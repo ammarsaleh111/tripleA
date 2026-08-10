@@ -1,5 +1,5 @@
 {
-  "name": "rashed-backend",
+  "name": "triplea-backend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -23,5 +23,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "TripleA GYM e-commerce backend API"
 }

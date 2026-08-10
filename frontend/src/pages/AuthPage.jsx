@@ -117,7 +117,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    placeholder="name@rashed.com"
+                    placeholder="name@tripleagym.com"
                     className={inputClass}
                     required
                   />

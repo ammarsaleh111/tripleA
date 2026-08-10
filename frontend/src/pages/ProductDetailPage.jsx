@@ -5,14 +5,14 @@ import { useAppContext } from '../context/AppContext.jsx';
 import ProductCard from '../components/shop/ProductCard.jsx';
 
 const DEFAULT_SHIPPING_MESSAGE =
-  'Cash on Delivery available. Fast delivery on football gear.';
+  'Cash on Delivery available. Fast delivery on elite gym supplements.';
 const FALLBACK_PRODUCT_IMAGE =
-  'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=900&q=80';
+  'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=900&q=80';
 
 const FEATURE_PANELS = [
   {
-    title: 'Match Ready',
-    body: 'Built for football sessions, training, and match day.',
+    title: 'Peak Performance',
+    body: 'Formulated for intensive training sessions and maximum muscle recovery.',
   },
   {
     title: 'Premium Gear',
@@ -188,7 +188,7 @@ const ProductDetailPage = () => {
   const shortDescription = useMemo(() => {
     const value = String(product.description || '').replace(/\s+/g, ' ').trim();
     if (!value) {
-      return 'Premium football gear for training and match day.';
+      return 'Industrial grade gym supplement engineered for maximum performance.';
     }
     if (value.length <= 150) {
       return value;
@@ -294,10 +294,10 @@ const ProductDetailPage = () => {
                 totalStock: Number(item.total_stock || 0),
                 name: item.name,
                 price: Number(item.base_price || 0),
-                colorName: item.category_name || 'Football Gear',
+                colorName: item.category_name || 'Supplements',
                 imageUrl:
                   item.primary_image ||
-                  'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=700&q=80',
+                  'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=700&q=80',
                 isNew: Boolean(item.is_featured),
                 rating: Number(item.avg_rating || 0),
                 reviewCount: Number(item.review_count || 0),
@@ -413,7 +413,7 @@ const ProductDetailPage = () => {
         </div>
 
         <aside className="storefront-surface h-fit p-5 sm:p-6 xl:sticky xl:top-28">
-          <p className="storefront-kicker">Football Gear</p>
+          <p className="storefront-kicker">Gym Supplement</p>
           <h1 className="storefront-title mt-4 text-[clamp(2.8rem,7vw,4.8rem)] text-white">{product.name}</h1>
           <p className="mt-3 text-sm leading-relaxed text-white/70">{shortDescription}</p>
 

@@ -16,9 +16,13 @@ const __dirname = path.dirname(__filename);
 const schemaPath = path.resolve(__dirname, '../sql/schema.sql');
 
 const openPool = async () => {
+  const connStr = process.env.DATABASE_URL || '';
+  const isLocalhost = connStr.includes('localhost') || connStr.includes('127.0.0.1');
+  const isSslDisabled = connStr.includes('sslmode=disable');
+
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString: connStr,
+    ssl: (isLocalhost || isSslDisabled) ? false : { rejectUnauthorized: false },
   });
   const client = await pool.connect();
   client.release();
@@ -85,6 +89,11 @@ const validateEnvironment = () => {
   if (missingVariables.length > 0) {
     throw new Error(`Missing required environment variables: ${missingVariables.join(', ')}`);
   }
+
+  const dbUrl = String(process.env.DATABASE_URL || '').toLowerCase();
+  if (dbUrl.includes('your_postgres_connection_string_here') || dbUrl.includes('user:password@host')) {
+    throw new Error('DATABASE_URL in backend/.env contains a placeholder value. Please paste your actual Neon PostgreSQL connection string in backend/.env');
+  }
 };
 
 // ── Seed data (identical to original) ────────────────────────────────────────
@@ -92,139 +101,139 @@ const validateEnvironment = () => {
 const catalogSeed = [
   {
     category: {
-      name: 'Football T-shirts',
-      slug: 'football-jerseys',
-      description: 'Match and training T-shirts for football players and fans.',
+      name: 'Protein',
+      slug: 'protein',
+      description: 'High-grade whey isolates, casein, and mass gainer blends for peak muscle recovery.',
     },
     product: {
-      name: 'Elite Match T-shirt',
-      slug: 'elite-match-jersey',
-      description: 'Lightweight football T-shirt with breathable match-day comfort.',
-      materialsCare: 'Recycled polyester performance knit. Machine wash cold.',
-      basePrice: 79.0,
+      name: 'TripleA Whey Isolate',
+      slug: 'triplea-whey-isolate',
+      description: 'Ultra-pure whey protein isolate with 27g protein per scoop. Cold-filtered for maximum bioavailability.',
+      materialsCare: 'Store in a cool dry place. Consume within 24 hours of mixing.',
+      basePrice: 49.99,
       isFeatured: true,
       images: [
-        'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=900&q=80',
       ],
       variants: [
-        { sku: 'RSH-JER-ELT-S-BLK', size: 'S', color: 'Black', colorHex: '#141414', priceModifier: 0, stockQuantity: 40 },
-        { sku: 'RSH-JER-ELT-M-BLK', size: 'M', color: 'Black', colorHex: '#141414', priceModifier: 0, stockQuantity: 45 },
-        { sku: 'RSH-JER-ELT-L-BLK', size: 'L', color: 'Black', colorHex: '#141414', priceModifier: 0, stockQuantity: 38 },
+        { sku: 'AAA-WHY-ISO-1KG-CHO', size: '1kg', color: 'Chocolate', colorHex: '#5c3317', priceModifier: 0,    stockQuantity: 40 },
+        { sku: 'AAA-WHY-ISO-2KG-CHO', size: '2kg', color: 'Chocolate', colorHex: '#5c3317', priceModifier: 35,   stockQuantity: 45 },
+        { sku: 'AAA-WHY-ISO-1KG-VAN', size: '1kg', color: 'Vanilla',   colorHex: '#f3e5ab', priceModifier: 0,    stockQuantity: 38 },
       ],
     },
   },
   {
     category: {
-      name: 'Football Boots',
-      slug: 'football-boots',
-      description: 'Studded football boots for speed, control, and traction.',
+      name: 'Creatine',
+      slug: 'creatine',
+      description: 'Pure creatine monohydrate for explosive strength, endurance, and lean muscle gains.',
     },
     product: {
-      name: 'Speed Control Boots',
-      slug: 'speed-control-boots',
-      description: 'Firm-ground football boots with a light upper and grippy soleplate.',
-      materialsCare: 'Synthetic upper. Wipe clean after play.',
-      basePrice: 149.0,
+      name: 'Pure Creatine Monohydrate',
+      slug: 'pure-creatine-monohydrate',
+      description: 'Micronized creatine monohydrate. 5g per serving, unflavored. Lab tested for purity.',
+      materialsCare: 'Keep sealed in a cool dry location. Take 5g daily with water.',
+      basePrice: 24.99,
       isFeatured: true,
       images: [
-        'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=900&q=80',
       ],
       variants: [
-        { sku: 'RSH-BOT-SPD-41-BLK', size: '41', color: 'Black', colorHex: '#1c1c1c', priceModifier: 0, stockQuantity: 35 },
-        { sku: 'RSH-BOT-SPD-42-BLK', size: '42', color: 'Black', colorHex: '#1c1c1c', priceModifier: 0, stockQuantity: 34 },
-        { sku: 'RSH-BOT-SPD-43-BLK', size: '43', color: 'Black', colorHex: '#1c1c1c', priceModifier: 0, stockQuantity: 22 },
+        { sku: 'AAA-CRE-MON-250G-UNF', size: '250g',  color: 'Unflavored', colorHex: '#f0f0f0', priceModifier: 0,   stockQuantity: 55 },
+        { sku: 'AAA-CRE-MON-500G-UNF', size: '500g',  color: 'Unflavored', colorHex: '#f0f0f0', priceModifier: 15,  stockQuantity: 35 },
+        { sku: 'AAA-CRE-MON-1KG-UNF',  size: '1kg',   color: 'Unflavored', colorHex: '#f0f0f0', priceModifier: 35,  stockQuantity: 22 },
       ],
     },
   },
   {
     category: {
-      name: 'Football Shorts',
-      slug: 'football-shorts',
-      description: 'Light football shorts for training and match days.',
+      name: 'Pre-Workout',
+      slug: 'pre-workout',
+      description: 'Industrial-grade pre-workout formulas for sustained energy and unstoppable focus.',
     },
     product: {
-      name: 'Pro Training Shorts',
-      slug: 'pro-training-shorts',
-      description: 'Breathable football shorts with a clean athletic fit.',
-      materialsCare: 'Lightweight polyester. Tumble dry low.',
-      basePrice: 45.0,
+      name: 'Nitric Surge Pre-Workout',
+      slug: 'nitric-surge-preworkout',
+      description: 'High-stim pre-workout with 350mg caffeine, L-Citrulline, and Beta-Alanine for maximum performance.',
+      materialsCare: 'Shake well. Consume 30 minutes before training. Not for use by minors.',
+      basePrice: 39.99,
+      isFeatured: true,
+      images: [
+        'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80',
+      ],
+      variants: [
+        { sku: 'AAA-PRE-NIT-300G-WAT', size: '300g', color: 'Watermelon', colorHex: '#fc5c65', priceModifier: 0,   stockQuantity: 40 },
+        { sku: 'AAA-PRE-NIT-300G-BLB', size: '300g', color: 'Blue Razz',  colorHex: '#3867d6', priceModifier: 0,   stockQuantity: 38 },
+        { sku: 'AAA-PRE-NIT-600G-WAT', size: '600g', color: 'Watermelon', colorHex: '#fc5c65', priceModifier: 25,  stockQuantity: 20 },
+      ],
+    },
+  },
+  {
+    category: {
+      name: 'Amino Acids',
+      slug: 'amino-acids',
+      description: 'BCAA blends and EAA formulas to accelerate muscle recovery and reduce soreness.',
+    },
+    product: {
+      name: 'BCAA Recovery Matrix',
+      slug: 'bcaa-recovery-matrix',
+      description: '2:1:1 BCAA ratio with added L-Glutamine and electrolytes for intra-workout recovery.',
+      materialsCare: 'Mix with 300ml cold water. Best consumed during or after training.',
+      basePrice: 32.99,
       isFeatured: false,
       images: [
-        'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=900&q=80',
       ],
       variants: [
-        { sku: 'RSH-SHO-PRO-S-BLU', size: 'S', color: 'Blue', colorHex: '#2563eb', priceModifier: 0, stockQuantity: 50 },
-        { sku: 'RSH-SHO-PRO-M-BLU', size: 'M', color: 'Blue', colorHex: '#2563eb', priceModifier: 0, stockQuantity: 52 },
-        { sku: 'RSH-SHO-PRO-L-BLU', size: 'L', color: 'Blue', colorHex: '#2563eb', priceModifier: 0, stockQuantity: 47 },
+        { sku: 'AAA-BCA-REC-300G-PNP', size: '300g', color: 'Pink Lemonade', colorHex: '#ff6b81', priceModifier: 0,  stockQuantity: 50 },
+        { sku: 'AAA-BCA-REC-300G-GRP', size: '300g', color: 'Grape',         colorHex: '#8854d0', priceModifier: 0,  stockQuantity: 52 },
+        { sku: 'AAA-BCA-REC-600G-PNP', size: '600g', color: 'Pink Lemonade', colorHex: '#ff6b81', priceModifier: 20, stockQuantity: 35 },
       ],
     },
   },
   {
     category: {
-      name: 'Football Balls',
-      slug: 'football-balls',
-      description: 'Training and match balls for every pitch.',
+      name: 'Mass Gainer',
+      slug: 'mass-gainer',
+      description: 'High-calorie mass gainers engineered for hard-gainers who need serious calories.',
     },
     product: {
-      name: 'Pro Match Ball',
-      slug: 'pro-match-ball',
-      description: 'Durable football with stable flight and responsive touch.',
-      materialsCare: 'PU cover. Inflate to recommended pressure.',
-      basePrice: 49.0,
+      name: 'Mass Gainer Pro 1000',
+      slug: 'mass-gainer-pro-1000',
+      description: 'Loaded with 1000+ calories per serving, complex carbs, and 50g protein for rapid mass building.',
+      materialsCare: 'Mix 3 scoops with 500ml whole milk. Best post-workout or between meals.',
+      basePrice: 64.99,
       isFeatured: true,
       images: [
-        'https://images.unsplash.com/photo-1614632537190-23e4146777db?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=900&q=80',
       ],
       variants: [
-        { sku: 'RSH-BAL-PRO-5-WHT', size: '5', color: 'White', colorHex: '#f8fafc', priceModifier: 0,  stockQuantity: 30 },
-        { sku: 'RSH-BAL-PRO-4-WHT', size: '4', color: 'White', colorHex: '#f8fafc', priceModifier: -4, stockQuantity: 24 },
-        { sku: 'RSH-BAL-PRO-5-VLT', size: '5', color: 'Volt',  colorHex: '#39ff14', priceModifier: 3,  stockQuantity: 18 },
+        { sku: 'AAA-MAS-PRO-3KG-CHO', size: '3kg', color: 'Chocolate', colorHex: '#5c3317', priceModifier: 0,    stockQuantity: 30 },
+        { sku: 'AAA-MAS-PRO-5KG-CHO', size: '5kg', color: 'Chocolate', colorHex: '#5c3317', priceModifier: 45,   stockQuantity: 24 },
+        { sku: 'AAA-MAS-PRO-3KG-VAN', size: '3kg', color: 'Vanilla',   colorHex: '#f3e5ab', priceModifier: 0,    stockQuantity: 18 },
       ],
     },
   },
   {
     category: {
-      name: 'Goalkeeper Gloves',
-      slug: 'goalkeeper-gloves',
-      description: 'Goalkeeper gloves for grip, protection, and confidence.',
+      name: 'Vitamins & Health',
+      slug: 'vitamins-health',
+      description: 'Essential vitamins, minerals, and health supplements for athletic optimization.',
     },
     product: {
-      name: 'Grip Shield Gloves',
-      slug: 'grip-shield-gloves',
-      description: 'Football goalkeeper gloves with padded palm grip and wrist support.',
-      materialsCare: 'Latex palm. Air dry after use.',
-      basePrice: 69.0,
+      name: 'Iron Core Multi-V',
+      slug: 'iron-core-multi-v',
+      description: 'Comprehensive multivitamin formulated for athletes. 26 essential vitamins and minerals per dose.',
+      materialsCare: 'Take 1 tablet daily with food and water. Store below 25°C.',
+      basePrice: 19.99,
       isFeatured: false,
       images: [
-        'https://images.unsplash.com/photo-1600679472829-3044539ce8ed?auto=format&fit=crop&w=900&q=80',
+        'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=900&q=80',
       ],
       variants: [
-        { sku: 'RSH-GLV-GRP-8-RED',  size: '8',  color: 'Red', colorHex: '#dc2626', priceModifier: 0, stockQuantity: 30 },
-        { sku: 'RSH-GLV-GRP-9-RED',  size: '9',  color: 'Red', colorHex: '#dc2626', priceModifier: 0, stockQuantity: 32 },
-        { sku: 'RSH-GLV-GRP-10-RED', size: '10', color: 'Red', colorHex: '#dc2626', priceModifier: 0, stockQuantity: 26 },
-      ],
-    },
-  },
-  {
-    category: {
-      name: 'Accessories',
-      slug: 'accessories',
-      description: 'Football accessories, shin guards, bags, and training extras.',
-    },
-    product: {
-      name: 'Carbon Shin Guards',
-      slug: 'carbon-shin-guards',
-      description: 'Lightweight shin guards with a secure sleeve fit.',
-      materialsCare: 'Wipe clean. Store dry.',
-      basePrice: 32.0,
-      isFeatured: true,
-      images: [
-        'https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&w=900&q=80',
-      ],
-      variants: [
-        { sku: 'RSH-SHG-CBN-S-BLK', size: 'S', color: 'Black', colorHex: '#111827', priceModifier: 0, stockQuantity: 28 },
-        { sku: 'RSH-SHG-CBN-M-BLK', size: 'M', color: 'Black', colorHex: '#111827', priceModifier: 0, stockQuantity: 31 },
-        { sku: 'RSH-SHG-CBN-L-BLK', size: 'L', color: 'Black', colorHex: '#111827', priceModifier: 0, stockQuantity: 20 },
+        { sku: 'AAA-VIT-MUL-60TAB',  size: '60 tabs',  color: 'Standard', colorHex: '#ffcc00', priceModifier: 0,  stockQuantity: 28 },
+        { sku: 'AAA-VIT-MUL-120TAB', size: '120 tabs', color: 'Standard', colorHex: '#ffcc00', priceModifier: 12, stockQuantity: 31 },
+        { sku: 'AAA-VIT-MUL-180TAB', size: '180 tabs', color: 'Standard', colorHex: '#ffcc00', priceModifier: 22, stockQuantity: 20 },
       ],
     },
   },
@@ -233,28 +242,28 @@ const catalogSeed = [
 const DEMO_CUSTOMER_PASSWORD = process.env.DEMO_CUSTOMER_PASSWORD || 'Customer123!';
 
 const demoCustomersSeed = [
-  { email: 'nora.hale@demo.rashed.com',  firstName: 'Nora',  lastName: 'Hale',   phoneNumber: '+1-202-555-0101', rewardPoints: 2840, tierStatus: 'Elite',  createdAtDaysAgo: 8,  addressLine1: '1450 Circuit Ave',    city: 'Austin',    state: 'TX', postalCode: '73301' },
-  { email: 'omar.ismail@demo.rashed.com', firstName: 'Omar',  lastName: 'Ismail', phoneNumber: '+1-202-555-0102', rewardPoints: 1320, tierStatus: 'Gold',   createdAtDaysAgo: 21, addressLine1: '72 Hudson Point',     city: 'New York',  state: 'NY', postalCode: '10001' },
-  { email: 'mila.ross@demo.rashed.com',   firstName: 'Mila',  lastName: 'Ross',   phoneNumber: '+1-202-555-0103', rewardPoints: 640,  tierStatus: 'Silver', createdAtDaysAgo: 34, addressLine1: '880 Harbor Street',   city: 'Miami',     state: 'FL', postalCode: '33101' },
-  { email: 'ryan.khaled@demo.rashed.com', firstName: 'Ryan',  lastName: 'Khaled', phoneNumber: '+1-202-555-0104', rewardPoints: 420,  tierStatus: 'Member', createdAtDaysAgo: 52, addressLine1: '11 Industrial Park',  city: 'Chicago',   state: 'IL', postalCode: '60601' },
-  { email: 'layla.saeed@demo.rashed.com', firstName: 'Layla', lastName: 'Saeed',  phoneNumber: '+1-202-555-0105', rewardPoints: 980,  tierStatus: 'Gold',   createdAtDaysAgo: 74, addressLine1: '90 Canyon Road',      city: 'Phoenix',   state: 'AZ', postalCode: '85001' },
+  { email: 'nora.hale@demo.triplea.com',  firstName: 'Nora',  lastName: 'Hale',   phoneNumber: '+1-202-555-0101', rewardPoints: 2840, tierStatus: 'Elite',  createdAtDaysAgo: 8,  addressLine1: '1450 Circuit Ave',    city: 'Austin',    state: 'TX', postalCode: '73301' },
+  { email: 'omar.ismail@demo.triplea.com', firstName: 'Omar',  lastName: 'Ismail', phoneNumber: '+1-202-555-0102', rewardPoints: 1320, tierStatus: 'Gold',   createdAtDaysAgo: 21, addressLine1: '72 Hudson Point',     city: 'New York',  state: 'NY', postalCode: '10001' },
+  { email: 'mila.ross@demo.triplea.com',   firstName: 'Mila',  lastName: 'Ross',   phoneNumber: '+1-202-555-0103', rewardPoints: 640,  tierStatus: 'Silver', createdAtDaysAgo: 34, addressLine1: '880 Harbor Street',   city: 'Miami',     state: 'FL', postalCode: '33101' },
+  { email: 'ryan.khaled@demo.triplea.com', firstName: 'Ryan',  lastName: 'Khaled', phoneNumber: '+1-202-555-0104', rewardPoints: 420,  tierStatus: 'Member', createdAtDaysAgo: 52, addressLine1: '11 Industrial Park',  city: 'Chicago',   state: 'IL', postalCode: '60601' },
+  { email: 'layla.saeed@demo.triplea.com', firstName: 'Layla', lastName: 'Saeed',  phoneNumber: '+1-202-555-0105', rewardPoints: 980,  tierStatus: 'Gold',   createdAtDaysAgo: 74, addressLine1: '90 Canyon Road',      city: 'Phoenix',   state: 'AZ', postalCode: '85001' },
 ];
 
 const demoCartSeed = [];
 
 const demoOrderSeed = [
-  { orderNumber: 'DEMO-ORD-1001', customerEmail: 'nora.hale@demo.rashed.com',  status: 'Delivered',  daysAgo: 2,   items: [{ variantOffset: 0,  quantity: 2 }, { variantOffset: 9,  quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1002', customerEmail: 'omar.ismail@demo.rashed.com', status: 'Processing', daysAgo: 5,   items: [{ variantOffset: 3,  quantity: 1 }, { variantOffset: 11, quantity: 2 }] },
-  { orderNumber: 'DEMO-ORD-1003', customerEmail: 'mila.ross@demo.rashed.com',   status: 'Shipped',    daysAgo: 9,   items: [{ variantOffset: 5,  quantity: 1 }, { variantOffset: 14, quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1004', customerEmail: 'ryan.khaled@demo.rashed.com', status: 'Pending',    daysAgo: 13,  items: [{ variantOffset: 2,  quantity: 2 }] },
-  { orderNumber: 'DEMO-ORD-1005', customerEmail: 'layla.saeed@demo.rashed.com', status: 'Delivered',  daysAgo: 18,  items: [{ variantOffset: 8,  quantity: 1 }, { variantOffset: 15, quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1006', customerEmail: 'nora.hale@demo.rashed.com',   status: 'Delivered',  daysAgo: 27,  items: [{ variantOffset: 6,  quantity: 1 }, { variantOffset: 17, quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1007', customerEmail: 'omar.ismail@demo.rashed.com', status: 'Cancelled',  daysAgo: 36,  items: [{ variantOffset: 1,  quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1008', customerEmail: 'mila.ross@demo.rashed.com',   status: 'Delivered',  daysAgo: 49,  items: [{ variantOffset: 4,  quantity: 2 }, { variantOffset: 12, quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1009', customerEmail: 'ryan.khaled@demo.rashed.com', status: 'Delivered',  daysAgo: 67,  items: [{ variantOffset: 7,  quantity: 1 }, { variantOffset: 10, quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1010', customerEmail: 'layla.saeed@demo.rashed.com', status: 'Delivered',  daysAgo: 84,  items: [{ variantOffset: 13, quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1011', customerEmail: 'nora.hale@demo.rashed.com',   status: 'Delivered',  daysAgo: 112, items: [{ variantOffset: 16, quantity: 1 }, { variantOffset: 0, quantity: 1 }] },
-  { orderNumber: 'DEMO-ORD-1012', customerEmail: null,                           status: 'Pending',    daysAgo: 3,   items: [{ variantOffset: 3,  quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1001', customerEmail: 'nora.hale@demo.triplea.com',  status: 'Delivered',  daysAgo: 2,   items: [{ variantOffset: 0,  quantity: 2 }, { variantOffset: 9,  quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1002', customerEmail: 'omar.ismail@demo.triplea.com', status: 'Processing', daysAgo: 5,   items: [{ variantOffset: 3,  quantity: 1 }, { variantOffset: 11, quantity: 2 }] },
+  { orderNumber: 'AAA-ORD-1003', customerEmail: 'mila.ross@demo.triplea.com',   status: 'Shipped',    daysAgo: 9,   items: [{ variantOffset: 5,  quantity: 1 }, { variantOffset: 14, quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1004', customerEmail: 'ryan.khaled@demo.triplea.com', status: 'Pending',    daysAgo: 13,  items: [{ variantOffset: 2,  quantity: 2 }] },
+  { orderNumber: 'AAA-ORD-1005', customerEmail: 'layla.saeed@demo.triplea.com', status: 'Delivered',  daysAgo: 18,  items: [{ variantOffset: 8,  quantity: 1 }, { variantOffset: 15, quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1006', customerEmail: 'nora.hale@demo.triplea.com',   status: 'Delivered',  daysAgo: 27,  items: [{ variantOffset: 6,  quantity: 1 }, { variantOffset: 17, quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1007', customerEmail: 'omar.ismail@demo.triplea.com', status: 'Cancelled',  daysAgo: 36,  items: [{ variantOffset: 1,  quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1008', customerEmail: 'mila.ross@demo.triplea.com',   status: 'Delivered',  daysAgo: 49,  items: [{ variantOffset: 4,  quantity: 2 }, { variantOffset: 12, quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1009', customerEmail: 'ryan.khaled@demo.triplea.com', status: 'Delivered',  daysAgo: 67,  items: [{ variantOffset: 7,  quantity: 1 }, { variantOffset: 10, quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1010', customerEmail: 'layla.saeed@demo.triplea.com', status: 'Delivered',  daysAgo: 84,  items: [{ variantOffset: 13, quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1011', customerEmail: 'nora.hale@demo.triplea.com',   status: 'Delivered',  daysAgo: 112, items: [{ variantOffset: 16, quantity: 1 }, { variantOffset: 0, quantity: 1 }] },
+  { orderNumber: 'AAA-ORD-1012', customerEmail: null,                            status: 'Pending',    daysAgo: 3,   items: [{ variantOffset: 3,  quantity: 1 }] },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

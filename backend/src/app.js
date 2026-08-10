@@ -39,7 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (_request, response) => {
   response.json({
-    message: 'Rashed API is running.',
+    message: 'TripleA API is running.',
   });
 });
 

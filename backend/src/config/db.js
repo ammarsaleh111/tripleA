@@ -5,14 +5,30 @@ const { Pool } = pg;
 let pool;
 let poolInitializationPromise;
 
+const isPlaceholderUrl = (url) => {
+  if (!url) return true;
+  const str = String(url).toLowerCase().trim();
+  return (
+    str.includes('your_postgres_connection_string_here') ||
+    str.includes('your_connection_string') ||
+    str.includes('user:password@host')
+  );
+};
+
 const getDatabaseConfig = () => {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is not configured.');
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString || isPlaceholderUrl(connectionString)) {
+    throw new Error(
+      'DATABASE_URL in backend/.env is set to placeholder "your_postgres_connection_string_here". Please update backend/.env with your actual Neon PostgreSQL connection string.'
+    );
   }
 
+  const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+  const isSslDisabled = connectionString.includes('sslmode=disable');
+
   return {
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString,
+    ssl: (isLocalhost || isSslDisabled) ? false : { rejectUnauthorized: false },
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,

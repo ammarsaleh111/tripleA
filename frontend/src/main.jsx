@@ -7,7 +7,7 @@ import { AppProvider } from './context/AppContext.jsx';
 import './index.css';
 
 const initialThemeMode =
-  String(localStorage.getItem('rashed_theme_mode') || 'light').toLowerCase() === 'dark'
+  String(localStorage.getItem('triplea_theme_mode') || 'light').toLowerCase() === 'dark'
     ? 'dark'
     : 'light';
 

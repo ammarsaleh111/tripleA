@@ -2,11 +2,9 @@ import { getDatabase } from '../config/db.js';
 
 const MAX_LIMIT = 48;
 const OTHER_CATEGORY_SLUGS = [
-  'goalkeeper-gloves',
-  'shin-guards',
-  'sports-bags',
-  'accessories',
-  'training',
+  'amino-acids',
+  'mass-gainer',
+  'vitamins-health',
 ];
 
 const toFiniteNumber = (value, fallback = null) => {

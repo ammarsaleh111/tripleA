@@ -89,8 +89,8 @@ const AdminTopbar = ({
           <MenuIcon />
         </button>
         <div>
-          <p className="font-display text-[1.85rem] font-bold uppercase tracking-[-0.05em] text-[#7DFF63]">
-            Rashed Admin
+          <p className="font-display text-[1.85rem] font-bold uppercase tracking-[-0.05em] text-[#FFCC00]">
+            TripleA Admin
           </p>
         </div>
       </div>
@@ -114,7 +114,7 @@ const AdminTopbar = ({
             aria-label="Notifications"
           >
             <BellIcon />
-            <span className={`absolute right-3 top-3 h-2.5 w-2.5 rounded-full ${hasAlerts ? 'bg-[#7DFF63]' : 'bg-white/25'}`} />
+            <span className={`absolute right-3 top-3 h-2.5 w-2.5 rounded-full ${hasAlerts ? 'bg-[#FFCC00]' : 'bg-white/25'}`} />
           </button>
           <button
             type="button"
@@ -128,7 +128,7 @@ const AdminTopbar = ({
             type="button"
             onClick={onRefreshDashboard}
             disabled={isDashboardLoading}
-            className="h-12 border border-white/10 bg-zinc-900 px-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/75 transition-all duration-300 ease-in-out hover:border-[#7DFF63] hover:text-[#7DFF63] disabled:cursor-not-allowed disabled:opacity-45"
+            className="h-12 border border-white/10 bg-zinc-900 px-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/75 transition-all duration-300 ease-in-out hover:border-[#FFCC00] hover:text-[#FFCC00] disabled:cursor-not-allowed disabled:opacity-45"
           >
             {isDashboardLoading ? 'Syncing' : 'Sync'}
           </button>
@@ -148,7 +148,7 @@ const AdminTopbar = ({
                 </div>
                 <button
                   type="button"
-                  className="w-full border border-[#7DFF63] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7DFF63] transition-all duration-300 ease-in-out hover:bg-[#7DFF63] hover:text-[#101010]"
+                  className="w-full border border-[#FFCC00] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#FFCC00] transition-all duration-300 ease-in-out hover:bg-[#FFCC00] hover:text-[#101010]"
                   onClick={() => setActivePanel('')}
                 >
                   Close Panel
@@ -178,14 +178,14 @@ const AdminTopbar = ({
           )}
 
           <div className="flex items-center gap-3 border border-white/10 bg-zinc-900 px-3 py-2">
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-white">
-              RA
+            <div className="grid h-8 w-8 place-items-center rounded-full bg-[#FFCC00] text-[10px] font-bold text-black">
+              TA
             </div>
             <div className="text-right">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/85">
-                Rashed A.
+                TripleA Admin
               </p>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#7DFF63]">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#FFCC00]">
                 Super Admin
               </p>
             </div>

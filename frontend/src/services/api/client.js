@@ -6,7 +6,7 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('rashed_auth_token');
+  const token = localStorage.getItem('triplea_auth_token');
 
   if (token) {
     config.headers = config.headers || {};

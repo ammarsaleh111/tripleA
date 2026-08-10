@@ -8,11 +8,12 @@ import {
 } from '../../../services/api/admin.js';
 
 const categoryOptions = [
-  'Football T-shirts',
-  'Football Boots',
-  'Football Shorts',
-  'Football Balls',
-  'Accessories',
+  'Protein',
+  'Creatine',
+  'Pre-Workout',
+  'Amino Acids',
+  'Mass Gainer',
+  'Vitamins & Health',
 ];
 
 const colorOptions = [

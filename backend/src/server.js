@@ -10,7 +10,7 @@ const startServer = async () => {
     await connectDatabase();
 
     app.listen(port, () => {
-      console.log(`Rashed backend listening on port ${port}`);
+      console.log(`TripleA backend listening on port ${port}`);
     });
   } catch (error) {
     console.error('Failed to start the backend server.');

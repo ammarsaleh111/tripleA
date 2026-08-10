@@ -13,7 +13,7 @@ const statusClasses = {
   cancelled: 'bg-[#3f1e1e] text-[#ff9f9f]',
 };
 
-const downloadCsv = (items, filename = 'rashed-orders-report.csv') => {
+const downloadCsv = (items, filename = 'triplea-orders-report.csv') => {
   const headers = ['Order ID', 'Customer', 'Date', 'Amount', 'Status'];
   const rows = items.map((item) => [
     item.orderNumber,

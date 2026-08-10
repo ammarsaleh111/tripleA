@@ -14,9 +14,13 @@ if (missingEnv.length > 0) {
   process.exit(1);
 }
 
+const connStr = process.env.DATABASE_URL || '';
+const isLocalhost = connStr.includes('localhost') || connStr.includes('127.0.0.1');
+const isSslDisabled = connStr.includes('sslmode=disable');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  connectionString: connStr,
+  ssl: (isLocalhost || isSslDisabled) ? false : { rejectUnauthorized: false },
 });
 
 const executeQuery = async (client, queryText, params = []) => {

@@ -1,32 +1,26 @@
-# Rashed Sport Store
+# TripleA GYM - Industrial Strength Fitness E-Commerce
 
-Rashed is a football gear e-commerce website with a React storefront, Express API, and SQL-backed catalog/order data. It supports shopping, cart checkout, account flows, admin inventory management, theme switching, and contact/admin messaging.
+TripleA is an industrial strength fitness & supplement e-commerce platform with a modern React storefront, Express API, and PostgreSQL database. It supports full shopping flows, cart checkout, user accounts, admin inventory & order management, and interactive customer services.
 
 ## Key Features
 
-- Shop catalog with live product cards, category filters, size and color filters, sorting, pagination, and a functional price slider from 0 EGP to 1000+ EGP.
-- Product detail pages with images, variants, stock-aware add-to-cart behavior, ratings summary, and related product browsing.
-- Cart and checkout flows with quantity controls, customer details, order creation, and order success confirmation.
-- Login, registration, password reset screen, persistent authentication option, role-based redirects, and a return-to-home action on auth pages.
-- User dashboard/profile areas for authenticated customers.
-- Admin dashboard with inventory, orders, messages, and catalog metrics.
-- Admin inventory management for adding, editing, and deleting products with simplified fields: name, price, category, description, variants, and uploaded product image.
-- Admin product image upload stores base64 images under the backend `/uploads/admin-products` path and saves the returned URL to the product gallery.
-- Theme switching with dark and light mode support across storefront surfaces, including the home page brand marquee and trust grid.
-- Contact form submission with admin message review and status updates.
+- **Shop Catalog**: Dynamic product grid with category filtering, price sliders, sorting, stock badges, and industrial yellow-accented dark aesthetics.
+- **Product Details**: Deep product view with image galleries, flavor/size variant selectors, stock availability, ratings, and related items.
+- **Cart & Checkout**: Real-time quantity controls, promo code engine, guest/user checkout, shipping fee calculations, and instant order placement.
+- **Auth & Profile**: Secure login/registration, persistent session control, role-based redirects (Customer/Admin), user order history, and profile details.
+- **Admin Dashboard**: Comprehensive administration suite for catalog management, stock updates, order fulfillment status tracking, customer metrics, and incoming message review.
 
 ## Tech Stack
 
-- Frontend: React, Vite, React Router, Tailwind CSS, Axios
-- Backend: Node.js, Express, SQL Server data access
-- Styling: Tailwind utility classes plus global theme variables in `frontend/src/index.css`
+- **Frontend**: React 18, Vite, React Router v6, Tailwind CSS, Lucide Icons, Axios
+- **Backend**: Node.js, Express, PostgreSQL (`pg`)
+- **Styling**: Industrial Dark UI design system (Montserrat, Hanken Grotesk, JetBrains Mono, `#FFCC00` industrial yellow accent)
 
 ## Project Structure
 
 ```text
-backend/   Express API, controllers, routes, middleware, database config
-frontend/  React application, pages, components, API clients, styles
-uploads/   Runtime image uploads served by the backend
+backend/   Express API, controllers, routes, SQL models, seed scripts
+frontend/  React application, components, pages, design system tokens
 ```
 
 ## Local Development
@@ -39,7 +33,7 @@ npm install
 npm run dev
 ```
 
-Run the backend from the backend project after configuring the database environment variables required by `backend/src/config/db.js`:
+Install and run the backend:
 
 ```bash
 cd backend
@@ -47,15 +41,9 @@ npm install
 npm run dev
 ```
 
-By default, the frontend expects the API on the configured Axios base URL, and the backend allows local Vite origins such as `http://localhost:5173` and `http://localhost:5174`.
+Initialize the database schema and seed data:
 
-## Admin Inventory Notes
-
-Admin product creation and editing now use a simplified catalog form:
-
-- Category choices: Football T-shirts, Football Boots, Football Shorts, Football Balls, Accessories
-- Variant fields: Size and Color only
-- Variant defaults sent to the API: stock quantity `100`, price modifier `0`
-- Image input: drag/drop or file picker upload with preview and remove action
-
-Uploaded images are written to `uploads/admin-products` and served publicly from `/uploads/admin-products/<file>`.
+```bash
+cd backend
+npm run db:init
+```

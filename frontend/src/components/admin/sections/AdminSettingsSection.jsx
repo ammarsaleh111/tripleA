@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
 
 const AdminSettingsSection = () => {
-  const [storeName, setStoreName] = useState('RASHED INDUSTRIAL');
-  const [supportEmail, setSupportEmail] = useState('ops@rashed-industrial.com');
+  const [storeName, setStoreName] = useState('TRIPLE A GYM');
+  const [supportEmail, setSupportEmail] = useState('ops@tripleagym.com');
   const [toggles, setToggles] = useState([false, true, true]);
   const [savedMessage, setSavedMessage] = useState('');
 
   useEffect(() => {
-    const stored = localStorage.getItem('rashed_admin_settings');
+    const stored = localStorage.getItem('triplea_admin_settings');
     if (!stored) {
       return;
     }
 
     try {
       const parsed = JSON.parse(stored);
-      setStoreName(parsed.storeName || 'RASHED INDUSTRIAL');
-      setSupportEmail(parsed.supportEmail || 'ops@rashed-industrial.com');
+      setStoreName(parsed.storeName || 'TRIPLE A GYM');
+      setSupportEmail(parsed.supportEmail || 'ops@tripleagym.com');
       if (Array.isArray(parsed.toggles) && parsed.toggles.length === 3) {
         setToggles(parsed.toggles);
       }
@@ -26,7 +26,7 @@ const AdminSettingsSection = () => {
 
   const handleSave = () => {
     localStorage.setItem(
-      'rashed_admin_settings',
+      'triplea_admin_settings',
       JSON.stringify({ storeName, supportEmail, toggles }),
     );
     setSavedMessage('Settings saved locally.');

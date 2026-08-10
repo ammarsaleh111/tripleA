@@ -7,7 +7,7 @@ export const getHealthStatus = async (_request, response, next) => {
 
     response.json({
       status: 'ok',
-      api: 'Rashed backend',
+      api: 'TripleA backend',
       database: rows[0]?.ok === 1 ? 'connected' : 'unknown',
       timestamp: new Date().toISOString(),
     });

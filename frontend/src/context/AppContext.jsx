@@ -13,10 +13,10 @@ import {
 } from '../services/api/cart.js';
 import { checkoutCart as checkoutCartApi, getMyOrders as getMyOrdersApi } from '../services/api/orders.js';
 
-const AUTH_TOKEN_KEY = 'rashed_auth_token';
-const GUEST_SESSION_KEY = 'rashed_guest_session_id';
-const THEME_MODE_KEY = 'rashed_theme_mode';
-const THEME_COLORS_KEY_PREFIX = 'rashed_theme_colors_';
+const AUTH_TOKEN_KEY = 'triplea_auth_token';
+const GUEST_SESSION_KEY = 'triplea_guest_session_id';
+const THEME_MODE_KEY = 'triplea_theme_mode';
+const THEME_COLORS_KEY_PREFIX = 'triplea_theme_colors_';
 const MAX_CLIENT_CART_QUANTITY = 20;
 
 const EMPTY_CART_STATE = {
