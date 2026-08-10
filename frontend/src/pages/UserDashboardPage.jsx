@@ -31,8 +31,8 @@ const statusTheme = {
   },
   processing: {
     label: 'Processing',
-    text: 'text-[#FFD633]',
-    surface: 'border-[#FFD633]/30 bg-[#FFD633]/10',
+    text: 'text-[var(--theme-accent)]',
+    surface: 'border-[var(--theme-accent)]/30 bg-[var(--theme-accent)]/10',
   },
   shipped: {
     label: 'Shipped',

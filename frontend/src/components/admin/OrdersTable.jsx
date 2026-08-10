@@ -5,7 +5,7 @@ const amountFormatter = new Intl.NumberFormat('en-US', {
 });
 
 const statusClasses = {
-  paid: 'bg-[#233d1f] text-[#7DFF63]',
+  paid: 'bg-[color:color-mix(in_srgb,var(--theme-accent)_18%,transparent)] text-[var(--theme-accent)]',
   pending: 'bg-[#2b2b1f] text-[#e8d97d]',
   processing: 'bg-[#123742] text-[#74def3]',
   shipped: 'bg-[#343434] text-white/65',
@@ -61,7 +61,7 @@ const OrdersTable = ({
   };
 
   return (
-    <article className="border border-white/10 bg-zinc-900">
+    <article className="border border-white/10 bg-[var(--theme-bg-surface)]">
       <div className="flex flex-col gap-4 border-b border-white/10 px-4 py-5 sm:px-6 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="font-display text-[2rem] font-bold uppercase tracking-tight text-white">
@@ -71,7 +71,7 @@ const OrdersTable = ({
         <button
           type="button"
           onClick={handleDownload}
-          className="self-start text-[10px] font-bold uppercase tracking-[0.24em] text-[#7DFF63] transition-all duration-300 ease-in-out hover:text-white"
+          className="self-start text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--theme-accent)] transition-all duration-300 ease-in-out hover:text-white"
         >
           Download Report
         </button>
@@ -79,7 +79,7 @@ const OrdersTable = ({
 
       <div className="overflow-x-auto">
         <table className="min-w-[760px]">
-          <thead className="bg-black">
+          <thead className="bg-[var(--theme-bg-canvas)]">
             <tr className="text-left text-[9px] font-bold uppercase tracking-[0.24em] text-zinc-500">
               <th className="px-6 py-4">Order ID</th>
               <th className="px-4 py-4">Customer</th>
@@ -139,7 +139,7 @@ const OrdersTable = ({
             Previous
           </button>
           <span className="text-zinc-400">{currentPage} / {Math.max(1, totalPages)}</span>
-          <button type="button" onClick={onNext} disabled={!canGoNext} className="text-white transition-all duration-300 ease-in-out hover:text-[#7DFF63] disabled:cursor-not-allowed disabled:text-white/15">
+          <button type="button" onClick={onNext} disabled={!canGoNext} className="text-white transition-all duration-300 ease-in-out hover:text-[var(--theme-accent)] disabled:cursor-not-allowed disabled:text-white/15">
             Next
           </button>
         </div>

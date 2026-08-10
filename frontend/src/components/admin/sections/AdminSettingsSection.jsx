@@ -39,34 +39,34 @@ const AdminSettingsSection = () => {
           <h2 className="text-white font-display font-bold text-3xl uppercase tracking-tighter">System Configuration</h2>
           <p className="text-gray-400 text-[10px] uppercase tracking-widest mt-2">Manage app parameters and environment flags</p>
         </div>
-        <button type="button" onClick={handleSave} className="bg-neon px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[#4ade80]">
+        <button type="button" onClick={handleSave} className="bg-[var(--theme-accent)] px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[var(--theme-accent-hover)]">
           Save Changes
         </button>
       </div>
 
       {savedMessage && (
-        <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-neon">{savedMessage}</p>
+        <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-[var(--theme-accent)]">{savedMessage}</p>
       )}
 
       <div className="space-y-8">
         <section className="border border-white/5 bg-[#111] p-5 sm:p-8">
-          <h3 className="text-neon font-display text-[10px] uppercase tracking-[0.2em] font-bold mb-6">General Store Information</h3>
+          <h3 className="mb-6 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--theme-accent)]">General Store Information</h3>
           
           <div className="space-y-6 text-sm">
             <div>
               <label className="block text-gray-500 uppercase tracking-widest text-[10px] font-bold mb-2">Store Name</label>
-              <input value={storeName} onChange={(event) => setStoreName(event.target.value)} type="text" className="w-full bg-[#1a1a1a] border border-transparent focus:border-neon text-white px-4 py-3 outline-none transition-colors" />
+              <input value={storeName} onChange={(event) => setStoreName(event.target.value)} type="text" className="w-full border border-transparent bg-[#1a1a1a] px-4 py-3 text-white outline-none transition-colors focus:border-[var(--theme-accent)]" />
             </div>
             
             <div>
               <label className="block text-gray-500 uppercase tracking-widest text-[10px] font-bold mb-2">Support Email</label>
-              <input value={supportEmail} onChange={(event) => setSupportEmail(event.target.value)} type="email" className="w-full bg-[#1a1a1a] border border-transparent focus:border-neon text-white px-4 py-3 outline-none transition-colors" />
+              <input value={supportEmail} onChange={(event) => setSupportEmail(event.target.value)} type="email" className="w-full border border-transparent bg-[#1a1a1a] px-4 py-3 text-white outline-none transition-colors focus:border-[var(--theme-accent)]" />
             </div>
           </div>
         </section>
 
         <section className="border border-white/5 bg-[#111] p-5 sm:p-8">
-          <h3 className="text-neon font-display text-[10px] uppercase tracking-[0.2em] font-bold mb-6">Global Variables</h3>
+          <h3 className="mb-6 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--theme-accent)]">Global Variables</h3>
           
           <div className="space-y-4">
             {[
@@ -85,7 +85,7 @@ const AdminSettingsSection = () => {
                         setToggles((current) => current.map((value, index) => (index === i ? event.target.checked : value)));
                       }}
                     />
-                  <div className="w-11 h-6 bg-[#1a1a1a] border border-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neon peer-checked:border-neon"></div>
+                  <div className="peer h-6 w-11 rounded-full border border-[color:var(--theme-border-soft)] bg-[var(--theme-bg-muted)] peer-focus:outline-none after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-[color:var(--theme-border-soft)] after:bg-white after:content-[''] after:transition-all peer-checked:border-[var(--theme-accent)] peer-checked:bg-[var(--theme-accent)] peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
                 </label>
               </div>
             ))}

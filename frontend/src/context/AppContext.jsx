@@ -30,20 +30,20 @@ const EMPTY_CART_STATE = {
 
 const THEME_COLOR_PRESETS = {
   light: {
-    accent: '#39FF14',
-    bgCanvas: '#F8FAFC',
-    bgSurface: '#FFFFFF',
-    textPrimary: '#0F172A',
-    textMuted: '#475569',
-    borderSoft: '#D1DCE8',
+    accent: '#FFCC00',
+    bgCanvas: '#0A0A0A',
+    bgSurface: '#141414',
+    textPrimary: '#FFF8E7',
+    textMuted: '#8E8E8E',
+    borderSoft: '#282828',
   },
   dark: {
-    accent: '#39FF14',
-    bgCanvas: '#0F0F0F',
-    bgSurface: '#1A1A1A',
-    textPrimary: '#F3F5F7',
-    textMuted: '#94A3B8',
-    borderSoft: '#2A2A2A',
+    accent: '#FFCC00',
+    bgCanvas: '#0A0A0A',
+    bgSurface: '#141414',
+    textPrimary: '#FFF8E7',
+    textMuted: '#8E8E8E',
+    borderSoft: '#282828',
   },
 };
 
@@ -546,8 +546,8 @@ export const AppProvider = ({ children }) => {
 
     localStorage.setItem(THEME_MODE_KEY, normalizedMode);
 
-    document.documentElement.classList.toggle('light-mode', normalizedMode === 'light');
-    document.documentElement.classList.toggle('dark-mode', normalizedMode === 'dark');
+    document.documentElement.classList.remove('light-mode');
+    document.documentElement.classList.add('dark-mode');
 
     setThemeColors(readThemeColors(normalizedMode));
   }, [themeMode]);

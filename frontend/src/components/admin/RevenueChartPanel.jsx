@@ -33,7 +33,7 @@ const RevenueChartPanel = ({ periods, activePeriod, onPeriodChange, series }) =>
   );
 
   return (
-    <article className="border border-white/10 bg-zinc-900 p-6">
+    <article className="border border-white/10 bg-[var(--theme-bg-surface)] p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="font-display text-[2rem] font-bold uppercase tracking-tight text-white">
@@ -52,7 +52,7 @@ const RevenueChartPanel = ({ periods, activePeriod, onPeriodChange, series }) =>
               onClick={() => onPeriodChange(period)}
               className={`px-3 py-2 text-[10px] font-bold uppercase tracking-[0.24em] transition-all duration-300 ease-in-out ${
                 activePeriod === period
-                  ? 'bg-black text-[#7DFF63]'
+                  ? 'bg-black text-[var(--theme-accent)]'
                   : 'bg-[#121212] text-zinc-500 hover:text-white'
               }`}
             >
@@ -71,8 +71,8 @@ const RevenueChartPanel = ({ periods, activePeriod, onPeriodChange, series }) =>
         >
           <defs>
             <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#7DFF63" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#7DFF63" stopOpacity="0.02" />
+              <stop offset="0%" stopColor="var(--theme-accent)" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="var(--theme-accent)" stopOpacity="0.02" />
             </linearGradient>
           </defs>
 
@@ -93,7 +93,7 @@ const RevenueChartPanel = ({ periods, activePeriod, onPeriodChange, series }) =>
             <path
               d={chart.linePath}
               fill="none"
-              stroke="#7DFF63"
+              stroke="var(--theme-accent)"
               strokeWidth="7"
               strokeLinejoin="round"
               strokeLinecap="round"
@@ -101,7 +101,7 @@ const RevenueChartPanel = ({ periods, activePeriod, onPeriodChange, series }) =>
           ) : null}
 
           {chart.points?.map((point) => (
-            <circle key={`${point.x}-${point.y}`} cx={point.x} cy={point.y} r="3" fill="#7DFF63" />
+            <circle key={`${point.x}-${point.y}`} cx={point.x} cy={point.y} r="3" fill="var(--theme-accent)" />
           ))}
         </svg>
       </div>

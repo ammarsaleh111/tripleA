@@ -125,7 +125,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
 
                 {resetMessage && <p className="text-[11px] tracking-widest uppercase text-neon">{resetMessage}</p>}
 
-                <button type="submit" className="w-full bg-neon text-black font-display font-bold text-sm tracking-widest uppercase py-4 mt-6 hover:bg-[#4ade80] transition-colors">
+                <button type="submit" className="w-full bg-[var(--theme-accent)] text-black font-display font-bold text-sm tracking-widest uppercase py-4 mt-6 hover:bg-[var(--theme-accent-hover)] transition-colors">
                   Send Reset Link
                 </button>
 

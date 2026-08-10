@@ -12,7 +12,7 @@ const initialThemeMode =
     : 'light';
 
 document.documentElement.classList.remove('light-mode', 'dark-mode');
-document.documentElement.classList.add(initialThemeMode === 'dark' ? 'dark-mode' : 'light-mode');
+document.documentElement.classList.add('dark-mode');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

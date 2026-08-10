@@ -90,12 +90,12 @@ const OrderSuccessPage = () => {
           <div className="flex items-center gap-4">
             {/* Step 1 - Done */}
             <div className="flex flex-1 flex-col items-center gap-2">
-              <div className="grid h-10 w-10 place-items-center rounded-full border border-[#39FF14]/40 bg-[#39FF14]/10 text-[#39FF14]">
+              <div className="grid h-10 w-10 place-items-center rounded-full border border-[var(--theme-accent)]/40 bg-[var(--theme-accent)]/10 text-[var(--theme-accent)]">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
                   <path d="M5 12.5L9.2 16.7L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
                 </svg>
               </div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#39FF14]">Order Placed</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--theme-accent)]">Order Placed</span>
             </div>
 
             {/* Connector */}
@@ -103,7 +103,7 @@ const OrderSuccessPage = () => {
 
             {/* Step 2 - Pending */}
             <div className="flex flex-1 flex-col items-center gap-2">
-              <div className={`grid h-10 w-10 place-items-center rounded-full border ${whatsappSent ? 'border-[#39FF14]/40 bg-[#39FF14]/10 text-[#39FF14]' : 'border-amber-400/40 bg-amber-400/10 text-amber-400 animate-pulse'}`}>
+              <div className={`grid h-10 w-10 place-items-center rounded-full border ${whatsappSent ? 'border-[var(--theme-accent)]/40 bg-[var(--theme-accent)]/10 text-[var(--theme-accent)]' : 'border-amber-400/40 bg-amber-400/10 text-amber-400 animate-pulse'}`}>
                 {whatsappSent ? (
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
                     <path d="M5 12.5L9.2 16.7L19 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
@@ -112,7 +112,7 @@ const OrderSuccessPage = () => {
                   <span className="text-lg font-bold">2</span>
                 )}
               </div>
-              <span className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${whatsappSent ? 'text-[#39FF14]' : 'text-amber-400'}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${whatsappSent ? 'text-[var(--theme-accent)]' : 'text-amber-400'}`}>
                 {whatsappSent ? 'Sent to WhatsApp' : 'Confirm on WhatsApp'}
               </span>
             </div>
@@ -129,7 +129,7 @@ const OrderSuccessPage = () => {
               !whatsappUrl
                 ? 'pointer-events-none border-zinc-600 bg-zinc-800 text-zinc-500 opacity-50'
                 : whatsappSent
-                  ? 'border-[#39FF14]/40 bg-[#39FF14]/10 text-[#39FF14] hover:bg-[#39FF14]/20'
+                  ? 'border-[var(--theme-accent)]/40 bg-[var(--theme-accent)]/10 text-[var(--theme-accent)] hover:bg-[var(--theme-accent)]/20'
                   : 'animate-pulse border-[#25D366] bg-[#25D366] text-white shadow-[0_0_30px_rgba(37,211,102,0.35)] hover:shadow-[0_0_50px_rgba(37,211,102,0.5)]'
             }`}
           >

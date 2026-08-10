@@ -17,7 +17,7 @@ const ProfilePage = () => {
         </p>
         <Link
           to="/auth"
-          className="mt-8 bg-neon px-8 py-3 text-xs font-bold uppercase tracking-[0.22em] text-black transition hover:bg-[#78ff5e]"
+          className="mt-8 bg-[var(--theme-accent)] px-8 py-3 text-xs font-bold uppercase tracking-[0.22em] text-black transition hover:bg-[var(--theme-accent-hover)]"
         >
           Go To Login
         </Link>
@@ -68,7 +68,7 @@ const ProfilePage = () => {
           <button
             type="button"
             onClick={logout}
-            className="bg-neon px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-[#78ff5e]"
+            className="bg-[var(--theme-accent)] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-[var(--theme-accent-hover)]"
           >
             Logout
           </button>

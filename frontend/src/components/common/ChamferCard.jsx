@@ -21,10 +21,10 @@ const ChamferCard = ({
   return (
     <div
       onClick={onClick}
-      className={`relative bg-[#141414] ${chamferClass} ${
-        border ? 'border border-[#282828]' : ''
+      className={`relative bg-[var(--theme-bg-surface)] ${chamferClass} ${
+        border ? 'border border-[color:var(--theme-border-soft)]' : ''
       } ${
-        hoverEffect ? 'transition-all duration-300 hover:border-[#FFCC00]/50' : ''
+        hoverEffect ? 'transition-all duration-300 hover:border-[var(--theme-accent)]/50' : ''
       } ${className}`}
       {...props}
     >

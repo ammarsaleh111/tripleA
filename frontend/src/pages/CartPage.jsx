@@ -46,15 +46,15 @@ const CartPage = () => {
       {/* Status Messages */}
       {cartLoading && !items.length && (
         <div className="mt-8 flex items-center justify-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#39FF14]/30 border-t-[#39FF14]" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--theme-accent)]/30 border-t-[var(--theme-accent)]" />
           <p className="text-sm text-zinc-400">Loading your cart...</p>
         </div>
       )}
 
       {cartSyncing && items.length > 0 && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-[#39FF14]/20 bg-[#39FF14]/5 px-4 py-2">
-          <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#39FF14]/30 border-t-[#39FF14]" />
-          <p className="text-[11px] uppercase tracking-widest text-[#39FF14]/70">Updating cart...</p>
+        <div className="mt-4 flex items-center gap-2 rounded-lg border border-[var(--theme-accent)]/20 bg-[var(--theme-accent)]/5 px-4 py-2">
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--theme-accent)]/30 border-t-[var(--theme-accent)]" />
+          <p className="text-[11px] uppercase tracking-widest text-[var(--theme-accent)]/70">Updating cart...</p>
         </div>
       )}
 
@@ -69,7 +69,7 @@ const CartPage = () => {
         <div className="mt-12 flex flex-col items-center justify-center py-16">
           {/* Decorative empty cart icon */}
           <div className="relative">
-            <div className="absolute inset-0 animate-pulse rounded-full bg-[#39FF14]/5 blur-3xl" />
+            <div className="absolute inset-0 animate-pulse rounded-full bg-[var(--theme-accent)]/5 blur-3xl" />
             <div className="relative grid h-28 w-28 place-items-center rounded-full border border-white/10 bg-[#111111]">
               <svg className="h-12 w-12 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -152,7 +152,7 @@ const CartPage = () => {
 
                         {/* Price */}
                         <div className="mt-3 flex items-center gap-2.5">
-                          <span className="text-lg font-bold text-neon">{formatMoney(unitPrice)}</span>
+                          <span className="text-lg font-bold text-[var(--theme-accent)]">{formatMoney(unitPrice)}</span>
                           {compareAtPrice && (
                             <span className="text-sm text-zinc-500 line-through">{formatMoney(compareAtPrice)}</span>
                           )}
@@ -233,7 +233,7 @@ const CartPage = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-400">Shipping</span>
-                    <span className={shipping === 0 ? 'text-[#39FF14]' : 'text-zinc-300'}>
+                    <span className={shipping === 0 ? 'text-[var(--theme-accent)]' : 'text-zinc-300'}>
                       {shipping === 0 ? 'Free' : formatMoney(shipping)}
                     </span>
                   </div>
@@ -246,18 +246,18 @@ const CartPage = () => {
                 {/* Total */}
                 <div className="flex items-center justify-between pt-5">
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/65">Total</span>
-                  <span className="font-display text-3xl font-bold leading-none text-neon">{formatMoney(total)}</span>
+                  <span className="font-display text-3xl font-bold leading-none text-[var(--theme-accent)]">{formatMoney(total)}</span>
                 </div>
 
                 {/* Free Shipping Hint */}
                 {shipping > 0 && (
-                  <div className="mt-4 rounded-lg border border-[#39FF14]/15 bg-[#39FF14]/5 px-4 py-3">
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-[#39FF14]/70">
+                  <div className="mt-4 rounded-lg border border-[var(--theme-accent)]/15 bg-[var(--theme-accent)]/5 px-4 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--theme-accent)]/70">
                       Add {formatMoney(100 - subtotal)} more for free shipping
                     </p>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                       <div
-                        className="h-full rounded-full bg-[#39FF14] transition-all duration-500"
+                        className="h-full rounded-full bg-[var(--theme-accent)] transition-all duration-500"
                         style={{ width: `${Math.min(100, (subtotal / 100) * 100)}%` }}
                       />
                     </div>

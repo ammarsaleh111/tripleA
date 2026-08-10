@@ -284,7 +284,7 @@ const AdminDashboardPage = () => {
                 type="button"
                 onClick={() => reloadDashboard()}
                 disabled={isDashboardLoading}
-                className="border border-white/20 px-3 py-1.5 text-white transition-all duration-300 ease-in-out hover:border-[#7DFF63] hover:text-[#7DFF63] disabled:cursor-not-allowed disabled:opacity-45"
+                className="border border-white/20 px-3 py-1.5 text-white transition-all duration-300 ease-in-out hover:border-[var(--theme-accent)] hover:text-[var(--theme-accent)] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {isDashboardLoading ? 'Syncing...' : 'Sync now'}
               </button>

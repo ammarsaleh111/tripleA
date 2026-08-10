@@ -7,6 +7,8 @@
 :root {
   --theme-accent: #FFCC00;
   --theme-accent-hover: #E6B800;
+  --theme-accent-soft: #FFD94A;
+  --theme-accent-press: #CC9900;
   --theme-bg-canvas: #0A0A0A;
   --theme-bg-surface: #141414;
   --theme-bg-elevated: #1A1A1A;
@@ -15,6 +17,7 @@
   --theme-text-secondary: #D4D4D4;
   --theme-text-muted: #8E8E8E;
   --theme-border-soft: #282828;
+  --theme-border-strong: #333333;
   --theme-shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.7);
   --theme-shadow-card: 0 14px 32px rgba(0, 0, 0, 0.5);
   --theme-focus-ring: 0 0 0 3px rgba(255, 204, 0, 0.25);
@@ -73,7 +76,7 @@ html.dark-mode {
 
 /* Button Component Classes */
 .btn-primary {
-  background-color: #FFCC00;
+  background-color: var(--theme-accent);
   color: #000000;
   font-family: 'Montserrat', sans-serif;
   font-weight: 800;
@@ -84,42 +87,42 @@ html.dark-mode {
   transition: all 0.2s ease-in-out;
 }
 .btn-primary:hover {
-  background-color: #E6B800;
+  background-color: var(--theme-accent-hover);
   box-shadow: 0 0 24px rgba(255, 204, 0, 0.4);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: #222222;
+  background-color: var(--theme-bg-muted);
   color: #FFF8E7;
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   font-style: italic;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid #333333;
+  border: 1px solid var(--theme-border-strong);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   transition: all 0.2s ease-in-out;
 }
 .btn-secondary:hover {
-  border-color: #FFCC00;
-  color: #FFCC00;
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
 }
 
 .btn-outlined {
   background-color: transparent;
-  color: #FFCC00;
+  color: var(--theme-accent);
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   font-style: italic;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid #FFCC00;
+  border: 1px solid var(--theme-accent);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
   transition: all 0.2s ease-in-out;
 }
 .btn-outlined:hover {
-  background-color: #FFCC00;
+  background-color: var(--theme-accent);
   color: #000000;
 }
 
@@ -132,7 +135,7 @@ html.dark-mode {
 
 html.light-mode {
   color-scheme: light;
-  --theme-accent: #39ff14;
+  --theme-accent: #FFCC00;
   --theme-bg-canvas: #f7faf7;
   --theme-bg-surface: #ffffff;
   --theme-bg-elevated: #f1f5f1;
@@ -214,20 +217,20 @@ html.light-mode body {
 }
 
 .text-neon,
-[class*="text-[#39FF14]"],
-[class*="text-[#39ff14]"] {
+[class*="text-[#FFCC00]"],
+[class*="text-[#ffcc00]"] {
   color: var(--theme-accent) !important;
 }
 
 .bg-neon,
-[class*="bg-[#39FF14]"],
-[class*="bg-[#39ff14]"] {
+[class*="bg-[#FFCC00]"],
+[class*="bg-[#ffcc00]"] {
   background-color: var(--theme-accent) !important;
 }
 
 .border-neon,
-[class*="border-[#39FF14]"],
-[class*="border-[#39ff14]"] {
+[class*="border-[#FFCC00]"],
+[class*="border-[#ffcc00]"] {
   border-color: var(--theme-accent) !important;
 }
 
@@ -287,21 +290,21 @@ html.light-mode select {
   border-color: var(--theme-border-soft);
 }
 
-/* Accent — swap electric #39FF14 for readable green */
+/* Accent — map legacy utility aliases onto the brand token */
 html.light-mode .text-neon,
-html.light-mode [class*="text-[#39FF14]"],
-html.light-mode [class*="text-[#39ff14]"] {
+html.light-mode [class*="text-[#FFCC00]"],
+html.light-mode [class*="text-[#ffcc00]"] {
   color: var(--theme-accent) !important;
 }
 
 html.light-mode .bg-neon,
-html.light-mode [class*="bg-[#39FF14]"],
-html.light-mode [class*="bg-[#39ff14]"] {
+html.light-mode [class*="bg-[#FFCC00]"],
+html.light-mode [class*="bg-[#ffcc00]"] {
   background-color: var(--theme-accent) !important;
 }
 
-html.light-mode [class*="border-[#39FF14]"],
-html.light-mode [class*="border-[#39ff14]"] {
+html.light-mode [class*="border-[#FFCC00]"],
+html.light-mode [class*="border-[#ffcc00]"] {
   border-color: var(--theme-accent) !important;
 }
 
@@ -1318,9 +1321,9 @@ html.light-mode .storefront-input::placeholder {
 html.light-mode .storefront-primary,
 html.light-mode .home-neon-button,
 html.light-mode .bg-neon,
-html.light-mode [class*="bg-[#39FF14]"],
-html.light-mode [class*="bg-[#39ff14]"],
-html.light-mode [class*="bg-[#7DFF63]"] {
+html.light-mode [class*="bg-[#FFCC00]"],
+html.light-mode [class*="bg-[#ffcc00]"],
+html.light-mode [class*="bg-[#FFD633]"] {
   background-color: var(--theme-accent) !important;
   border-color: var(--theme-accent) !important;
   color: #ffffff !important;
@@ -1333,15 +1336,15 @@ html.light-mode .home-neon-button:hover {
 }
 
 html.light-mode .text-neon,
-html.light-mode [class*="text-[#39FF14]"],
-html.light-mode [class*="text-[#39ff14]"],
-html.light-mode [class*="text-[#7DFF63]"] {
+html.light-mode [class*="text-[#FFCC00]"],
+html.light-mode [class*="text-[#ffcc00]"],
+html.light-mode [class*="text-[#FFD633]"] {
   color: var(--theme-accent) !important;
 }
 
-html.light-mode [class*="border-[#39FF14]"],
-html.light-mode [class*="border-[#39ff14]"],
-html.light-mode [class*="border-[#7DFF63]"] {
+html.light-mode [class*="border-[#FFCC00]"],
+html.light-mode [class*="border-[#ffcc00]"],
+html.light-mode [class*="border-[#FFD633]"] {
   border-color: var(--theme-accent) !important;
 }
 
@@ -1463,7 +1466,7 @@ html.light-mode
 }
 
 html.light-mode .auth-visual .text-neon {
-  color: #7dff63 !important;
+  color: var(--theme-accent) !important;
 }
 
 /* Home marquee and trust grid theme support */

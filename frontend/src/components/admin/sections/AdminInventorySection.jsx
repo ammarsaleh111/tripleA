@@ -271,15 +271,15 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
               setPage(1);
             }}
             placeholder="Search by product or slug"
-            className="w-64 max-w-full border border-white/10 bg-[#121212] px-4 py-3 text-[11px] uppercase tracking-wider text-white outline-none focus:border-neon"
+            className="w-64 max-w-full border border-white/10 bg-[#121212] px-4 py-3 text-[11px] uppercase tracking-wider text-white outline-none focus:border-[var(--theme-accent)]"
           />
-          <button type="button" onClick={openCreateForm} className="bg-neon px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[#4ade80]">
+          <button type="button" onClick={openCreateForm} className="bg-[var(--theme-accent)] px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[var(--theme-accent-hover)]">
             Add Product
           </button>
         </div>
       </div>
 
-      {actionMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-neon">{actionMessage}</p>}
+      {actionMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-[var(--theme-accent)]">{actionMessage}</p>}
       {loadError && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-yellow-400">{loadError}</p>}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -348,7 +348,7 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
           <div className="mx-auto w-full max-w-4xl border border-white/10 bg-[#0f0f0f] p-6 md:p-8">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-neon">{editingProductId ? 'Update Product' : 'Create Product'}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">{editingProductId ? 'Update Product' : 'Create Product'}</p>
                 <h3 className="mt-2 font-display text-2xl font-black uppercase tracking-tight text-white">{editingProductId ? 'Edit Catalog Item' : 'New Catalog Item'}</h3>
               </div>
               <button type="button" onClick={closeForm} className="border border-white/15 bg-[#1a1a1a] px-4 py-2 text-[10px] uppercase tracking-widest text-white hover:border-white">Close</button>
@@ -358,15 +358,15 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2">
                   <span className="block text-[10px] uppercase tracking-widest text-white/45">Name</span>
-                  <input value={formData.name} onChange={(event) => updateFormField('name', event.target.value)} type="text" className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-neon" required />
+                  <input value={formData.name} onChange={(event) => updateFormField('name', event.target.value)} type="text" className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required />
                 </label>
                 <label className="space-y-2">
                   <span className="block text-[10px] uppercase tracking-widest text-white/45">Price</span>
-                  <input value={formData.basePrice} onChange={(event) => updateFormField('basePrice', event.target.value)} type="number" min="0" step="0.01" className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-neon" required />
+                  <input value={formData.basePrice} onChange={(event) => updateFormField('basePrice', event.target.value)} type="number" min="0" step="0.01" className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required />
                 </label>
                 <label className="space-y-2 md:col-span-2">
                   <span className="block text-[10px] uppercase tracking-widest text-white/45">Category</span>
-                  <select value={formData.categoryName} onChange={(event) => updateFormField('categoryName', event.target.value)} className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-neon" required>
+                  <select value={formData.categoryName} onChange={(event) => updateFormField('categoryName', event.target.value)} className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required>
                     {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
                   </select>
                 </label>
@@ -374,19 +374,19 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
 
               <label className="block space-y-2">
                 <span className="block text-[10px] uppercase tracking-widest text-white/45">Description</span>
-                <textarea value={formData.description} onChange={(event) => updateFormField('description', event.target.value)} className="min-h-[120px] w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-neon" required />
+                <textarea value={formData.description} onChange={(event) => updateFormField('description', event.target.value)} className="min-h-[120px] w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required />
               </label>
 
               <div className="border border-white/10 p-4">
                 <div className="mb-4 flex items-center justify-between">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-neon">Variants</p>
-                  <button type="button" onClick={addVariant} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-neon">Add Variant</button>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Variants</p>
+                  <button type="button" onClick={addVariant} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)]">Add Variant</button>
                 </div>
                 <div className="space-y-3">
                   {formData.variants.map((variant, index) => (
                     <div key={variant.id || `variant-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_110px]">
-                      <input value={variant.size} onChange={(event) => updateVariant(index, 'size', event.target.value)} type="text" placeholder="Size" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-neon" />
-                      <select value={variant.color} onChange={(event) => updateVariant(index, 'color', event.target.value)} className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-neon">
+                      <input value={variant.size} onChange={(event) => updateVariant(index, 'size', event.target.value)} type="text" placeholder="Size" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]" />
+                      <select value={variant.color} onChange={(event) => updateVariant(index, 'color', event.target.value)} className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]">
                         {colorOptions.map((color) => <option key={color} value={color}>{color}</option>)}
                       </select>
                       <button type="button" onClick={() => removeVariant(index)} disabled={formData.variants.length === 1} className="border border-red-500/40 bg-[#2a1313] px-3 py-2 text-[10px] uppercase tracking-widest text-red-200 disabled:cursor-not-allowed disabled:opacity-40">Remove</button>
@@ -397,7 +397,7 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
               </div>
 
               <div className="border border-white/10 p-4">
-                <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-neon">Image Link</p>
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Image Link</p>
                 <div className="space-y-4">
                   <label className="block space-y-2">
                     <span className="block text-[10px] uppercase tracking-widest text-white/45">Image URL</span>
@@ -406,7 +406,7 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
                       onChange={(event) => updateFormField('imageUrl', event.target.value)}
                       type="url"
                       placeholder="https://example.com/product-image.jpg"
-                      className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-neon"
+                      className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]"
                     />
                   </label>
                   {formData.imageUrl ? (
@@ -427,7 +427,7 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
 
               <div className="flex flex-wrap items-center justify-end gap-3">
                 <button type="button" onClick={closeForm} className="border border-white/15 bg-[#1a1a1a] px-5 py-3 text-[10px] uppercase tracking-widest text-white">Cancel</button>
-                <button type="submit" disabled={isSaving} className="bg-neon px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[#4ade80] disabled:cursor-not-allowed disabled:opacity-45">
+                <button type="submit" disabled={isSaving} className="bg-[var(--theme-accent)] px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[var(--theme-accent-hover)] disabled:cursor-not-allowed disabled:opacity-45">
                   {isSaving ? 'Saving...' : editingProductId ? 'Update Product' : 'Create Product'}
                 </button>
               </div>

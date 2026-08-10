@@ -122,7 +122,7 @@ const AdminMessagesSection = ({ onMessagesMutated }) => {
             onChange={(event) => setSearchTerm(event.target.value)}
             type="text"
             placeholder="Search name/email/subject"
-            className="w-72 max-w-full bg-[#1a1a1a] border border-white/15 px-4 py-3 text-[10px] uppercase tracking-widest text-white outline-none focus:border-neon"
+            className="w-72 max-w-full border border-white/15 bg-[#1a1a1a] px-4 py-3 text-[10px] uppercase tracking-widest text-white outline-none focus:border-[var(--theme-accent)]"
           />
           <select
             value={statusFilter}
@@ -141,14 +141,14 @@ const AdminMessagesSection = ({ onMessagesMutated }) => {
           </select>
           <button
             type="submit"
-            className="bg-neon text-black text-[10px] font-bold px-6 py-3 uppercase tracking-widest hover:bg-[#4ade80] transition-colors"
+            className="bg-[var(--theme-accent)] px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[var(--theme-accent-hover)]"
           >
             Search
           </button>
         </form>
       </div>
 
-      {statusMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-neon">{statusMessage}</p>}
+      {statusMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-[var(--theme-accent)]">{statusMessage}</p>}
       {errorMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-red-400">{errorMessage}</p>}
 
       <div className="bg-[#111] border border-white/5 overflow-x-auto">

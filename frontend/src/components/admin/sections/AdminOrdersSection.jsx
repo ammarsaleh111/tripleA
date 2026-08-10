@@ -154,7 +154,7 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
             onChange={(event) => setSearchTerm(event.target.value)}
             type="text"
             placeholder="Search order/customer"
-            className="w-64 max-w-full bg-[#1a1a1a] border border-white/15 px-4 py-3 text-[10px] uppercase tracking-widest text-white outline-none focus:border-neon"
+            className="w-64 max-w-full border border-white/15 bg-[#1a1a1a] px-4 py-3 text-[10px] uppercase tracking-widest text-white outline-none focus:border-[var(--theme-accent)]"
           />
           <select
             value={statusFilter}
@@ -173,14 +173,14 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
           </select>
           <button
             type="submit"
-            className="bg-neon text-black text-[10px] font-bold px-6 py-3 uppercase tracking-widest hover:bg-[#4ade80] transition-colors"
+            className="bg-[var(--theme-accent)] px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[var(--theme-accent-hover)]"
           >
             Search
           </button>
         </form>
       </div>
 
-      {statusMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-neon">{statusMessage}</p>}
+      {statusMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-[var(--theme-accent)]">{statusMessage}</p>}
       {errorMessage && <p className="mb-4 text-[11px] uppercase tracking-[0.18em] text-red-400">{errorMessage}</p>}
 
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
@@ -283,7 +283,7 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
           <div className="w-full max-w-4xl border border-white/15 bg-[#111] p-6">
             <div className="flex items-start justify-between border-b border-white/10 pb-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neon font-bold">Order Detail</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--theme-accent)]">Order Detail</p>
                 <h3 className="mt-2 font-display text-2xl font-bold uppercase tracking-tight text-white">
                   {orderDetail?.orderNumber || 'Loading...'}
                 </h3>
@@ -306,7 +306,7 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
                     <p>Customer: <span className="text-white">{orderDetail.customerName}</span></p>
                     <p>Status: <span className="text-white">{orderDetail.status}</span></p>
                     <p>Date: <span className="text-white">{formatDate(orderDetail.createdAt)}</span></p>
-                    <p>Total: <span className="text-neon">{formatCurrency(orderDetail.totalAmount)}</span></p>
+                    <p>Total: <span className="text-[var(--theme-accent)]">{formatCurrency(orderDetail.totalAmount)}</span></p>
                   </div>
 
                   <div className="overflow-x-auto border border-white/10">
