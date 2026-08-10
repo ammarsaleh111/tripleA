@@ -2,14 +2,15 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAppContext } from '../context/AppContext.jsx';
+import ChamferCard from '../components/common/ChamferCard.jsx';
 
 const FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80';
+  'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80';
 
-const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
+const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 const inputClassName =
-  'w-full rounded-xl border border-white/10 bg-black/35 px-3.5 py-3 text-sm text-white outline-none transition-all duration-300 ease-in-out placeholder:text-zinc-500 focus:border-[#39FF14]';
+  'w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input placeholder:text-zinc-600';
 
 const createInitialForm = (user) => ({
   name: [user?.firstName, user?.lastName].filter(Boolean).join(' '),
@@ -20,7 +21,7 @@ const createInitialForm = (user) => ({
   notes: '',
 });
 
-const ORDER_CONFIRMATION_STORAGE_KEY = 'rashed_latest_order_confirmation';
+const ORDER_CONFIRMATION_STORAGE_KEY = 'triplea_latest_order_confirmation';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -103,108 +104,123 @@ const CheckoutPage = () => {
 
   if (!cartLoading && !items.length) {
     return (
-      <section className="mx-auto w-full max-w-4xl px-2 py-10 text-white sm:px-6 sm:py-16">
-        <div className="storefront-surface p-8 text-center">
-          <p className="storefront-kicker">Checkout</p>
-          <h1 className="storefront-title mt-4 text-[clamp(2.8rem,8vw,5rem)]">Your Bag Is Empty</h1>
-          <Link to="/shop" className="storefront-primary mt-7 px-7">Shop Football Gear</Link>
-        </div>
+      <section className="mx-auto w-full max-w-4xl px-4 py-16 text-white">
+        <ChamferCard className="p-12 text-center space-y-4">
+          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">TRANSMISSION CART</span>
+          <h1 className="font-heading font-black italic text-4xl uppercase text-white">YOUR ARSENAL IS EMPTY</h1>
+          <p className="font-mono text-xs text-zinc-400">Add supplements or equipment before proceeding to checkout.</p>
+          <div className="pt-4">
+            <Link to="/shop" className="btn-primary inline-block text-xs px-8 py-3">
+              SHOP SUPPLEMENTS
+            </Link>
+          </div>
+        </ChamferCard>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-2 py-8 text-white sm:px-6 sm:py-14">
-      <div className="border-b border-white/10 pb-7">
-        <p className="storefront-kicker">Cash On Delivery</p>
-        <h1 className="storefront-title mt-4 text-[clamp(2.8rem,7vw,5.4rem)]">Fast Checkout</h1>
+    <section className="mx-auto w-full max-w-7xl px-4 py-8 text-white">
+      <div className="border-b border-[#282828] pb-6">
+        <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">TRANSMISSION CHECKOUT</span>
+        <h1 className="font-heading font-black italic text-4xl sm:text-6xl uppercase text-white mt-1">FAST CHECKOUT</h1>
+        <p className="font-mono text-xs text-zinc-400 mt-1 uppercase">CASH ON DELIVERY • DIRECT DISPATCH</p>
       </div>
 
-      <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <form id="checkout-form" onSubmit={handleConfirmOrder} className="storefront-surface p-5 sm:p-7">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Full Name *</span>
-              <input name="name" value={formValues.name} onChange={handleChange} placeholder="Your name" className={inputClassName} />
-            </label>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <form id="checkout-form" onSubmit={handleConfirmOrder}>
+          <ChamferCard className="p-6 sm:p-8 space-y-6">
+            <h2 className="font-heading font-black italic text-2xl uppercase text-white border-b border-[#222222] pb-3">
+              RECIPIENT & ADDRESS
+            </h2>
 
-            <label className="space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">WhatsApp / Phone *</span>
-              <input name="phone" value={formValues.phone} onChange={handleChange} placeholder="+20 100 000 0000" className={inputClassName} />
-            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2 sm:col-span-2 block">
+                <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">FULL NAME *</span>
+                <input name="name" value={formValues.name} onChange={handleChange} placeholder="ENTER YOUR FULL NAME" className={inputClassName} />
+              </label>
 
-            <label className="space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Email</span>
-              <input type="email" name="email" value={formValues.email} onChange={handleChange} placeholder="you@example.com" className={inputClassName} />
-            </label>
+              <label className="space-y-2 block">
+                <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">PHONE / WHATSAPP *</span>
+                <input name="phone" value={formValues.phone} onChange={handleChange} placeholder="+1 (800) 000-0000" className={inputClassName} />
+              </label>
 
-            <label className="space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">City</span>
-              <input name="city" value={formValues.city} onChange={handleChange} placeholder="City" className={inputClassName} />
-            </label>
+              <label className="space-y-2 block">
+                <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">EMAIL ADDRESS</span>
+                <input type="email" name="email" value={formValues.email} onChange={handleChange} placeholder="athlete@example.com" className={inputClassName} />
+              </label>
 
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Delivery Address *</span>
-              <input name="address" value={formValues.address} onChange={handleChange} placeholder="Street, building, floor" className={inputClassName} />
-            </label>
+              <label className="space-y-2 block">
+                <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">CITY</span>
+                <input name="city" value={formValues.city} onChange={handleChange} placeholder="CITY / REGION" className={inputClassName} />
+              </label>
 
-            <label className="space-y-2 sm:col-span-2">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">Notes</span>
-              <textarea rows={3} name="notes" value={formValues.notes} onChange={handleChange} placeholder="Delivery notes" className={`${inputClassName} resize-none`} />
-            </label>
-          </div>
+              <label className="space-y-2 sm:col-span-2 block">
+                <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">DELIVERY ADDRESS *</span>
+                <input name="address" value={formValues.address} onChange={handleChange} placeholder="STREET, BUILDING, SUITE" className={inputClassName} />
+              </label>
 
-          {submitError && (
-            <div className="mt-5 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-[11px] uppercase tracking-widest text-red-300">
-              {submitError}
+              <label className="space-y-2 sm:col-span-2 block">
+                <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">DELIVERY INSTRUCTIONS</span>
+                <textarea rows={3} name="notes" value={formValues.notes} onChange={handleChange} placeholder="Gate code, delivery times, special notes" className={`${inputClassName} resize-none`} />
+              </label>
             </div>
-          )}
+
+            {submitError && (
+              <div className="border border-red-500/40 bg-red-500/10 p-3 font-mono text-xs text-red-400 font-bold uppercase tracking-widest">
+                {submitError}
+              </div>
+            )}
+          </ChamferCard>
         </form>
 
-        <aside className="storefront-surface h-fit p-5 lg:sticky lg:top-24">
-          <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-white/65">Order Summary</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.14em] text-zinc-500">{itemCount} items</p>
+        <aside>
+          <ChamferCard className="p-6 space-y-6 lg:sticky lg:top-24">
+            <div className="flex items-center justify-between border-b border-[#222222] pb-4">
+              <div>
+                <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">SUMMARY</span>
+                <h3 className="font-heading font-black italic text-xl uppercase text-white">{itemCount} ITEMS</h3>
+              </div>
+              <span className="bg-[#FFCC00] text-black font-mono font-extrabold text-[10px] uppercase tracking-widest px-2.5 py-1 chamfer-badge">
+                COD PAY
+              </span>
             </div>
-            <span className="storefront-chip text-neon">COD</span>
-          </div>
 
-          <div className="mt-4 max-h-[280px] space-y-3 overflow-y-auto pr-1">
-            {items.map((item) => (
-              <article key={item.id} className="flex gap-3 rounded-xl border border-white/10 bg-black/25 p-3">
-                <img src={item.imageUrl || FALLBACK_IMAGE} alt={item.name || 'Cart item'} className="h-16 w-14 rounded-md border border-white/10 object-cover" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold uppercase tracking-[0.06em] text-white">{item.name}</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-500">Qty {item.quantity}</p>
-                </div>
-                <p className="text-sm font-semibold text-zinc-200">{formatMoney(item.lineTotal || item.unitPrice * item.quantity || 0)}</p>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-4 text-sm">
-            <div className="flex justify-between text-zinc-400"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
-            <div className="mt-2 flex justify-between text-zinc-400"><span>Shipping</span><span>{formatMoney(shipping)}</span></div>
-            <div className="mt-2 flex justify-between text-zinc-400"><span>Tax</span><span>{formatMoney(tax)}</span></div>
-            <div className="mt-4 flex justify-between border-t border-white/10 pt-4 text-base font-semibold text-white">
-              <span>Total</span>
-              <span className="text-neon">{formatMoney(total)}</span>
+            <div className="max-h-[280px] space-y-3 overflow-y-auto pr-1">
+              {items.map((item) => (
+                <article key={item.id} className="flex gap-3 bg-[#0A0A0A] border border-[#222222] p-3 chamfer-box">
+                  <img src={item.imageUrl || FALLBACK_IMAGE} alt={item.name || 'Cart item'} className="h-16 w-14 border border-[#222222] object-contain bg-[#141414] p-1" />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="truncate font-heading font-black italic text-xs uppercase text-white">{item.name}</p>
+                    <p className="font-mono text-[10px] uppercase text-zinc-500">QTY {item.quantity}</p>
+                  </div>
+                  <p className="font-heading font-black italic text-sm text-[#FFCC00]">{formatMoney(item.lineTotal || item.unitPrice * item.quantity || 0)}</p>
+                </article>
+              ))}
             </div>
-          </div>
 
-          <button
-            type="submit"
-            form="checkout-form"
-            disabled={isSubmitting || cartLoading || !items.length}
-            className="storefront-primary mt-5 w-full py-3.5 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {checkoutLoading ? 'Confirming...' : 'Confirm COD Order'}
-          </button>
+            <div className="border-t border-[#222222] pt-4 font-mono text-xs space-y-2">
+              <div className="flex justify-between text-zinc-400"><span>SUBTOTAL</span><span>{formatMoney(subtotal)}</span></div>
+              <div className="flex justify-between text-zinc-400"><span>DISPATCH & SHIPPING</span><span>{formatMoney(shipping)}</span></div>
+              <div className="flex justify-between border-t border-[#222222] pt-3 text-base font-bold text-white">
+                <span>TOTAL</span>
+                <span className="text-[#FFCC00] font-heading font-black italic text-xl">{formatMoney(total)}</span>
+              </div>
+            </div>
 
-          <p className="mt-3 text-center text-[10px] uppercase tracking-[0.14em] text-white/55">
-            You will be redirected to the confirmation page after order.
-          </p>
+            <button
+              type="submit"
+              form="checkout-form"
+              disabled={isSubmitting || cartLoading || !items.length}
+              className="btn-primary w-full py-4 text-center text-sm disabled:opacity-40"
+            >
+              {checkoutLoading ? 'TRANSMITTING ORDER...' : 'CONFIRM COD ORDER'}
+            </button>
+
+            <p className="text-center font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+              Cash on delivery payment will be collected upon arrival.
+            </p>
+          </ChamferCard>
         </aside>
       </div>
     </section>

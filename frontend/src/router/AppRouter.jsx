@@ -11,14 +11,15 @@ import AuthPage from '../pages/AuthPage.jsx';
 import UserDashboardPage from '../pages/UserDashboardPage.jsx';
 import StaticInfoPage from '../pages/StaticInfoPage.jsx';
 import ContactPage from '../pages/ContactPage.jsx';
+import AboutPage from '../pages/AboutPage.jsx';
 import CheckoutPage from '../pages/CheckoutPage.jsx';
 import OrderSuccessPage from '../pages/OrderSuccessPage.jsx';
 
 const normalizeRole = (role) => String(role || '').trim().toLowerCase();
 
 const SessionLoading = () => (
-  <section className="mx-auto flex min-h-[65vh] w-full max-w-5xl items-center justify-center px-6 py-20 text-center">
-    <p className="text-[11px] uppercase tracking-[0.24em] text-white/55">Restoring your session...</p>
+  <section className="mx-auto flex min-h-[65vh] w-full max-w-5xl items-center justify-center px-6 py-20 text-center font-mono">
+    <p className="text-xs uppercase tracking-widest text-[#FFCC00]">Restoring your session...</p>
   </section>
 );
 
@@ -66,6 +67,7 @@ const AppRouter = () => {
         <Route path="/" element={<HomeEntryRoute />} />
         <Route path="/dashboard" element={<CustomerDashboardRoute />} />
         <Route path="/shop" element={<ShopPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
@@ -82,3 +84,4 @@ const AppRouter = () => {
 };
 
 export default AppRouter;
+

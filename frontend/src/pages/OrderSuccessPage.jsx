@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import ChamferCard from '../components/common/ChamferCard.jsx';
 
-const STORAGE_KEY = 'rashed_latest_order_confirmation';
+const STORAGE_KEY = 'triplea_latest_order_confirmation';
 
-const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
+const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 const readStoredOrder = () => {
   try {
@@ -43,19 +44,23 @@ const OrderSuccessPage = () => {
   };
 
   return (
-    <section className="mx-auto w-full max-w-4xl px-4 py-10 text-white sm:px-6 sm:py-16">
-      <div className="storefront-surface border-[#39FF14]/20 p-8 text-center shadow-[0_0_40px_rgba(57,255,20,0.12)]">
-        {/* Warning Icon */}
-        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full border-2 border-amber-400/50 bg-amber-400/10 text-amber-400">
-          <svg aria-hidden="true" className="h-10 w-10" fill="none" viewBox="0 0 24 24">
-            <path d="M12 9v4m0 4h.01M12 2L2 20h20L12 2z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-          </svg>
+    <section className="mx-auto w-full max-w-3xl px-4 py-12 text-white">
+      <ChamferCard className="p-8 sm:p-12 text-center space-y-6">
+        {/* Status Badge Icon */}
+        <div className="mx-auto w-20 h-20 bg-[#FFCC00] text-black font-mono font-bold text-3xl flex items-center justify-center chamfer-badge shadow-[0_0_30px_rgba(255,204,0,0.3)]">
+          ✓
         </div>
 
         {/* Main Title */}
-        <h1 className="storefront-title mt-5 text-[clamp(2.2rem,7vw,4.2rem)]">
-          Your order is almost complete
-        </h1>
+        <div className="space-y-2">
+          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">TRANSMISSION ID: #{orderId || 'TRIPLEA-8821'}</span>
+          <h1 className="font-heading font-black italic text-4xl sm:text-5xl uppercase text-white">
+            ORDER CONFIRMED
+          </h1>
+          <p className="font-mono text-xs text-zinc-400 max-w-md mx-auto uppercase">
+            Your supplement & gear order has been received by TRIPLE A GYM headquarters.
+          </p>
+        </div>
 
         {/* Order Details */}
         <p className="mt-3 text-sm uppercase tracking-[0.16em] text-zinc-400">
@@ -145,16 +150,16 @@ const OrderSuccessPage = () => {
         </div>
 
         {/* Helper Text */}
-        <p className="mt-5 text-[11px] uppercase tracking-[0.14em] text-white/40">
+        <p className="mt-5 font-mono text-xs uppercase tracking-widest text-zinc-500">
           {whatsappSent
             ? 'WhatsApp was opened with your order details. Please send the message to confirm.'
             : 'Clicking the button will open WhatsApp with your order details pre-filled.'}
         </p>
-      </div>
+      </ChamferCard>
 
       <div className="mt-6 text-center">
-        <Link to="/" className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 transition-all duration-300 hover:text-neon">
-          Back to Home
+        <Link to="/" className="font-mono text-xs uppercase tracking-widest text-zinc-400 hover:text-[#FFCC00]">
+          ← BACK TO HOME
         </Link>
       </div>
     </section>

@@ -65,37 +65,38 @@ const AuthPage = ({ initialMode = 'login' }) => {
     setResetMessage('If an account exists, a password reset link has been queued.');
   };
 
-  const inputClass = 'theme-input w-full px-4 py-4 font-light';
+  const inputClass = 'w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3.5 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input';
 
   return (
-    <div className="auth-page flex min-h-screen flex-col overflow-x-hidden bg-black font-body text-white selection:bg-neon selection:text-black md:flex-row">
-      <div className="auth-visual relative flex min-h-[42vh] w-full flex-col justify-between overflow-hidden border-r border-dark-border bg-[#0a0a0a] p-6 sm:min-h-[50vh] sm:p-8 md:min-h-screen md:w-1/2 md:p-12 lg:p-16">
-        <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop")' }} />
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-black/80 via-transparent to-black" />
+    <div className="auth-page flex min-h-screen flex-col overflow-x-hidden bg-[#0A0A0A] font-sans text-[#FFF8E7] selection:bg-[#FFCC00] selection:text-black md:flex-row">
+      <div className="auth-visual relative flex min-h-[42vh] w-full flex-col justify-between overflow-hidden border-r border-[#282828] bg-black p-6 sm:min-h-[50vh] sm:p-8 md:min-h-screen md:w-1/2 md:p-12 lg:p-16">
+        <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop")' }} />
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
         <div className="relative z-10">
-          <h1 className="text-neon font-display font-bold tracking-tighter text-2xl">RASHED</h1>
+          <Link to="/" className="font-heading font-black italic text-3xl tracking-tighter text-[#FFCC00]">
+            TRIPLE A GYM
+          </Link>
         </div>
 
         <div className="relative z-10 mt-auto">
-          <h2 className="mb-6 font-display text-[clamp(3.4rem,16vw,6rem)] font-black uppercase leading-[0.85] tracking-tighter md:text-7xl lg:text-8xl">
-            <span className="text-white block">Welcome</span>
-            <span className="text-neon block">To Rashed</span>
+          <h2 className="mb-4 font-heading font-black italic text-5xl sm:text-6xl md:text-7xl uppercase leading-none tracking-tight">
+            <span className="text-white block">INDUSTRIAL</span>
+            <span className="text-[#FFCC00] block">MEMBERSHIP</span>
           </h2>
-          <p className="mb-8 max-w-md text-base font-light leading-relaxed text-gray-400 sm:mb-12 md:text-xl">
-            Sign in to shop new arrivals, track orders, and save your favorites.
+          <p className="mb-8 max-w-md font-mono text-xs leading-relaxed text-zinc-400 uppercase tracking-wider">
+            Sign in to access your athlete dashboard, active orders, and pro membership benefits.
           </p>
-          <div className="text-xs tracking-[0.2em] text-gray-600 uppercase">Apparel / Footwear / Essentials</div>
+          <div className="font-mono text-xs tracking-widest text-zinc-600 uppercase">SUPPLEMENTS / ACCESS / STRENGTH</div>
         </div>
       </div>
 
-      <div className="auth-panel relative flex min-h-screen w-full items-center justify-center bg-[#0f0f0f] p-5 sm:p-8 md:w-1/2 md:p-12">
+      <div className="auth-panel relative flex min-h-screen w-full items-center justify-center bg-[#141414] p-5 sm:p-8 md:w-1/2 md:p-12">
         <Link
           to="/"
-          className="absolute left-5 top-5 z-20 border border-white/15 bg-[#1a1a1a] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white transition-colors hover:border-neon hover:text-neon sm:left-8 sm:top-8"
+          className="absolute right-5 top-5 z-20 font-mono text-xs uppercase tracking-widest text-zinc-400 hover:text-[#FFCC00] sm:right-8 sm:top-8"
         >
-          Return to Home
+          ← RETURN HOME
         </Link>
       
         <div className="w-full max-w-md relative z-10">
@@ -139,16 +140,16 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('login')}
-                  className={`pb-4 font-display text-lg font-medium transition-colors sm:text-xl ${activeTab === 'login' ? 'text-white border-b-2 border-neon' : 'text-gray-500 hover:text-gray-300'}`}
+                  className={`pb-4 font-heading font-black italic text-lg tracking-wider uppercase transition-colors ${activeTab === 'login' ? 'text-[#FFCC00] border-b-2 border-[#FFCC00]' : 'text-zinc-500 hover:text-zinc-300'}`}
                 >
-                  Login
+                  LOGIN
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('register')}
-                  className={`pb-4 font-display text-lg font-medium transition-colors sm:text-xl ${activeTab === 'register' ? 'text-white border-b-2 border-neon' : 'text-gray-500 hover:text-gray-300'}`}
+                  className={`pb-4 font-heading font-black italic text-lg tracking-wider uppercase transition-colors ${activeTab === 'register' ? 'text-[#FFCC00] border-b-2 border-[#FFCC00]' : 'text-zinc-500 hover:text-zinc-300'}`}
                 >
-                  Create Account
+                  JOIN GYM
                 </button>
               </div>
 
@@ -156,24 +157,24 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 {activeTab === 'register' && (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase">First Name</label>
+                      <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">First Name</label>
                       <input
                         type="text"
                         value={firstName}
                         onChange={(event) => setFirstName(event.target.value)}
-                        placeholder="Rashed"
+                        placeholder="ENTER FIRST NAME"
                         className={inputClass}
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase">Last Name</label>
+                      <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">Last Name</label>
                       <input
                         type="text"
                         value={lastName}
                         onChange={(event) => setLastName(event.target.value)}
-                        placeholder="Customer"
+                        placeholder="ENTER LAST NAME"
                         className={inputClass}
                         required
                       />
@@ -182,12 +183,12 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 )}
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase">Email Address</label>
+                  <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">Email Address</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    placeholder="name@rashed.com"
+                    placeholder="athlete@tripleagym.com"
                     className={inputClass}
                     required
                   />
@@ -195,10 +196,10 @@ const AuthPage = ({ initialMode = 'login' }) => {
 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase">Password</label>
+                    <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">Password</label>
                     {activeTab === 'login' && (
-                      <Link to="/auth/reset-password" className="text-[10px] uppercase tracking-wider text-gray-500 hover:text-neon transition-colors">
-                        Forgot Password?
+                      <Link to="/auth/reset-password" className="font-mono text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[#FFCC00] transition-colors">
+                        FORGOT PASSWORD?
                       </Link>
                     )}
                   </div>
@@ -214,47 +215,38 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     <button
                       type="button"
                       onClick={() => setShowPassword((current) => !current)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors font-mono text-xs"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        {showPassword ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243L8 8.5" />
-                        ) : (
-                          <>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </>
-                        )}
-                      </svg>
+                      {showPassword ? 'HIDE' : 'SHOW'}
                     </button>
                   </div>
                 </div>
 
                 {activeTab === 'login' && (
                   <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center w-4 h-4 rounded border border-gray-600 bg-transparent group-hover:border-neon transition-colors">
+                    <div className="relative flex items-center justify-center w-4 h-4 border border-zinc-700 bg-transparent group-hover:border-[#FFCC00] transition-colors">
                       <input
                         type="checkbox"
                         checked={stayAuthenticated}
                         onChange={(event) => setStayAuthenticated(event.target.checked)}
                         className="sr-only"
                       />
-                      {stayAuthenticated && <div className="w-2 h-2 bg-neon rounded-sm" />}
+                      {stayAuthenticated && <div className="w-2 h-2 bg-[#FFCC00]" />}
                     </div>
-                    <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
-                      Keep me signed in
+                    <span className="font-mono text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors uppercase">
+                      KEEP ME SIGNED IN
                     </span>
                   </label>
                 )}
 
-                {errorMessage && <p className="text-[11px] tracking-widest uppercase text-red-400">{errorMessage}</p>}
+                {errorMessage && <p className="font-mono text-xs tracking-widest uppercase text-red-400 font-bold">{errorMessage}</p>}
 
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full bg-neon text-black font-display font-bold text-sm tracking-widest uppercase py-4 mt-6 hover:bg-[#4ade80] transition-colors"
+                  className="btn-primary w-full py-4 mt-6 text-center text-sm disabled:opacity-40"
                 >
-                  {authLoading ? 'Processing...' : activeTab === 'register' ? 'Create Account' : 'Sign In'}
+                  {authLoading ? 'PROCESSING...' : activeTab === 'register' ? 'JOIN TRIPLE A GYM' : 'MEMBER LOGIN'}
                 </button>
               </form>
 

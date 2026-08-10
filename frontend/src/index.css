@@ -1,50 +1,133 @@
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Montserrat:ital,wght@0,700..900;1,700..900&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --theme-accent: #39ff14;
-  --theme-bg-canvas: #0f0f0f;
-  --theme-bg-surface: #1a1a1a;
-  --theme-bg-elevated: #111827;
-  --theme-bg-muted: #111111;
-  --theme-text-primary: #f3f5f7;
-  --theme-text-secondary: #cbd5e1;
-  --theme-text-muted: #94a3b8;
-  --theme-border-soft: #2a2a2a;
-  --theme-shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.36);
-  --theme-shadow-card: 0 14px 32px rgba(0, 0, 0, 0.28);
-  --theme-focus-ring: 0 0 0 3px rgba(57, 255, 20, 0.18);
+  --theme-accent: #FFCC00;
+  --theme-accent-hover: #E6B800;
+  --theme-bg-canvas: #0A0A0A;
+  --theme-bg-surface: #141414;
+  --theme-bg-elevated: #1A1A1A;
+  --theme-bg-muted: #181818;
+  --theme-text-primary: #FFF8E7;
+  --theme-text-secondary: #D4D4D4;
+  --theme-text-muted: #8E8E8E;
+  --theme-border-soft: #282828;
+  --theme-shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.7);
+  --theme-shadow-card: 0 14px 32px rgba(0, 0, 0, 0.5);
+  --theme-focus-ring: 0 0 0 3px rgba(255, 204, 0, 0.25);
   --theme-danger-bg: rgba(127, 29, 29, 0.34);
   --theme-danger-border: rgba(248, 113, 113, 0.42);
   --theme-danger-text: #fca5a5;
 
   color: var(--theme-text-primary);
-  background:
-    radial-gradient(circle at top, rgba(57, 255, 20, 0.08), transparent 28%),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(6, 235, 247, 0.06),
-      transparent 24%
-    ),
-    linear-gradient(180deg, #161616 0%, #121212 45%, #0f0f0f 100%);
-  font-family: "Inter", sans-serif;
+  background: #0A0A0A;
+  font-family: "Hanken Grotesk", "Inter", sans-serif;
   color-scheme: dark;
 }
 
 html.dark-mode {
   color-scheme: dark;
-  --theme-bg-elevated: #151515;
-  --theme-bg-muted: #0b0d0f;
-  --theme-text-secondary: #cbd5e1;
-  --theme-shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.36);
-  --theme-shadow-card: 0 14px 32px rgba(0, 0, 0, 0.28);
-  --theme-focus-ring: 0 0 0 3px rgba(57, 255, 20, 0.18);
+  --theme-bg-elevated: #1A1A1A;
+  --theme-bg-muted: #141414;
+  --theme-text-secondary: #D4D4D4;
+  --theme-shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.7);
+  --theme-shadow-card: 0 14px 32px rgba(0, 0, 0, 0.5);
+  --theme-focus-ring: 0 0 0 3px rgba(255, 204, 0, 0.25);
   --theme-danger-bg: rgba(127, 29, 29, 0.34);
   --theme-danger-border: rgba(248, 113, 113, 0.42);
   --theme-danger-text: #fca5a5;
+}
+
+/* TRIPLE A GYM Chamfered Cut-Corner Utility Shapes */
+.chamfer-box {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+}
+
+.chamfer-box-sm {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+
+.chamfer-box-lg {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 32px), calc(100% - 32px) 100%, 0 100%);
+}
+
+.chamfer-box-top-cut {
+  clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px);
+}
+
+.chamfer-btn {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chamfer-badge {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+
+.chamfer-input {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+
+/* Button Component Classes */
+.btn-primary {
+  background-color: #FFCC00;
+  color: #000000;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  transition: all 0.2s ease-in-out;
+}
+.btn-primary:hover {
+  background-color: #E6B800;
+  box-shadow: 0 0 24px rgba(255, 204, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #222222;
+  color: #FFF8E7;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #333333;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  transition: all 0.2s ease-in-out;
+}
+.btn-secondary:hover {
+  border-color: #FFCC00;
+  color: #FFCC00;
+}
+
+.btn-outlined {
+  background-color: transparent;
+  color: #FFCC00;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #FFCC00;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  transition: all 0.2s ease-in-out;
+}
+.btn-outlined:hover {
+  background-color: #FFCC00;
+  color: #000000;
+}
+
+.font-industrial {
+  font-family: 'Montserrat', sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 html.light-mode {

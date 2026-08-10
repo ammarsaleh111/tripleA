@@ -26,7 +26,7 @@ const ProductCard = ({ product }) => {
         productId: product.id,
         slug: product.slug,
         name: product.name,
-        variant: product.colorName || 'Default / One Size',
+        variant: product.colorName || 'Standard',
         unitPrice: Number(product.price || 0),
         quantity: 1,
         imageUrl: product.imageUrl,
@@ -38,70 +38,88 @@ const ProductCard = ({ product }) => {
       return;
     }
 
-    setCartFeedback('Added to cart');
+    setCartFeedback('ADDED TO TRANSMISSION');
+    setTimeout(() => setCartFeedback(''), 2500);
   };
 
   const isOutOfStock = Number(product.totalStock || product.defaultVariantStock || 0) <= 0;
+  const stockCount = Number(product.totalStock || product.defaultVariantStock || 0);
+
+  // Badge logic matching reference design
+  const badgeText = product.isNew
+    ? 'BEST SELLER'
+    : stockCount > 0 && stockCount <= 5
+    ? `LOW STOCK: ${stockCount} LEFT`
+    : product.badgeText || (product.rating >= 4.7 ? 'BEST SELLER' : null);
 
   return (
-    <article className="storefront-surface group block p-3 transition-all duration-300 ease-in-out">
+    <article className="group relative bg-[#141414] border border-[#282828] p-4 flex flex-col justify-between transition-all duration-300 hover:border-[#FFCC00]/60 chamfer-box">
       <Link to={`/products/${product.slug}`} className="block">
-        <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-lg border border-white/10 bg-[#121212]">
-          {product.isNew && (
-            <div className="absolute top-3 left-3 bg-neon text-black text-[10px] font-bold px-2 py-1 uppercase tracking-widest z-10">
-              New Drop
-            </div>
-          )}
-
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-500 ease-in-out group-hover:scale-105"
-            style={{ backgroundImage: `url(${product.imageUrl})` }}
-          />
-
-          <div className="absolute inset-0 bg-black/10 opacity-0 transition-all duration-300 ease-in-out group-hover:opacity-100" />
-
-          {product.badgeText && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 border border-white/25 bg-zinc-900/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white/85 backdrop-blur-sm">
-              {product.badgeText}
-            </div>
+        {/* Badge header */}
+        <div className="h-6 mb-2 flex items-center justify-start">
+          {badgeText && (
+            <span className="bg-[#FFF8E7] text-black font-mono font-extrabold text-[10px] uppercase tracking-widest px-2.5 py-0.5 chamfer-badge">
+              {badgeText}
+            </span>
           )}
         </div>
 
-        <div className="mb-1 flex items-start justify-between gap-3">
-          <h3 className="min-w-0 font-display text-base font-bold uppercase leading-none tracking-tight text-white">
+        {/* Product Image Box */}
+        <div className="relative mb-5 aspect-[4/3] w-full overflow-hidden bg-[#0A0A0A] border border-[#222222] flex items-center justify-center p-3">
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+
+        {/* Product Details */}
+        <div className="space-y-2 mb-4">
+          <h3 className="font-heading font-black italic text-lg uppercase tracking-tight text-white group-hover:text-[#FFCC00] transition-colors leading-tight">
             {product.name}
           </h3>
-          <span className="shrink-0 font-display text-base font-bold text-white">{product.price.toFixed(2)} EGP</span>
-        </div>
 
-        <p className="mb-3 text-[10px] uppercase tracking-widest text-zinc-400">{product.colorName}</p>
+          {/* Ratings */}
+          <div className="flex items-center gap-2">
+            <div className="flex text-[#FFCC00] text-xs">
+              {[...Array(5)].map((_, i) => (
+                <span key={i}>
+                  {i < Math.floor(product.rating || 5) ? '★' : '☆'}
+                </span>
+              ))}
+            </div>
+            <span className="text-[11px] font-mono text-zinc-400">
+              ({product.reviewCount || 128})
+            </span>
+          </div>
+        </div>
       </Link>
 
-      <div className="flex items-center gap-1.5 mb-4">
-        <div className="flex text-neon text-[10px]">
-          {[...Array(5)].map((_, i) => (
-            <svg key={i} className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'fill-current' : 'fill-gray-700'}`} viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          ))}
-        </div>
-        <span className="text-[9px] tracking-wider text-zinc-500">({product.reviewCount})</span>
+      {/* Footer / Price & Add to Cart */}
+      <div className="pt-3 border-t border-[#222222] flex items-center justify-between gap-3 mt-auto">
+        <span className="font-heading font-black italic text-xl text-white">
+          ${product.price.toFixed(2)}
+        </span>
+
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={isOutOfStock || !product.defaultVariantId}
+          className="btn-primary text-xs px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+        >
+          {isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART'}
+        </button>
       </div>
 
-      <button
-        type="button"
-        onClick={handleAddToCart}
-        disabled={isOutOfStock || !product.defaultVariantId}
-        className="storefront-primary w-full py-3 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-      </button>
-
       {cartFeedback && (
-        <p className="mt-2 text-center text-[9px] uppercase tracking-widest text-neon">{cartFeedback}</p>
+        <p className="mt-2 text-center text-[10px] font-mono tracking-widest text-[#FFCC00] animate-pulse">
+          {cartFeedback}
+        </p>
       )}
     </article>
   );
 };
 
 export default ProductCard;
+

@@ -14,12 +14,14 @@ const primaryLinks = [
 
 const SidebarIcon = ({ active = false }) => (
   <span
-    className={`grid h-4 w-4 place-items-center rounded-sm border text-[8px] ${
+    className={`grid h-4 w-4 place-items-center border text-[8px] ${
       active
-        ? 'border-[#7DFF63] bg-[#7DFF63] text-[#101010]'
-        : 'border-white/15 bg-white/[0.04] text-white/55'
+        ? 'border-[#FFCC00] bg-[#FFCC00] text-black font-bold'
+        : 'border-[#282828] bg-[#0A0A0A] text-zinc-500'
     }`}
-  />
+  >
+    ⚡
+  </span>
 );
 
 const AdminSidebar = ({ activeSection, onSectionChange, isOpen, onClose }) => {
@@ -29,27 +31,27 @@ const AdminSidebar = ({ activeSection, onSectionChange, isOpen, onClose }) => {
   return (
     <>
       <div
-        className={`fixed inset-0 z-30 bg-black/55 transition md:hidden ${
+        className={`fixed inset-0 z-30 bg-black/70 backdrop-blur-sm transition md:hidden ${
           isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onClose}
       />
 
       <aside
-        className={`fixed left-0 top-0 z-40 flex h-full w-[min(272px,calc(100vw-2rem))] flex-col overflow-y-auto border-r border-white/10 bg-black px-5 py-6 transition duration-300 sm:px-6 md:sticky md:z-0 md:w-[272px] md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-40 flex h-full w-[min(272px,calc(100vw-2rem))] flex-col overflow-y-auto border-r border-[#282828] bg-[#141414] px-5 py-6 transition duration-300 sm:px-6 md:sticky md:z-0 md:w-[272px] md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div>
-          <p className="font-display text-[2rem] font-bold uppercase leading-none tracking-[-0.06em] text-[#7DFF63]">
-            Admin Portal
+          <p className="font-heading font-black italic text-2xl uppercase leading-none tracking-tighter text-[#FFCC00]">
+            TRIPLE A GYM
           </p>
-          <p className="mt-3 text-[10px] uppercase tracking-[0.32em] text-zinc-500">
-            Rashed Industrial
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-zinc-400">
+            ADMIN PORTAL
           </p>
         </div>
 
-        <nav className="mt-12 space-y-2">
+        <nav className="mt-10 space-y-2">
           {primaryLinks.map((item) => {
             const isActive = item === activeSection;
 
@@ -61,10 +63,10 @@ const AdminSidebar = ({ activeSection, onSectionChange, isOpen, onClose }) => {
                   onSectionChange(item);
                   onClose();
                 }}
-                className={`flex w-full items-center gap-3 border-l-2 px-4 py-4 text-left text-[12px] font-semibold uppercase tracking-[0.16em] transition-all duration-300 ease-in-out ${
+                className={`flex w-full items-center gap-3 border-l-2 px-4 py-3.5 text-left font-heading font-black italic text-xs uppercase tracking-wider transition-all duration-200 ${
                   isActive
-                    ? 'border-[#7DFF63] bg-zinc-900 text-[#7DFF63]'
-                    : 'border-transparent text-zinc-400 hover:bg-zinc-900/60 hover:text-white'
+                    ? 'border-[#FFCC00] bg-[#0A0A0A] text-[#FFCC00]'
+                    : 'border-transparent text-zinc-400 hover:bg-[#0A0A0A]/50 hover:text-white'
                 }`}
               >
                 <SidebarIcon active={isActive} />
@@ -74,20 +76,18 @@ const AdminSidebar = ({ activeSection, onSectionChange, isOpen, onClose }) => {
           })}
         </nav>
 
-        <div className="mt-auto">
+        <div className="mt-auto pt-6 border-t border-[#282828] space-y-4">
           <button
             type="button"
             onClick={() => navigate('/shop')}
-            className="flex w-full items-center justify-center gap-2 bg-[#7DFF63] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.24em] text-[#101010] shadow-[0_0_24px_rgba(125,255,99,0.24)] transition-all duration-300 ease-in-out hover:brightness-110"
+            className="btn-primary w-full py-3.5 text-center text-xs block"
           >
-            View Live Store
-            <span aria-hidden="true">[]</span>
+            VIEW LIVE STORE
           </button>
 
-          <div className="mt-8 space-y-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-            <button type="button" onClick={() => navigate('/help')} className="flex items-center gap-3 transition-all duration-300 ease-in-out hover:text-white">
-              <span className="text-zinc-400">?</span>
-              Help
+          <div className="space-y-3 font-mono text-xs uppercase text-zinc-400">
+            <button type="button" onClick={() => navigate('/')} className="block hover:text-[#FFCC00]">
+              ← STORE HOME
             </button>
             <button
               type="button"
@@ -95,10 +95,9 @@ const AdminSidebar = ({ activeSection, onSectionChange, isOpen, onClose }) => {
                 logout();
                 navigate('/auth', { replace: true });
               }}
-              className="flex items-center gap-3 transition-all duration-300 ease-in-out hover:text-white"
+              className="block text-red-400 hover:text-red-300"
             >
-              <span className="text-zinc-400">-&gt;</span>
-              Logout
+              LOGOUT
             </button>
           </div>
         </div>
@@ -108,3 +107,4 @@ const AdminSidebar = ({ activeSection, onSectionChange, isOpen, onClose }) => {
 };
 
 export default AdminSidebar;
+

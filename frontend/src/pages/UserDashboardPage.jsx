@@ -26,13 +26,13 @@ const formatOrderDate = (value) => {
 const statusTheme = {
   pending: {
     label: 'Pending',
-    text: 'text-[#f8d66d]',
-    surface: 'border-[#f8d66d]/30 bg-[#f8d66d]/10',
+    text: 'text-[#FFCC00]',
+    surface: 'border-[#FFCC00]/30 bg-[#FFCC00]/10',
   },
   processing: {
     label: 'Processing',
-    text: 'text-[#74def3]',
-    surface: 'border-[#74def3]/30 bg-[#74def3]/10',
+    text: 'text-[#FFD633]',
+    surface: 'border-[#FFD633]/30 bg-[#FFD633]/10',
   },
   shipped: {
     label: 'Shipped',
@@ -41,13 +41,13 @@ const statusTheme = {
   },
   delivered: {
     label: 'Delivered',
-    text: 'text-[#7DFF63]',
-    surface: 'border-[#7DFF63]/30 bg-[#7DFF63]/10',
+    text: 'text-[#FFCC00]',
+    surface: 'border-[#FFCC00]/30 bg-[#FFCC00]/10',
   },
   cancelled: {
     label: 'Cancelled',
-    text: 'text-[#ff9f9f]',
-    surface: 'border-[#ff9f9f]/30 bg-[#ff9f9f]/10',
+    text: 'text-red-400',
+    surface: 'border-red-500/30 bg-red-500/10',
   },
 };
 

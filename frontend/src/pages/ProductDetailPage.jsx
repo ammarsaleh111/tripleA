@@ -474,9 +474,9 @@ const ProductDetailPage = () => {
                 <button
                   type="button"
                   onClick={handleShowSizeGuide}
-                  className="text-[10px] font-bold uppercase tracking-[0.14em] text-neon transition-all duration-300 ease-in-out hover:text-white"
+                  className="font-mono text-xs uppercase tracking-widest text-[#FFCC00] hover:underline"
                 >
-                  Size Guide
+                  SIZE GUIDE
                 </button>
               </div>
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
@@ -486,37 +486,37 @@ const ProductDetailPage = () => {
                       key={size}
                       type="button"
                       onClick={() => setSelectedSize(size)}
-                      className={`rounded-lg border py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-all duration-300 ease-in-out ${
+                      className={`py-2.5 font-mono text-xs font-bold uppercase transition-all chamfer-input ${
                         selectedSize === size
-                          ? 'border-neon bg-neon text-black'
-                          : 'border-white/10 bg-black/25 text-zinc-300 hover:border-zinc-500'
+                          ? 'border-[#FFCC00] bg-[#FFCC00] text-black'
+                          : 'border-[#282828] bg-[#0A0A0A] text-zinc-300 hover:border-zinc-500'
                       }`}
                     >
                       {size}
                     </button>
                   ))
                 ) : (
-                  <p className="col-span-full text-[10px] uppercase tracking-[0.16em] text-zinc-500">No size options</p>
+                  <p className="col-span-full font-mono text-xs uppercase tracking-widest text-zinc-500">No size options</p>
                 )}
               </div>
             </div>
 
             <div>
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Quantity</p>
-              <div className="inline-flex items-center overflow-hidden rounded-lg border border-white/12 bg-black/30">
+              <p className="mb-3 font-mono text-xs uppercase tracking-widest text-zinc-400">QUANTITY</p>
+              <div className="inline-flex items-center overflow-hidden border border-[#282828] bg-[#0A0A0A]">
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                  className="px-4 py-2 text-sm text-white/75 transition-all duration-300 hover:text-white"
+                  className="px-4 py-2 font-mono text-sm text-zinc-400 hover:text-[#FFCC00]"
                   aria-label="Decrease quantity"
                 >
                   -
                 </button>
-                <span className="min-w-10 px-2 text-center text-sm font-semibold">{quantity}</span>
+                <span className="min-w-10 px-2 text-center font-mono text-sm font-bold text-white">{quantity}</span>
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.min(maxSelectableQuantity, current + 1))}
-                  className="px-4 py-2 text-sm text-white/75 transition-all duration-300 hover:text-white"
+                  className="px-4 py-2 font-mono text-sm text-zinc-400 hover:text-[#FFCC00]"
                   aria-label="Increase quantity"
                 >
                   +
@@ -529,47 +529,44 @@ const ProductDetailPage = () => {
             type="button"
             onClick={handleAddToCart}
             disabled={!canAddToCart}
-            className="storefront-primary mt-7 flex w-full items-center justify-center gap-2 py-4 disabled:cursor-not-allowed disabled:opacity-45"
+            className="btn-primary mt-7 flex w-full items-center justify-center gap-2 py-4 disabled:opacity-40"
           >
-            {selectedStock > 0 ? 'Add To Cart' : 'Unavailable'}
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
+            {selectedStock > 0 ? 'ADD TO TRANSMISSION' : 'UNAVAILABLE'}
           </button>
 
           <button
             type="button"
             onClick={handleBuyNow}
             disabled={!canAddToCart}
-            className="storefront-secondary mt-3 flex w-full items-center justify-center gap-2 py-4 disabled:cursor-not-allowed disabled:opacity-45"
+            className="btn-secondary mt-3 flex w-full items-center justify-center gap-2 py-4 disabled:opacity-40"
           >
-            Buy Now
+            BUY NOW (EXPRESS CHECKOUT)
           </button>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[10px] uppercase tracking-[0.14em]">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 font-mono text-xs uppercase tracking-widest">
             <p className={stockStatusClass}>{stockStatusLabel}</p>
-            <p className="text-white/55">Cash on delivery</p>
+            <p className="text-zinc-500">CASH ON DELIVERY</p>
           </div>
 
           {cartFeedback && (
-            <p className="mt-3 text-[11px] uppercase tracking-[0.15em] text-neon">{cartFeedback}</p>
+            <p className="mt-3 font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00] animate-pulse">{cartFeedback}</p>
           )}
 
-          <div ref={materialsSectionRef} className="mt-6 border-t border-white/10">
+          <div ref={materialsSectionRef} className="mt-8 border-t border-[#282828]">
             <Accordion 
-              title="Details" 
+              title="PRODUCT DETAILS" 
               content={product.description}
               isOpen={openAccordion === 'description'}
               onClick={() => setOpenAccordion(openAccordion === 'description' ? '' : 'description')}
             />
             <Accordion 
-              title="Materials & Care" 
+              title="INGREDIENTS & SPECIFICATIONS" 
               content={product.materials}
               isOpen={openAccordion === 'materials'}
               onClick={() => setOpenAccordion(openAccordion === 'materials' ? '' : 'materials')}
             />
             <Accordion 
-              title="Delivery & Returns" 
+              title="SHIPPING & DISPATCH" 
               content={product.shipping}
               isOpen={openAccordion === 'shipping'}
               onClick={() => setOpenAccordion(openAccordion === 'shipping' ? '' : 'shipping')}
@@ -578,88 +575,56 @@ const ProductDetailPage = () => {
         </aside>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
         {FEATURE_PANELS.map((panel, index) => (
-          <article key={panel.title} className="storefront-surface p-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-neon">0{index + 1}</p>
-            <h3 className="mt-3 text-2xl font-semibold text-white">{panel.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-white/65">{panel.body}</p>
-            {index === 1 && (
-              <button
-                type="button"
-                onClick={handleExploreConstruction}
-                className="storefront-secondary mt-4 px-4"
-              >
-                Open Gear Details
-              </button>
-            )}
+          <article key={panel.title} className="bg-[#141414] border border-[#282828] p-6 chamfer-box">
+            <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">0{index + 1}</p>
+            <h3 className="mt-2 font-heading font-black italic text-xl uppercase text-white">{panel.title}</h3>
+            <p className="mt-2 font-mono text-xs leading-relaxed text-zinc-400">{panel.body}</p>
           </article>
         ))}
       </div>
 
       {showSizeGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-2 py-6 sm:px-6 sm:py-10">
-          <div className="storefront-surface max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-y-auto p-4 shadow-2xl shadow-black/40 sm:p-6">
-            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 py-6">
+          <div className="bg-[#141414] border border-[#282828] w-full max-w-3xl p-6 shadow-2xl chamfer-box">
+            <div className="flex items-start justify-between gap-4 border-b border-[#282828] pb-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-neon">Size Guide</p>
-            <h3 className="mt-2 font-display text-3xl font-bold uppercase tracking-tight text-white">
-                  Size Guide
+                <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">SPECIFICATIONS</p>
+                <h3 className="mt-1 font-heading font-black italic text-3xl uppercase text-white">
+                  SUPPLEMENT SPEC GUIDE
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowSizeGuide(false)}
-                className="storefront-secondary min-h-0 px-3 py-2 text-[11px]"
+                className="btn-secondary text-xs px-3 py-2"
               >
-                Close
+                CLOSE
               </button>
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-white/10 bg-black/35 p-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/45">Selected Size</p>
-                <p className="mt-2 text-2xl font-bold text-white">{selectedSize || 'M'}</p>
+              <div className="bg-[#0A0A0A] border border-[#282828] p-4 chamfer-box">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">DOSAGE & FORMULA</p>
+                <p className="mt-2 font-mono text-xl font-bold text-white">1 SCOOP (30g)</p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-black/35 p-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/45">Recommended Fit</p>
-                <p className="mt-2 text-sm text-white/72">Choose your regular match or boot size.</p>
+              <div className="bg-[#0A0A0A] border border-[#282828] p-4 chamfer-box">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">RECOMMENDED USAGE</p>
+                <p className="mt-2 font-mono text-xs text-zinc-300">Consume 30 minutes pre or post training.</p>
               </div>
-            </div>
-
-            <div className="mt-6 overflow-x-auto border border-white/10">
-              <table className="min-w-[560px] text-left">
-                <thead className="bg-black/45 text-[10px] uppercase tracking-[0.2em] text-white/45">
-                  <tr>
-                    <th className="px-4 py-3">Size</th>
-                    <th className="px-4 py-3">Apparel</th>
-                    <th className="px-4 py-3">Boots</th>
-                    <th className="px-4 py-3">Fit Note</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(product.sizes.length > 0 ? product.sizes : ['S', 'M', 'L', 'XL']).map((size) => (
-                    <tr key={size} className="border-t border-white/10 text-sm text-white/80">
-                      <td className="px-4 py-3 font-semibold uppercase">{size}</td>
-                      <td className="px-4 py-3">Regular</td>
-                      <td className="px-4 py-3">True size</td>
-                      <td className="px-4 py-3 text-white/60">Match-ready fit</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
       )}
 
       {relatedProducts.length > 0 && (
-        <section className="mt-8">
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <h2 className="storefront-title text-[clamp(2.2rem,5vw,4rem)]">Related Products</h2>
-            <Link to="/shop" className="storefront-secondary px-4">Shop All</Link>
+        <section className="mt-12">
+          <div className="mb-6 flex items-end justify-between gap-4 border-b border-[#282828] pb-4">
+            <h2 className="font-heading font-black italic text-3xl uppercase text-white">RELATED SUPPLEMENTS</h2>
+            <Link to="/shop" className="font-mono text-xs text-[#FFCC00] hover:underline">VIEW ALL →</Link>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {relatedProducts.map((item) => (
               <ProductCard key={item.id} product={item} />
             ))}

@@ -1,9 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext.jsx';
+import ChamferCard from '../components/common/ChamferCard.jsx';
 
-const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
+const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
 const FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80';
+  'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80';
 
 const CartPage = () => {
   const {
@@ -24,24 +25,21 @@ const CartPage = () => {
   const isMutatingCart = cartSyncing || cartLoading;
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-3 py-8 text-white sm:px-6 sm:py-14">
+    <section className="mx-auto w-full max-w-7xl px-4 py-8 text-white">
       {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#282828] pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="storefront-kicker">Cart</p>
-          <h1 className="storefront-title mt-3 text-[clamp(2.4rem,6vw,4.5rem)]">Your Bag</h1>
-          <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-zinc-500">
-            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">ORDER SUMMARY</span>
+          <h1 className="font-heading font-black italic text-4xl sm:text-6xl uppercase text-white mt-1">TRANSMISSION BAG</h1>
+          <p className="mt-1 font-mono text-xs uppercase tracking-widest text-zinc-400">
+            {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'} IN ARSENAL
           </p>
         </div>
         <Link
           to="/shop"
-          className="group inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-zinc-400 transition-all duration-300 ease-in-out hover:text-neon"
+          className="font-mono text-xs text-zinc-400 hover:text-[#FFCC00] uppercase tracking-widest transition-colors"
         >
-          <svg className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Continue Shopping
+          ← CONTINUE SHOPPING
         </Link>
       </div>
 

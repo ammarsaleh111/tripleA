@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { useAppContext } from '../context/AppContext.jsx';
 import { submitContactMessage } from '../services/api/contact.js';
+import ChamferCard from '../components/common/ChamferCard.jsx';
 
 const ContactPage = () => {
   const { authUser } = useAppContext();
@@ -26,7 +27,6 @@ const ContactPage = () => {
         current.fullName || `${String(authUser.firstName || '').trim()} ${String(authUser.lastName || '').trim()}`.trim(),
       email: current.email || String(authUser.email || ''),
     }));
-
   }, [authUser]);
 
   const handleFieldChange = (key, value) => {
@@ -50,92 +50,101 @@ const ContactPage = () => {
         message: formData.message,
       });
 
-      setStatusMessage('Message sent. We will reply soon.');
+      setStatusMessage('TRANSMISSION CONFIRMED. OUR SUPPORT TEAM WILL RESPOND PROMPTLY.');
       setFormData((current) => ({
         ...current,
         subject: '',
         message: '',
       }));
     } catch (error) {
-      setErrorMessage(error?.response?.data?.message || 'Unable to send your message right now.');
+      setErrorMessage(error?.response?.data?.message || 'Unable to submit transmission right now.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-2 py-3 text-white md:px-4">
-      <div className="storefront-shell p-5 sm:p-8">
-        <p className="storefront-kicker">Customer Support</p>
-        <h1 className="storefront-title mt-3 text-[clamp(2.6rem,6vw,4.6rem)] text-white">
-          Contact Rashed
-        </h1>
-        <p className="storefront-subtitle mt-4 max-w-2xl">
-          Questions about orders, sizing, or products. We are here to help.
-        </p>
+    <section className="mx-auto w-full max-w-4xl px-4 py-8 text-white">
+      <ChamferCard className="p-8 sm:p-12 space-y-8">
+        <div className="text-center space-y-2 border-b border-[#282828] pb-6">
+          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">
+            TRIPLE A GYM SUPPORT
+          </span>
+          <h1 className="font-heading font-black italic text-4xl sm:text-5xl uppercase text-white">
+            CONTACT HEADQUARTERS
+          </h1>
+          <p className="font-mono text-xs text-zinc-400 max-w-xl mx-auto uppercase">
+            Questions regarding memberships, supplement orders, or training protocols.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2">
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">Full Name</span>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <label className="space-y-2 block">
+              <span className="block font-mono text-xs text-zinc-400 uppercase tracking-widest">FULL NAME</span>
               <input
                 value={formData.fullName}
                 onChange={(event) => handleFieldChange('fullName', event.target.value)}
                 type="text"
                 required
-                className="storefront-input"
+                placeholder="ENTER FULL NAME"
+                className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
               />
             </label>
 
-            <label className="space-y-2">
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">Email</span>
+            <label className="space-y-2 block">
+              <span className="block font-mono text-xs text-zinc-400 uppercase tracking-widest">EMAIL</span>
               <input
                 value={formData.email}
                 onChange={(event) => handleFieldChange('email', event.target.value)}
                 type="email"
                 required
-                className="storefront-input"
+                placeholder="ENTER EMAIL ADDRESS"
+                className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
               />
             </label>
           </div>
 
           <label className="space-y-2 block">
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">Subject</span>
+            <span className="block font-mono text-xs text-zinc-400 uppercase tracking-widest">SUBJECT</span>
             <input
               value={formData.subject}
               onChange={(event) => handleFieldChange('subject', event.target.value)}
               type="text"
               required
-              className="storefront-input"
+              placeholder="TRANSMISSION SUBJECT"
+              className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
             />
           </label>
 
           <label className="space-y-2 block">
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">Message</span>
+            <span className="block font-mono text-xs text-zinc-400 uppercase tracking-widest">MESSAGE</span>
             <textarea
               value={formData.message}
               onChange={(event) => handleFieldChange('message', event.target.value)}
               required
               minLength={10}
-              rows={7}
-              className="storefront-input resize-none"
+              rows={6}
+              placeholder="WRITE YOUR MESSAGE..."
+              className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input resize-none"
             />
           </label>
 
-          {statusMessage && <p className="text-[11px] uppercase tracking-widest text-neon">{statusMessage}</p>}
-          {errorMessage && <p className="text-[11px] uppercase tracking-widest text-red-400">{errorMessage}</p>}
+          {statusMessage && <p className="font-mono text-xs font-bold text-[#FFCC00] text-center animate-pulse">{statusMessage}</p>}
+          {errorMessage && <p className="font-mono text-xs font-bold text-red-400 text-center">{errorMessage}</p>}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="storefront-primary px-7 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-primary w-full py-4 text-center text-sm disabled:opacity-40"
           >
-            {isSubmitting ? 'Sending...' : 'Send'}
+            {isSubmitting ? 'TRANSMITTING...' : 'SUBMIT TRANSMISSION'}
           </button>
         </form>
-      </div>
+      </ChamferCard>
     </section>
   );
 };
 
 export default ContactPage;
+

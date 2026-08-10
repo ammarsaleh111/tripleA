@@ -6,20 +6,20 @@ import ThemeControls from '../common/ThemeControls.jsx';
 import CartSidebar from '../shop/CartSidebar.jsx';
 
 const links = [
-  { to: '/', label: 'Home' },
-  { to: '/shop', label: 'Shop' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/', label: 'HOME' },
+  { to: '/shop', label: 'SHOP' },
+  { to: '/about', label: 'ABOUT US' },
 ];
 
 const MenuIcon = () => (
-  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
-    <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+  <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+    <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
   </svg>
 );
 
 const CloseIcon = () => (
   <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-    <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
   </svg>
 );
 
@@ -30,6 +30,18 @@ const UserIcon = () => (
       stroke="currentColor"
       strokeLinecap="round"
       strokeWidth="1.8"
+    />
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24">
+    <path
+      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
     />
   </svg>
 );
@@ -51,10 +63,15 @@ const CartIcon = () => (
 const MainLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { authUser, logout, themeMode } = useAppContext();
+  const { authUser, logout, cart } = useAppContext();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showGuestAuthPrompt, setShowGuestAuthPrompt] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const cartItemCount = useMemo(() => {
+    if (!cart?.items) return 0;
+    return cart.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  }, [cart?.items]);
 
   const profileDisplayName = useMemo(
     () => String(authUser?.firstName || '').trim(),
@@ -65,185 +82,36 @@ const MainLayout = () => {
     String(authUser?.role || '').trim().toLowerCase() === 'admin' ? '/admin' : '/dashboard';
 
   const isHomePage = location.pathname === '/';
-  const isLightMode = themeMode === 'light';
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setShowGuestAuthPrompt(false);
   }, [location.pathname]);
 
-  const mobileMenuSurfaceClass = isLightMode
-    ? 'border-black/10 bg-white/95 text-neutral-900'
-    : 'border-white/10 bg-black/95 text-white';
-
-  const mobileSecondaryTextClass = isLightMode ? 'text-neutral-500' : 'text-zinc-400';
-  const mobileItemClass = isLightMode
-    ? 'border-black/10 bg-white/60 text-neutral-900 hover:bg-white'
-    : 'border-white/10 bg-zinc-900/55 text-white hover:border-[#39FF14] hover:text-[#39FF14]';
-
   return (
-    <div className="min-h-screen overflow-x-hidden text-white">
-      <header className={`z-50 px-2 pt-2 sm:px-3 sm:pt-3 md:px-6 md:pt-4 ${isHomePage ? 'home-header absolute top-0 w-full' : 'sticky top-0'}`}>
-        <div className="storefront-header-shell mx-auto max-w-[1700px] px-3 py-3 md:px-5">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-4">
-            <div className="flex min-w-0 items-center gap-3 sm:min-w-[130px]">
-              <Link to="/" className="storefront-brand-wordmark">
-                Rashed Sport
-              </Link>
-            </div>
+    <div className="min-h-screen bg-[#0A0A0A] overflow-x-hidden text-[#FFF8E7] flex flex-col font-sans">
+      {/* TRIPLE A GYM Header */}
+      <header className="sticky top-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#282828] py-3 px-4 md:px-8 transition-all">
+        <div className="mx-auto max-w-[1500px] flex items-center justify-between gap-4">
+          
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 group">
+            <span className="font-heading font-black italic text-xl md:text-2xl tracking-tighter text-[#FFCC00] group-hover:text-yellow-300 transition-colors">
+              TRIPLE A GYM
+            </span>
+          </Link>
 
-            <nav className="hidden items-center justify-center gap-2 md:flex">
-              {links.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  className={({ isActive }) =>
-                    `storefront-nav-link ${isActive ? 'storefront-nav-link-active' : ''}`
-                  }
-                >
-                  {link.label}
-                </NavLink>
-              ))}
-            </nav>
-
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                className="storefront-icon-button md:hidden"
-                aria-label="Open cart"
-                onClick={() => setIsCartOpen(true)}
-              >
-                <CartIcon />
-              </button>
-
-              <button
-                type="button"
-                className="storefront-icon-button md:hidden"
-                aria-label="Open menu"
-                onClick={() => setIsMobileMenuOpen(true)}
-              >
-                <MenuIcon />
-              </button>
-
-              <div className="hidden items-center gap-3 text-white/85 md:flex">
-                <ThemeControls />
-
-                {!authUser ? (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      className="storefront-account-button"
-                      aria-label="Open account access options"
-                      onClick={() => setShowGuestAuthPrompt((current) => !current)}
-                    >
-                      <UserIcon />
-                      Account
-                    </button>
-
-                    {showGuestAuthPrompt && (
-                      <div className="storefront-dropdown absolute right-0 top-full z-40 mt-3 w-60 p-3">
-                        <p className="mb-3 text-[9px] uppercase tracking-[0.2em] text-white/45">Access</p>
-                        <Link
-                          to="/auth?tab=login"
-                          onClick={() => setShowGuestAuthPrompt(false)}
-                          className="mb-2 block rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 ease-in-out hover:border-[#39FF14] hover:text-[#39FF14]"
-                        >
-                          Login
-                        </Link>
-                        <Link
-                          to="/auth?tab=register"
-                          onClick={() => setShowGuestAuthPrompt(false)}
-                          className="block rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 ease-in-out hover:border-[#39FF14] hover:text-[#39FF14]"
-                        >
-                          Register
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="group relative">
-                    <button
-                      type="button"
-                      className="storefront-account-button"
-                      aria-label="Open profile menu"
-                    >
-                      <UserIcon />
-                      <span>{profileDisplayName || 'Account'}</span>
-                    </button>
-
-                    <div className="storefront-dropdown pointer-events-none absolute right-0 top-full z-40 mt-3 w-60 p-3 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
-                      <Link
-                        to={dashboardRoute}
-                        className="mb-2 block rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 ease-in-out hover:border-[#39FF14] hover:text-[#39FF14]"
-                      >
-                        Dashboard
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          logout();
-                          navigate('/auth', { replace: true });
-                        }}
-                        className="w-full rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 ease-in-out hover:border-[#39FF14] hover:text-[#39FF14]"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className="storefront-icon-button"
-                  aria-label="Open cart"
-                  onClick={() => setIsCartOpen(true)}
-                >
-                  <CartIcon />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div
-        className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-      >
-        <button
-          type="button"
-          aria-label="Close menu backdrop"
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-
-        <aside
-          className={`absolute right-0 top-0 flex h-full w-full max-w-sm transform flex-col overflow-y-auto border-l p-4 shadow-2xl backdrop-blur-xl transition-all duration-300 ease-in-out sm:p-6 ${mobileMenuSurfaceClass} ${
-            isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
-          <div className="flex items-center justify-between border-b border-white/10 pb-5">
-            <p className={`text-xs font-bold uppercase tracking-[0.22em] ${mobileSecondaryTextClass}`}>Menu</p>
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="storefront-icon-button"
-              aria-label="Close mobile menu"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-
-          <nav className="mt-8 flex flex-col gap-3">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8">
             {links.map((link) => (
               <NavLink
-                key={`mobile-${link.to}`}
+                key={link.to}
                 to={link.to}
-                onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
-                  `rounded-xl border px-4 py-4 text-lg font-bold uppercase tracking-tight transition-all duration-300 ease-in-out ${mobileItemClass} ${
-                    isActive ? 'border-[#39FF14] text-[#39FF14]' : ''
+                  `font-heading font-extrabold italic text-sm tracking-wider uppercase transition-colors relative py-1 ${
+                    isActive
+                      ? 'text-[#FFCC00] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#FFCC00]'
+                      : 'text-zinc-300 hover:text-[#FFCC00]'
                   }`
                 }
               >
@@ -252,31 +120,164 @@ const MainLayout = () => {
             ))}
           </nav>
 
-          <div className="mt-8 border-t border-white/10 pt-6">
-            <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${mobileSecondaryTextClass}`}>Theme</p>
-            <div className="mt-3">
-              <ThemeControls />
-            </div>
-          </div>
+          {/* Right Action Icons & Join Now Button */}
+          <div className="flex items-center gap-3">
+            {/* Search link */}
+            <Link
+              to="/shop"
+              className="p-2 text-zinc-400 hover:text-[#FFCC00] transition-colors hidden sm:block"
+              aria-label="Search items"
+            >
+              <SearchIcon />
+            </Link>
 
-          <div className="mt-8 border-t border-white/10 pt-6">
-            <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${mobileSecondaryTextClass}`}>Account</p>
-            <div className="mt-3 space-y-3">
+            {/* Cart Trigger */}
+            <button
+              type="button"
+              className="relative p-2 text-zinc-300 hover:text-[#FFCC00] transition-colors flex items-center gap-1.5"
+              aria-label="Open cart"
+              onClick={() => setIsCartOpen(true)}
+            >
+              <CartIcon />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#FFCC00] text-black font-mono font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                  {cartItemCount}
+                </span>
+              )}
+            </button>
+
+            {/* Account / Auth */}
+            {!authUser ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowGuestAuthPrompt((prev) => !prev)}
+                  className="hidden sm:flex items-center gap-2 p-2 text-zinc-300 hover:text-[#FFCC00] transition-colors text-xs font-mono uppercase"
+                >
+                  <UserIcon />
+                </button>
+                {showGuestAuthPrompt && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#141414] border border-[#282828] p-3 shadow-2xl z-50 chamfer-box">
+                    <Link
+                      to="/auth?tab=login"
+                      onClick={() => setShowGuestAuthPrompt(false)}
+                      className="block text-center mb-2 btn-secondary text-xs py-2"
+                    >
+                      LOGIN
+                    </Link>
+                    <Link
+                      to="/auth?tab=register"
+                      onClick={() => setShowGuestAuthPrompt(false)}
+                      className="block text-center btn-primary text-xs py-2"
+                    >
+                      REGISTER
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="group relative hidden sm:block">
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-xs font-mono uppercase text-zinc-300 hover:text-[#FFCC00]"
+                >
+                  <UserIcon />
+                  <span className="truncate max-w-[100px]">{profileDisplayName || 'ACCOUNT'}</span>
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-48 bg-[#141414] border border-[#282828] p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50 chamfer-box">
+                  <Link
+                    to={dashboardRoute}
+                    className="block px-3 py-2 text-xs font-mono text-zinc-300 hover:text-[#FFCC00] hover:bg-[#1E1E1E]"
+                  >
+                    DASHBOARD
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      navigate('/auth', { replace: true });
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-mono text-red-400 hover:bg-[#1E1E1E]"
+                  >
+                    LOGOUT
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* JOIN NOW Button */}
+            <Link
+              to="/auth?tab=register"
+              className="btn-primary text-xs sm:text-sm px-4 py-2 sm:px-5 sm:py-2.5 inline-block"
+            >
+              JOIN NOW
+            </Link>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              type="button"
+              className="p-2 text-zinc-300 hover:text-[#FFCC00] md:hidden"
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Open mobile menu"
+            >
+              <MenuIcon />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Mobile Navigation Drawer */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden bg-black/80 backdrop-blur-sm flex justify-end">
+          <div className="w-4/5 max-w-xs bg-[#141414] border-l border-[#282828] p-6 flex flex-col justify-between h-full">
+            <div>
+              <div className="flex items-center justify-between pb-6 border-b border-[#282828]">
+                <span className="font-heading font-black italic text-lg text-[#FFCC00]">
+                  TRIPLE A GYM
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-1 text-zinc-400 hover:text-white"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+
+              <nav className="mt-6 flex flex-col gap-4">
+                {links.map((link) => (
+                  <NavLink
+                    key={`mob-${link.to}`}
+                    to={link.to}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `font-heading font-extrabold italic text-lg tracking-wider uppercase ${
+                        isActive ? 'text-[#FFCC00]' : 'text-zinc-300'
+                      }`
+                    }
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+
+            <div className="border-t border-[#282828] pt-6 space-y-3">
               {!authUser ? (
                 <>
                   <Link
                     to="/auth?tab=login"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block border px-4 py-3 text-sm font-bold uppercase tracking-[0.16em] transition-all duration-300 ease-in-out ${mobileItemClass}`}
+                    className="block text-center btn-secondary text-sm py-3"
                   >
-                    Login
+                    LOGIN
                   </Link>
                   <Link
                     to="/auth?tab=register"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block border px-4 py-3 text-sm font-bold uppercase tracking-[0.16em] transition-all duration-300 ease-in-out ${mobileItemClass}`}
+                    className="block text-center btn-primary text-sm py-3"
                   >
-                    Register
+                    JOIN NOW
                   </Link>
                 </>
               ) : (
@@ -284,41 +285,87 @@ const MainLayout = () => {
                   <Link
                     to={dashboardRoute}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`block border px-4 py-3 text-sm font-bold uppercase tracking-[0.16em] transition-all duration-300 ease-in-out ${mobileItemClass}`}
+                    className="block text-center btn-secondary text-sm py-3"
                   >
-                    Dashboard
+                    DASHBOARD
                   </Link>
                   <button
                     type="button"
                     onClick={() => {
                       setIsMobileMenuOpen(false);
                       logout();
-                      navigate('/auth', { replace: true });
+                      navigate('/auth');
                     }}
-                    className={`w-full border px-4 py-3 text-left text-sm font-bold uppercase tracking-[0.16em] transition-all duration-300 ease-in-out ${mobileItemClass}`}
+                    className="w-full text-center text-xs font-mono text-red-400 py-2"
                   >
-                    Logout
+                    LOGOUT
                   </button>
                 </>
               )}
             </div>
           </div>
-        </aside>
-      </div>
+        </div>
+      )}
 
-      <main className={`text-white ${isHomePage ? 'w-full' : 'mx-auto w-full max-w-[1560px] px-2 py-4 sm:px-4 sm:py-7 md:px-8 md:py-10'}`}>
-        {isHomePage ? (
-          <Outlet />
-        ) : (
-          <div className="storefront-shell p-3 sm:p-6 md:p-8">
-            <Outlet />
-          </div>
-        )}
+      {/* Main Page Viewport */}
+      <main className="flex-1 w-full">
+        <Outlet />
       </main>
 
+      {/* Cart Drawer */}
       <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* TRIPLE A GYM Footer */}
+      <footer className="bg-[#141414] border-t border-[#282828] pt-12 pb-8 px-6 md:px-12 mt-16">
+        <div className="mx-auto max-w-[1500px] grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-[#282828]">
+          <div className="space-y-3">
+            <h3 className="font-heading font-black italic text-2xl tracking-tight text-[#FFCC00]">
+              TRIPLE A GYM
+            </h3>
+            <p className="font-mono text-xs text-zinc-400 tracking-wider">
+              INDUSTRIAL STRENGTH FITNESS.
+            </p>
+            <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
+              Built for performance, power, and real strength. Equipment, supplements, and iron community.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-mono text-xs text-zinc-400 uppercase tracking-widest mb-3">Location</h4>
+            <p className="text-xs text-zinc-300">123 Industrial Compound Drive</p>
+            <p className="text-xs text-zinc-300">Iron City, NY 10001</p>
+            <p className="text-xs text-zinc-400 font-mono mt-2">+1 (800) 555-IRON</p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-mono text-xs text-zinc-400 uppercase tracking-widest mb-3">Hours</h4>
+            <p className="text-xs text-zinc-300">Mon - Fri: 5:00 AM - 11:00 PM</p>
+            <p className="text-xs text-zinc-300">Sat - Sun: 7:00 AM - 9:00 PM</p>
+            <p className="text-xs text-[#FFCC00] font-mono mt-2">24/7 PRO MEMBER ACCESS</p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-mono text-xs text-zinc-400 uppercase tracking-widest mb-3">Navigation</h4>
+            <ul className="space-y-1.5 text-xs text-zinc-400 font-mono">
+              <li><Link to="/shop" className="hover:text-[#FFCC00]">SHOP SUPPLEMENTS</Link></li>
+              <li><Link to="/about" className="hover:text-[#FFCC00]">ABOUT OUR PROTOCOL</Link></li>
+              <li><Link to="/contact" className="hover:text-[#FFCC00]">CONTACT / STEP UP</Link></li>
+              <li><Link to="/help" className="hover:text-[#FFCC00]">SUPPORT & FAQs</Link></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-[1500px] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
+          <p>© 2024 TRIPLE A GYM. INDUSTRIAL STRENGTH FITNESS. ALL RIGHTS RESERVED.</p>
+          <div className="flex gap-6">
+            <Link to="/privacy" className="hover:text-zinc-300">PRIVACY POLICY</Link>
+            <Link to="/terms" className="hover:text-zinc-300">TERMS OF SERVICE</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
 
 export default MainLayout;
+

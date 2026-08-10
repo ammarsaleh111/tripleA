@@ -4,29 +4,45 @@ export default {
   theme: {
     extend: {
       colors: {
-        neon: '#5eff33', // Rashed brand neon green
-        dark: {
-          bg: '#0a0a0a',
-          panel: '#0f0f0f',
-          input: '#1a1a1a',
-          border: '#2a2a2a',
+        primary: {
+          DEFAULT: '#FFCC00',
+          hover: '#E6B800',
+          light: '#FFD633',
+          dark: '#CC0300',
         },
+        accent: {
+          DEFAULT: '#FFCC00',
+          cream: '#FFF8E7',
+        },
+        neon: '#FFCC00', // TRIPLE A Industrial Yellow accent
+        dark: {
+          bg: '#0A0A0A',
+          panel: '#141414',
+          card: '#1A1A1A',
+          input: '#161616',
+          border: '#282828',
+          hover: '#222222',
+        },
+        cream: '#FFF8E7',
         brand: {
-          50: '#f7f6f2',
-          100: '#ece7da',
-          200: '#d8cdb3',
-          300: '#c3b18d',
-          400: '#ae9567',
-          500: '#91784a',
-          600: '#755f39',
-          700: '#594729',
-          800: '#3d301a',
-          900: '#221a0c',
+          50: '#FFFDF0',
+          100: '#FFF8C4',
+          200: '#FFF08A',
+          300: '#FFE64D',
+          400: '#FFD60F',
+          500: '#FFCC00',
+          600: '#D6A600',
+          700: '#A37C00',
+          800: '#705300',
+          900: '#3D2D00',
         },
       },
       fontFamily: {
-        display: ['"Space Grotesk"', 'sans-serif'],
-        body: ['"Inter"', 'sans-serif'],
+        heading: ['"Montserrat"', 'sans-serif'],
+        display: ['"Montserrat"', 'sans-serif'],
+        body: ['"Hanken Grotesk"', '"Inter"', 'sans-serif'],
+        sans: ['"Hanken Grotesk"', '"Inter"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
     },
   },

@@ -1,128 +1,135 @@
 import React from 'react';
 
 const categoryOptions = [
-  { label: 'T-shirts', value: 'football-jerseys' },
-  { label: 'Shorts', value: 'football-shorts' },
-  { label: 'Boots', value: 'football-boots' },
-  { label: 'Balls', value: 'football-balls' },
-  { label: 'Others', value: 'others' },
+  { label: 'All Supplements', value: '' },
+  { label: 'Protein', value: 'protein' },
+  { label: 'Creatine', value: 'creatine' },
+  { label: 'Pre-Workout', value: 'pre-workout' },
 ];
 
-const sizeOptions = ['S', 'M', 'L', 'XL', '39', '40', '41', '42', '43', '44'];
-const colorOptions = [
-  { label: 'Black', value: 'Black', swatchClass: 'bg-black border-white/70' },
-  { label: 'White', value: 'White', swatchClass: 'bg-white border-zinc-400' },
-  { label: 'Blue', value: 'Blue', swatchClass: 'bg-blue-600 border-transparent' },
-  { label: 'Red', value: 'Red', swatchClass: 'bg-red-600 border-transparent' },
-  { label: 'Volt', value: 'Volt', swatchClass: 'bg-neon border-transparent' },
+const brandOptions = [
+  { label: 'TRIPLE A', value: 'triple-a' },
+  { label: 'Iron Core', value: 'iron-core' },
+  { label: 'Apex Labs', value: 'apex-labs' },
 ];
 
 const SidebarFilter = ({ filters, onFilterChange }) => {
   const selectedCategory = filters?.category || '';
-  const selectedSize = filters?.size || '';
-  const selectedColor = filters?.color || '';
-  const selectedMaxPrice = Number(filters?.price_max || 1000);
-  const priceLabel = selectedMaxPrice >= 1000 ? '1000+ EGP' : String(selectedMaxPrice) + ' EGP';
+  const selectedBrand = filters?.brand || '';
 
   return (
-    <aside className="storefront-surface hidden w-full p-6 text-white md:sticky md:top-24 md:block">
-      {/* Category Section */}
-      <div className="mb-10">
-        <h4 className="text-neon font-bold text-[10px] tracking-[0.2em] uppercase mb-4">Category</h4>
+    <aside className="bg-[#141414] border border-[#282828] p-6 text-white w-full sticky top-24 hidden md:block chamfer-box">
+      {/* Filters Title Header */}
+      <div className="flex items-center gap-3 mb-8 border-b border-[#222222] pb-4">
+        <div className="w-1 h-6 bg-[#FFCC00]" />
+        <h3 className="font-heading font-black italic text-xl uppercase tracking-wider text-white">
+          FILTERS
+        </h3>
+      </div>
+
+      {/* CATEGORY SECTION */}
+      <div className="mb-8">
+        <h4 className="font-mono text-xs text-zinc-400 uppercase tracking-widest mb-4">
+          CATEGORY
+        </h4>
         <ul className="space-y-3">
-          {categoryOptions.map((category) => (
-            <li key={category.value} className="flex items-center gap-3">
-              <label className="flex items-center cursor-pointer group">
-                <input
-                  type="radio"
-                  name="shop-category"
-                  className="sr-only"
-                  checked={selectedCategory === category.value}
-                  onChange={() => onFilterChange('category', category.value)}
-                />
-                <div className={`w-3 h-3 flex items-center justify-center border transition-all duration-300 ease-in-out ${selectedCategory === category.value ? 'bg-neon border-neon' : 'border-zinc-700 bg-transparent group-hover:border-neon'}`}>
-                   {selectedCategory === category.value && <div className="w-1.5 h-1.5 bg-black" />}
-                </div>
-                <span className="ml-3 text-[10px] uppercase tracking-widest text-zinc-300 font-bold transition-all duration-300 ease-in-out group-hover:text-white">{category.label}</span>
-              </label>
-            </li>
-          ))}
-          <li className="pt-2">
-            <button
-              type="button"
-              className="text-[10px] uppercase tracking-widest text-zinc-500 transition-all duration-300 ease-in-out hover:text-neon"
-              onClick={() => onFilterChange('category', '')}
-            >
-              Clear Category
-            </button>
-          </li>
+          {categoryOptions.map((cat) => {
+            const isChecked = selectedCategory === cat.value;
+            return (
+              <li key={cat.label}>
+                <button
+                  type="button"
+                  onClick={() => onFilterChange('category', isChecked ? '' : cat.value)}
+                  className="flex items-center gap-3 w-full text-left group cursor-pointer"
+                >
+                  <div
+                    className={`w-4 h-4 border transition-colors flex items-center justify-center ${
+                      isChecked
+                        ? 'bg-[#FFCC00] border-[#FFCC00]'
+                        : 'border-zinc-700 bg-[#0A0A0A] group-hover:border-[#FFCC00]'
+                    }`}
+                  >
+                    {isChecked && (
+                      <svg className="w-3 h-3 text-black fill-current" viewBox="0 0 20 20">
+                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                      </svg>
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs font-mono tracking-wider transition-colors ${
+                      isChecked ? 'text-white font-bold' : 'text-zinc-400 group-hover:text-white'
+                    }`}
+                  >
+                    {cat.label}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
-      {/* Size Section */}
-      <div className="mb-10">
-        <h4 className="text-neon font-bold text-[10px] tracking-[0.2em] uppercase mb-4">Size</h4>
-        <div className="grid grid-cols-4 gap-2">
-          {sizeOptions.map((size) => (
-            <button
-              key={size}
-              type="button"
-              onClick={() => onFilterChange('size', selectedSize === size ? '' : size)}
-              className={`border py-2 text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ease-in-out ${selectedSize === size ? 'border-neon bg-neon text-black' : 'border-white/10 bg-black text-zinc-400 hover:border-zinc-500'}`}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Price Range Section */}
-      <div className="mb-10">
-        <h4 className="text-neon font-bold text-[10px] tracking-[0.2em] uppercase mb-4">Price</h4>
-          <div className="relative mb-4 mt-6 h-0.5 w-full bg-zinc-800">
-            <div className="absolute left-1/4 right-0 h-full bg-zinc-500"></div>
-           <div className="absolute left-[30%] -mt-1.5 w-3 h-3 bg-neon"></div>
-        </div>
-          <div className="flex justify-between text-[9px] font-bold tracking-widest text-zinc-400">
-           <span>$0</span>
-           <span>$500+</span>
-        </div>
-      </div>
-
-      {/* Color Section */}
-      <div className="mb-10">
-        <h4 className="text-neon font-bold text-[10px] tracking-[0.2em] uppercase mb-4">Color</h4>
-        <div className="flex flex-wrap gap-2">
-          {colorOptions.map((color) => {
-            const isActive = selectedColor === color.value;
-
+      {/* BRAND SECTION */}
+      <div className="mb-8">
+        <h4 className="font-mono text-xs text-zinc-400 uppercase tracking-widest mb-4">
+          BRAND
+        </h4>
+        <ul className="space-y-3">
+          {brandOptions.map((brand) => {
+            const isChecked = selectedBrand === brand.value;
             return (
-              <button
-                key={color.value}
-                type="button"
-                title={color.label}
-                aria-label={color.label}
-                onClick={() => onFilterChange('color', isActive ? '' : color.value)}
-                className={`h-5 w-5 border focus:outline-none transition-all duration-300 ease-in-out ${color.swatchClass} ${isActive ? 'ring-2 ring-neon ring-offset-2 ring-offset-black' : ''}`}
-              />
+              <li key={brand.label}>
+                <button
+                  type="button"
+                  onClick={() => onFilterChange('brand', isChecked ? '' : brand.value)}
+                  className="flex items-center gap-3 w-full text-left group cursor-pointer"
+                >
+                  <div
+                    className={`w-4 h-4 border transition-colors flex items-center justify-center ${
+                      isChecked
+                        ? 'bg-[#FFCC00] border-[#FFCC00]'
+                        : 'border-zinc-700 bg-[#0A0A0A] group-hover:border-[#FFCC00]'
+                    }`}
+                  >
+                    {isChecked && (
+                      <svg className="w-3 h-3 text-black fill-current" viewBox="0 0 20 20">
+                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                      </svg>
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs font-mono tracking-wider transition-colors ${
+                      isChecked ? 'text-white font-bold' : 'text-zinc-400 group-hover:text-white'
+                    }`}
+                  >
+                    {brand.label}
+                  </span>
+                </button>
+              </li>
             );
           })}
-        </div>
-        {selectedColor && (
-          <button
-            type="button"
-            className="mt-3 text-[10px] uppercase tracking-widest text-zinc-500 transition-all duration-300 ease-in-out hover:text-neon"
-            onClick={() => onFilterChange('color', '')}
-          >
-            Clear Color
-          </button>
-        )}
+        </ul>
       </div>
+
+      {/* Reset Filters */}
+      {(selectedCategory || selectedBrand) && (
+        <button
+          type="button"
+          onClick={() => {
+            onFilterChange('category', '');
+            onFilterChange('brand', '');
+          }}
+          className="w-full text-center text-xs font-mono text-[#FFCC00] hover:underline pt-4 border-t border-[#222222]"
+        >
+          RESET ALL FILTERS
+        </button>
+      )}
     </aside>
   );
 };
 
 export default SidebarFilter;
+
 
 
 
