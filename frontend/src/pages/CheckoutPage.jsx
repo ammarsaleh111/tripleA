@@ -106,9 +106,9 @@ const CheckoutPage = () => {
     return (
       <section className="mx-auto w-full max-w-4xl px-4 py-16 text-white">
         <ChamferCard className="p-12 text-center space-y-4">
-          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">TRANSMISSION CART</span>
-          <h1 className="font-heading font-black italic text-4xl uppercase text-white">YOUR ARSENAL IS EMPTY</h1>
-          <p className="font-mono text-xs text-zinc-400">Add supplements or equipment before proceeding to checkout.</p>
+          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">YOUR CART</span>
+          <h1 className="font-heading font-black text-4xl uppercase text-white">YOUR CART IS EMPTY</h1>
+          <p className="font-mono text-xs text-zinc-400">Add supplements to your cart before proceeding to checkout.</p>
           <div className="pt-4">
             <Link to="/shop" className="btn-primary inline-block text-xs px-8 py-3">
               SHOP SUPPLEMENTS
@@ -122,15 +122,15 @@ const CheckoutPage = () => {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-8 text-white">
       <div className="border-b border-[#282828] pb-6">
-        <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">TRANSMISSION CHECKOUT</span>
-        <h1 className="font-heading font-black italic text-4xl sm:text-6xl uppercase text-white mt-1">FAST CHECKOUT</h1>
+        <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">CHECKOUT</span>
+        <h1 className="font-heading font-black text-4xl sm:text-6xl uppercase text-white mt-1">FAST CHECKOUT</h1>
         <p className="font-mono text-xs text-zinc-400 mt-1 uppercase">CASH ON DELIVERY • DIRECT DISPATCH</p>
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
         <form id="checkout-form" onSubmit={handleConfirmOrder}>
           <ChamferCard className="p-6 sm:p-8 space-y-6">
-            <h2 className="font-heading font-black italic text-2xl uppercase text-white border-b border-[#222222] pb-3">
+            <h2 className="font-heading font-bold text-2xl uppercase text-white border-b border-[#222222] pb-3">
               RECIPIENT & ADDRESS
             </h2>
 

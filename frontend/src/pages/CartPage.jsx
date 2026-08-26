@@ -30,9 +30,9 @@ const CartPage = () => {
       <div className="flex flex-col gap-4 border-b border-[#282828] pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">ORDER SUMMARY</span>
-          <h1 className="font-heading font-black italic text-4xl sm:text-6xl uppercase text-white mt-1">TRANSMISSION BAG</h1>
+          <h1 className="font-heading font-black text-4xl sm:text-6xl uppercase text-white mt-1">YOUR CART</h1>
           <p className="mt-1 font-mono text-xs uppercase tracking-widest text-zinc-400">
-            {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'} IN ARSENAL
+            {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'} IN YOUR CART
           </p>
         </div>
         <Link
@@ -103,7 +103,7 @@ const CartPage = () => {
               return (
                 <article
                   key={item.id}
-                  className="group storefront-surface overflow-hidden p-0 transition-all duration-300 ease-in-out hover:border-white/20 hover:shadow-[0_8px_30px_rgba(57,255,20,0.06)]"
+                  className="group storefront-surface overflow-hidden p-0 transition-all duration-300 ease-in-out hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,204,0,0.06)]"
                   style={{ animationDelay: `${index * 60}ms` }}
                 >
                   <div className="flex flex-col sm:flex-row">

@@ -50,14 +50,14 @@ const ContactPage = () => {
         message: formData.message,
       });
 
-      setStatusMessage('TRANSMISSION CONFIRMED. OUR SUPPORT TEAM WILL RESPOND PROMPTLY.');
+      setStatusMessage('MESSAGE CONFIRMED. OUR SUPPORT TEAM WILL RESPOND PROMPTLY.');
       setFormData((current) => ({
         ...current,
         subject: '',
         message: '',
       }));
     } catch (error) {
-      setErrorMessage(error?.response?.data?.message || 'Unable to submit transmission right now.');
+      setErrorMessage(error?.response?.data?.message || 'Unable to submit message right now.');
     } finally {
       setIsSubmitting(false);
     }
@@ -68,13 +68,13 @@ const ContactPage = () => {
       <ChamferCard className="p-8 sm:p-12 space-y-8">
         <div className="text-center space-y-2 border-b border-[#282828] pb-6">
           <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">
-            TRIPLE A GYM SUPPORT
+            TRIPLE A SUPPORT
           </span>
-          <h1 className="font-heading font-black italic text-4xl sm:text-5xl uppercase text-white">
-            CONTACT HEADQUARTERS
+          <h1 className="font-heading font-black text-4xl sm:text-5xl uppercase text-white">
+            CONTACT US
           </h1>
           <p className="font-mono text-xs text-zinc-400 max-w-xl mx-auto uppercase">
-            Questions regarding memberships, supplement orders, or training protocols.
+            Questions regarding supplement orders, products, or deliveries.
           </p>
         </div>
 
@@ -112,7 +112,7 @@ const ContactPage = () => {
               onChange={(event) => handleFieldChange('subject', event.target.value)}
               type="text"
               required
-              placeholder="TRANSMISSION SUBJECT"
+              placeholder="MESSAGE SUBJECT"
               className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
             />
           </label>
@@ -138,7 +138,7 @@ const ContactPage = () => {
             disabled={isSubmitting}
             className="btn-primary w-full py-4 text-center text-sm disabled:opacity-40"
           >
-            {isSubmitting ? 'TRANSMITTING...' : 'SUBMIT TRANSMISSION'}
+            {isSubmitting ? 'SENDING...' : 'SEND MESSAGE'}
           </button>
         </form>
       </ChamferCard>

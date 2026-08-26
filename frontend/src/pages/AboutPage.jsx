@@ -21,7 +21,7 @@ const AboutPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmissionFeedback('TRANSMISSION SENT. OUR TEAM WILL CONTACT YOU WITHIN 24 HOURS.');
+    setSubmissionFeedback('MESSAGE SENT. OUR TEAM WILL CONTACT YOU WITHIN 24 HOURS.');
     setFormData({ name: '', email: '', plan: 'Strength Acquisition', message: '' });
     setTimeout(() => setSubmissionFeedback(''), 5000);
   };
@@ -127,11 +127,11 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* SECTION 4: STEP UP (CONTACT TRANSMISSION FORM) */}
+      {/* SECTION 4: CONTACT FORM */}
       <section className="mx-auto max-w-[1500px] px-6">
         <ChamferCard className="p-8 sm:p-12 max-w-3xl mx-auto space-y-8">
           <div className="text-center space-y-2">
-            <h2 className="font-heading font-black italic text-4xl uppercase text-white">
+            <h2 className="font-heading font-black text-4xl uppercase text-white">
               STEP UP
             </h2>
             <p className="font-mono text-xs text-zinc-400 uppercase tracking-widest">
@@ -167,15 +167,16 @@ const AboutPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="font-mono text-xs text-zinc-400 uppercase tracking-widest">TARGET PLAN</label>
+              <label className="font-mono text-xs text-zinc-400 uppercase tracking-widest">INQUIRY TYPE</label>
               <select
                 value={formData.plan}
                 onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
                 className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
               >
-                <option value="Strength Acquisition">Strength Acquisition</option>
-                <option value="Olympic Weightlifting">Olympic Weightlifting</option>
-                <option value="Pro Athlete 24/7">Pro Athlete 24/7</option>
+                <option value="Supplement Stack Recommendation">Supplement Stack Recommendation</option>
+                <option value="Order & Shipping Query">Order & Shipping Query</option>
+                <option value="Bulk Inquiry">Bulk Inquiry</option>
+                <option value="General Feedback">General Feedback</option>
               </select>
             </div>
 
@@ -192,7 +193,7 @@ const AboutPage = () => {
             </div>
 
             <button type="submit" className="btn-primary w-full py-4 text-center text-sm">
-              SUBMIT TRANSMISSION
+              SUBMIT MESSAGE
             </button>
 
             {submissionFeedback && (

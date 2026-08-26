@@ -401,7 +401,7 @@ const ProductDetailPage = () => {
                 onClick={() => setActiveImage(index)}
                 className={`overflow-hidden rounded-lg border transition-all duration-300 ${
                   activeImage === index
-                    ? 'border-neon shadow-[0_0_0_1px_rgba(57,255,20,0.35)]'
+                    ? 'border-[#FFCC00] shadow-[0_0_0_1px_rgba(255,204,0,0.35)]'
                     : 'border-white/10 hover:border-white/35'
                 }`}
                 aria-label={`Show image ${index + 1}`}
@@ -418,9 +418,9 @@ const ProductDetailPage = () => {
           <p className="mt-3 text-sm leading-relaxed text-white/70">{shortDescription}</p>
 
           <div className="mt-5 flex items-end justify-between gap-4">
-            <p className="text-4xl font-bold text-neon">{product.price.toFixed(2)} EGP</p>
+            <p className="text-4xl font-bold text-[#FFCC00]">${product.price.toFixed(2)}</p>
             <div className="flex items-center gap-1">
-              <div className="flex text-neon">
+              <div className="flex text-[#FFCC00]">
                 {[...Array(5)].map((_, index) => (
                   <svg
                     key={`rating-star-${index}`}
@@ -440,7 +440,7 @@ const ProductDetailPage = () => {
           <div className="mt-6 space-y-7">
             <div>
               <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                Color / {selectedColor?.name?.split(' / ')[1] || selectedColor?.name || 'N/A'}
+                Flavor / {selectedColor?.name || 'N/A'}
               </p>
               <div className="flex flex-wrap gap-2">
                 {product.colors.length > 0 ? (
@@ -451,10 +451,10 @@ const ProductDetailPage = () => {
                       onClick={() => setSelectedColor(color)}
                       className={`h-9 w-9 rounded-full border-2 p-0.5 transition-all duration-300 ease-in-out ${
                         selectedColor?.id === color.id
-                          ? 'border-neon shadow-[0_0_0_1px_rgba(57,255,20,0.35)]'
+                          ? 'border-[#FFCC00] shadow-[0_0_0_1px_rgba(255,204,0,0.35)]'
                           : 'border-transparent hover:border-zinc-500'
                       }`}
-                      aria-label={`Select color ${color.name}`}
+                      aria-label={`Select flavor ${color.name}`}
                     >
                       <span
                         className="block h-full w-full rounded-full border border-white/20"
@@ -463,7 +463,7 @@ const ProductDetailPage = () => {
                     </button>
                   ))
                 ) : (
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">No color options</p>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">No flavor options</p>
                 )}
               </div>
             </div>
@@ -531,7 +531,7 @@ const ProductDetailPage = () => {
             disabled={!canAddToCart}
             className="btn-primary mt-7 flex w-full items-center justify-center gap-2 py-4 disabled:opacity-40"
           >
-            {selectedStock > 0 ? 'ADD TO TRANSMISSION' : 'UNAVAILABLE'}
+            {selectedStock > 0 ? 'ADD TO CART' : 'UNAVAILABLE'}
           </button>
 
           <button

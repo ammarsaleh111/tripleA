@@ -53,12 +53,12 @@ const OrderSuccessPage = () => {
 
         {/* Main Title */}
         <div className="space-y-2">
-          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">TRANSMISSION ID: #{orderId || 'TRIPLEA-8821'}</span>
-          <h1 className="font-heading font-black italic text-4xl sm:text-5xl uppercase text-white">
+          <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">ORDER ID: #{orderId || 'TRIPLEA-8821'}</span>
+          <h1 className="font-heading font-black text-4xl sm:text-5xl uppercase text-white">
             ORDER CONFIRMED
           </h1>
           <p className="font-mono text-xs text-zinc-400 max-w-md mx-auto uppercase">
-            Your supplement & gear order has been received by TRIPLE A GYM headquarters.
+            Your supplement order has been received by TRIPLE A.
           </p>
         </div>
 

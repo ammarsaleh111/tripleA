@@ -109,8 +109,8 @@ const CartSidebar = ({ isOpen, onClose }) => {
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-[#FFCC00]" />
             <div>
-              <h2 className="font-heading font-black italic text-lg uppercase tracking-wider text-white">
-                TRANSMISSION CART
+              <h2 className="font-heading font-black text-lg uppercase tracking-wider text-white">
+                YOUR CART
               </h2>
               <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-400">
                 {itemCount} {itemCount === 1 ? 'ITEM' : 'ITEMS'} SELECTED
@@ -134,7 +134,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
           {cartLoading && !cartItems.length && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#FFCC00]/20 border-t-[#FFCC00]" />
-              <p className="mt-4 font-mono text-xs uppercase tracking-widest text-zinc-400">Syncing transmission...</p>
+              <p className="mt-4 font-mono text-xs uppercase tracking-widest text-zinc-400">Syncing cart...</p>
             </div>
           )}
 
