@@ -6,6 +6,9 @@ import { useAppContext } from '../context/AppContext.jsx';
 const getPostAuthRoute = (role) =>
   String(role || '').trim().toLowerCase() === 'admin' ? '/admin' : '/dashboard';
 
+const AUTH_VISUAL_IMAGE =
+  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop';
+
 const AuthPage = ({ initialMode = 'login' }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -65,91 +68,131 @@ const AuthPage = ({ initialMode = 'login' }) => {
     setResetMessage('If an account exists, a password reset link has been queued.');
   };
 
-  const inputClass = 'w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3.5 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input';
+  const inputClass =
+    'w-full bg-[#050506] border border-[#1C1C26] text-white px-4 py-3.5 font-mono text-xs focus:border-[#FFCC00] focus:outline-none rounded-xl placeholder:text-zinc-600';
 
   return (
-    <div className="auth-page flex min-h-screen flex-col overflow-x-hidden bg-[#0A0A0A] font-sans text-[#FFF8E7] selection:bg-[#FFCC00] selection:text-black md:flex-row">
-      <div className="auth-visual relative flex min-h-[42vh] w-full flex-col justify-between overflow-hidden border-r border-[#282828] bg-black p-6 sm:min-h-[50vh] sm:p-8 md:min-h-screen md:w-1/2 md:p-12 lg:p-16">
-        <div className="absolute inset-0 z-0 opacity-40 mix-blend-luminosity bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop")' }} />
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-[#050506] font-sans text-white selection:bg-[#FFCC00] selection:text-black md:flex-row">
+      {/* Brand Visual Panel */}
+      <div className="auth-visual relative flex min-h-[42vh] w-full flex-col justify-between overflow-hidden bg-black p-6 sm:min-h-[50vh] sm:p-8 md:min-h-screen md:w-1/2 md:p-12 lg:p-16">
+        <div
+          className="absolute inset-0 z-0 opacity-30 bg-cover bg-center filter grayscale contrast-125"
+          style={{ backgroundImage: `url("${AUTH_VISUAL_IMAGE}")` }}
+        />
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050506] via-black/70 to-black/85" />
 
         <div className="relative z-10">
-          <Link to="/" className="font-heading font-black italic text-3xl tracking-tighter text-[#FFCC00]">
-            TRIPLE A GYM
+          <Link
+            to="/"
+            className="font-heading font-black text-3xl tracking-tighter text-[#FFCC00] transition-colors hover:text-yellow-300"
+          >
+            TRIPLE A
           </Link>
         </div>
 
-        <div className="relative z-10 mt-auto">
-          <h2 className="mb-4 font-heading font-black italic text-5xl sm:text-6xl md:text-7xl uppercase leading-none tracking-tight">
-            <span className="text-white block">INDUSTRIAL</span>
-            <span className="text-[#FFCC00] block">MEMBERSHIP</span>
+        <div className="relative z-10 mt-auto space-y-4">
+          <div className="inline-flex items-center gap-2.5 border border-[#FFCC00]/40 bg-black/80 px-5 py-2 rounded-full backdrop-blur-md">
+            <span className="h-2 w-2 animate-ping rounded-full bg-[#FFCC00]" />
+            <span className="font-mono text-xs font-extrabold uppercase tracking-widest text-[#FFCC00]">
+              ELITE NUTRITION STACK
+            </span>
+          </div>
+
+          <h2 className="font-heading font-black text-5xl uppercase leading-[0.9] tracking-tight sm:text-6xl md:text-7xl">
+            <span className="block text-white">FUEL YOUR</span>
+            <span className="block text-[#FFCC00]">PERFORMANCE.</span>
           </h2>
-          <p className="mb-8 max-w-md font-mono text-xs leading-relaxed text-zinc-400 uppercase tracking-wider">
-            Sign in to access your athlete dashboard, active orders, and pro membership benefits.
+          <p className="mb-6 max-w-md font-mono text-xs uppercase leading-relaxed tracking-wider text-zinc-400">
+            Sign in to track your orders, manage your supplement stack, and unlock member-only offers.
           </p>
-          <div className="font-mono text-xs tracking-widest text-zinc-600 uppercase">SUPPLEMENTS / ACCESS / STRENGTH</div>
+          <div className="font-mono text-xs uppercase tracking-widest text-zinc-600">
+            PERFORMANCE / RECOVERY / RESULTS
+          </div>
         </div>
       </div>
 
-      <div className="auth-panel relative flex min-h-screen w-full items-center justify-center bg-[#141414] p-5 sm:p-8 md:w-1/2 md:p-12">
+      {/* Form Panel */}
+      <div className="relative flex min-h-screen w-full items-center justify-center bg-[#0B0B0E] p-5 sm:p-8 md:w-1/2 md:p-12">
         <Link
           to="/"
-          className="absolute right-5 top-5 z-20 font-mono text-xs uppercase tracking-widest text-zinc-400 hover:text-[#FFCC00] sm:right-8 sm:top-8"
+          className="absolute right-5 top-5 z-20 font-mono text-xs uppercase tracking-widest text-zinc-400 transition-colors hover:text-[#FFCC00] sm:right-8 sm:top-8"
         >
           ← RETURN HOME
         </Link>
-      
-        <div className="w-full max-w-md relative z-10">
+
+        <div className="relative z-10 w-full max-w-md">
           {isResetMode ? (
             <div>
-              <div className="mb-12 border-b border-dark-border pb-4">
-                <p className="text-[10px] font-bold tracking-[0.22em] text-neon uppercase">Password Recovery</p>
-                <h2 className="mt-3 text-3xl font-display font-black uppercase tracking-tighter text-white">Reset Access</h2>
-                <p className="mt-4 text-sm leading-6 text-gray-400">
+              <div className="mb-12 border-b border-[#1C1C26] pb-4">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-[#FFCC00]">
+                  Password Recovery
+                </p>
+                <h2 className="mt-3 font-heading text-3xl font-black uppercase tracking-tight text-white">
+                  Reset Access
+                </h2>
+                <p className="mt-4 text-sm leading-6 text-zinc-400">
                   Enter your email and we&apos;ll send a reset link.
                 </p>
               </div>
 
               <form onSubmit={handleResetSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase">Email Address</label>
+                  <label className="block font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+                    Email Address
+                  </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    placeholder="name@tripleagym.com"
+                    placeholder="name@triplea-supplements.com"
                     className={inputClass}
                     required
                   />
                 </div>
 
-                {resetMessage && <p className="text-[11px] tracking-widest uppercase text-neon">{resetMessage}</p>}
+                {resetMessage && (
+                  <p className="font-mono text-[11px] uppercase tracking-widest text-[#FFCC00]">{resetMessage}</p>
+                )}
 
-                <button type="submit" className="w-full bg-[var(--theme-accent)] text-black font-display font-bold text-sm tracking-widest uppercase py-4 mt-6 hover:bg-[var(--theme-accent-hover)] transition-colors">
+                <button
+                  type="submit"
+                  className="mt-6 w-full rounded-xl bg-[#FFCC00] py-4 font-heading text-sm font-bold uppercase tracking-widest text-black shadow-lg transition-all hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-[0_0_25px_rgba(255,204,0,0.4)]"
+                >
                   Send Reset Link
                 </button>
 
-                <Link to="/auth" className="block text-center text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors">
+                <Link
+                  to="/auth"
+                  className="block text-center font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:text-white"
+                >
                   Back to Login
                 </Link>
               </form>
             </div>
           ) : (
             <>
-              <div className="mb-10 flex flex-wrap gap-x-8 gap-y-3 border-b border-dark-border sm:mb-12">
+              <div className="mb-10 flex flex-wrap gap-x-8 gap-y-3 border-b border-[#1C1C26] sm:mb-12">
                 <button
                   type="button"
                   onClick={() => setActiveTab('login')}
-                  className={`pb-4 font-heading font-black italic text-lg tracking-wider uppercase transition-colors ${activeTab === 'login' ? 'text-[#FFCC00] border-b-2 border-[#FFCC00]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  className={`pb-4 font-heading text-lg font-black uppercase tracking-wider transition-colors ${
+                    activeTab === 'login'
+                      ? 'border-b-2 border-[#FFCC00] text-[#FFCC00]'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
                 >
                   LOGIN
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('register')}
-                  className={`pb-4 font-heading font-black italic text-lg tracking-wider uppercase transition-colors ${activeTab === 'register' ? 'text-[#FFCC00] border-b-2 border-[#FFCC00]' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  className={`pb-4 font-heading text-lg font-black uppercase tracking-wider transition-colors ${
+                    activeTab === 'register'
+                      ? 'border-b-2 border-[#FFCC00] text-[#FFCC00]'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
                 >
-                  JOIN GYM
+                  JOIN TRIPLE A
                 </button>
               </div>
 
@@ -157,7 +200,9 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 {activeTab === 'register' && (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">First Name</label>
+                      <label className="block font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+                        First Name
+                      </label>
                       <input
                         type="text"
                         value={firstName}
@@ -169,7 +214,9 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">Last Name</label>
+                      <label className="block font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+                        Last Name
+                      </label>
                       <input
                         type="text"
                         value={lastName}
@@ -183,22 +230,29 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 )}
 
                 <div className="space-y-2">
-                  <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">Email Address</label>
+                  <label className="block font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+                    Email Address
+                  </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    placeholder="athlete@tripleagym.com"
+                    placeholder="athlete@triplea-supplements.com"
                     className={inputClass}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="block font-mono text-xs font-bold tracking-widest text-zinc-400 uppercase">Password</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block font-mono text-xs font-bold uppercase tracking-widest text-zinc-400">
+                      Password
+                    </label>
                     {activeTab === 'login' && (
-                      <Link to="/auth/reset-password" className="font-mono text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[#FFCC00] transition-colors">
+                      <Link
+                        to="/auth/reset-password"
+                        className="font-mono text-[10px] uppercase tracking-wider text-zinc-500 transition-colors hover:text-[#FFCC00]"
+                      >
                         FORGOT PASSWORD?
                       </Link>
                     )}
@@ -215,7 +269,7 @@ const AuthPage = ({ initialMode = 'login' }) => {
                     <button
                       type="button"
                       onClick={() => setShowPassword((current) => !current)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors font-mono text-xs"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-xs text-zinc-500 transition-colors hover:text-white"
                     >
                       {showPassword ? 'HIDE' : 'SHOW'}
                     </button>
@@ -223,42 +277,49 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 </div>
 
                 {activeTab === 'login' && (
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center w-4 h-4 border border-zinc-700 bg-transparent group-hover:border-[#FFCC00] transition-colors">
+                  <label className="group flex cursor-pointer items-center gap-3">
+                    <div className="relative flex h-4 w-4 items-center justify-center rounded-sm border border-zinc-700 transition-colors group-hover:border-[#FFCC00]">
                       <input
                         type="checkbox"
                         checked={stayAuthenticated}
                         onChange={(event) => setStayAuthenticated(event.target.checked)}
                         className="sr-only"
                       />
-                      {stayAuthenticated && <div className="w-2 h-2 bg-[#FFCC00]" />}
+                      {stayAuthenticated && <div className="h-2 w-2 rounded-sm bg-[#FFCC00]" />}
                     </div>
-                    <span className="font-mono text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors uppercase">
+                    <span className="font-mono text-xs uppercase tracking-widest text-zinc-400 transition-colors group-hover:text-zinc-300">
                       KEEP ME SIGNED IN
                     </span>
                   </label>
                 )}
 
-                {errorMessage && <p className="font-mono text-xs tracking-widest uppercase text-red-400 font-bold">{errorMessage}</p>}
+                {errorMessage && (
+                  <p className="font-mono text-xs font-bold uppercase tracking-widest text-red-400">{errorMessage}</p>
+                )}
 
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="btn-primary w-full py-4 mt-6 text-center text-sm disabled:opacity-40"
+                  className="mt-6 w-full rounded-xl bg-[#FFCC00] py-4 text-center font-heading text-sm font-bold uppercase tracking-widest text-black shadow-lg transition-all hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-[0_0_25px_rgba(255,204,0,0.4)] disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-lg"
                 >
-                  {authLoading ? 'PROCESSING...' : activeTab === 'register' ? 'JOIN TRIPLE A GYM' : 'MEMBER LOGIN'}
+                  {authLoading ? 'PROCESSING...' : activeTab === 'register' ? 'CREATE ACCOUNT' : 'LOGIN'}
                 </button>
               </form>
 
-              <div className="flex items-center gap-4 my-10">
-                <div className="h-px bg-dark-border flex-1" />
-                <span className="text-[10px] text-gray-500 tracking-[0.2em] uppercase">Other Options</span>
-                <div className="h-px bg-dark-border flex-1" />
+              <div className="my-10 flex items-center gap-4">
+                <div className="h-px flex-1 bg-[#1C1C26]" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                  Other Options
+                </span>
+                <div className="h-px flex-1 bg-[#1C1C26]" />
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row">
-                <Link to="/help?topic=oauth" className="flex-1 flex items-center justify-center gap-3 bg-[#1a1a1a] hover:bg-[#222] transition-colors py-4 text-xs font-bold tracking-widest text-white uppercase border border-dark-border">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <Link
+                  to="/help?topic=oauth"
+                  className="flex flex-1 items-center justify-center gap-3 rounded-xl border border-[#1C1C26] bg-[#14141E] py-4 font-mono text-xs font-bold uppercase tracking-widest text-white transition-colors hover:border-[#FFCC00]/60"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                     <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                     <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -266,8 +327,11 @@ const AuthPage = ({ initialMode = 'login' }) => {
                   </svg>
                   Google
                 </Link>
-                <Link to="/help?topic=oauth" className="flex-1 flex items-center justify-center gap-3 bg-[#1a1a1a] hover:bg-[#222] transition-colors py-4 text-xs font-bold tracking-widest text-white uppercase border border-dark-border">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <Link
+                  to="/help?topic=oauth"
+                  className="flex flex-1 items-center justify-center gap-3 rounded-xl border border-[#1C1C26] bg-[#14141E] py-4 font-mono text-xs font-bold uppercase tracking-widest text-white transition-colors hover:border-[#FFCC00]/60"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.04 2.26-.82 3.59-.83 1.58.07 2.87.68 3.65 1.76-3.21 1.87-2.8 5.86.3 7.03-.78 1.83-1.63 3.29-2.62 4.21z" />
                     <path d="M12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
                   </svg>
@@ -275,15 +339,16 @@ const AuthPage = ({ initialMode = 'login' }) => {
                 </Link>
               </div>
 
-              <p className="mt-12 text-center text-[9px] leading-relaxed text-gray-500 uppercase tracking-widest max-w-xs mx-auto">
+              <p className="mx-auto mt-12 max-w-xs text-center font-mono text-[9px] uppercase leading-relaxed tracking-widest text-zinc-500">
                 By continuing, you agree to our{' '}
-                <Link to="/terms" className="border-b border-gray-600 hover:text-white hover:border-white transition-colors">
+                <Link to="/terms" className="border-b border-zinc-600 transition-colors hover:border-white hover:text-white">
                   Terms
                 </Link>{' '}
                 and{' '}
-                <Link to="/privacy" className="border-b border-gray-600 hover:text-white hover:border-white transition-colors">
+                <Link to="/privacy" className="border-b border-zinc-600 transition-colors hover:border-white hover:text-white">
                   Privacy Policy
-                </Link>.
+                </Link>
+                .
               </p>
             </>
           )}
@@ -294,4 +359,3 @@ const AuthPage = ({ initialMode = 'login' }) => {
 };
 
 export default AuthPage;
-

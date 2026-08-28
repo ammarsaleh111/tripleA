@@ -47,7 +47,7 @@ const OrderSuccessPage = () => {
     <section className="mx-auto w-full max-w-3xl px-4 py-12 text-white">
       <ChamferCard className="p-8 sm:p-12 text-center space-y-6">
         {/* Status Badge Icon */}
-        <div className="mx-auto w-20 h-20 bg-[#FFCC00] text-black font-mono font-bold text-3xl flex items-center justify-center chamfer-badge shadow-[0_0_30px_rgba(255,204,0,0.3)]">
+        <div className="mx-auto h-20 w-20 rounded-xl bg-[#FFCC00] text-black font-mono font-bold text-3xl flex items-center justify-center shadow-[0_0_30px_rgba(255,204,0,0.3)]">
           ✓
         </div>
 
@@ -143,7 +143,7 @@ const OrderSuccessPage = () => {
           <button
             type="button"
             onClick={() => navigate('/shop')}
-            className="storefront-secondary px-6"
+            className="rounded-xl border border-[#22222E] bg-[#14141E] px-6 py-3 font-heading text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-[#FFCC00] hover:text-[#FFCC00]"
           >
             Continue Shopping
           </button>

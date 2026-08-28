@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAppContext } from '../context/AppContext.jsx';
@@ -10,7 +10,7 @@ const FALLBACK_IMAGE =
 const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 const inputClassName =
-  'w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input placeholder:text-zinc-600';
+  'w-full bg-[#050506] border border-[#1C1C26] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none rounded-xl placeholder:text-zinc-600';
 
 const createInitialForm = (user) => ({
   name: [user?.firstName, user?.lastName].filter(Boolean).join(' '),
@@ -121,16 +121,16 @@ const CheckoutPage = () => {
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-8 text-white">
-      <div className="border-b border-[#282828] pb-6">
+      <div className="border-b border-[#1C1C24] pb-6">
         <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">CHECKOUT</span>
         <h1 className="font-heading font-black text-4xl sm:text-6xl uppercase text-white mt-1">FAST CHECKOUT</h1>
-        <p className="font-mono text-xs text-zinc-400 mt-1 uppercase">CASH ON DELIVERY • DIRECT DISPATCH</p>
+        <p className="font-mono text-xs text-zinc-400 mt-1 uppercase">CASH ON DELIVERY â€¢ DIRECT DISPATCH</p>
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
         <form id="checkout-form" onSubmit={handleConfirmOrder}>
           <ChamferCard className="p-6 sm:p-8 space-y-6">
-            <h2 className="font-heading font-bold text-2xl uppercase text-white border-b border-[#222222] pb-3">
+            <h2 className="font-heading font-bold text-2xl uppercase text-white border-b border-[#1C1C26] pb-3">
               RECIPIENT & ADDRESS
             </h2>
 
@@ -176,35 +176,35 @@ const CheckoutPage = () => {
 
         <aside>
           <ChamferCard className="p-6 space-y-6 lg:sticky lg:top-24">
-            <div className="flex items-center justify-between border-b border-[#222222] pb-4">
+            <div className="flex items-center justify-between border-b border-[#1C1C26] pb-4">
               <div>
                 <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">SUMMARY</span>
-                <h3 className="font-heading font-black italic text-xl uppercase text-white">{itemCount} ITEMS</h3>
+                <h3 className="font-heading font-black text-xl uppercase text-white">{itemCount} ITEMS</h3>
               </div>
-              <span className="bg-[#FFCC00] text-black font-mono font-extrabold text-[10px] uppercase tracking-widest px-2.5 py-1 chamfer-badge">
+              <span className="bg-[#FFCC00] text-black font-mono font-extrabold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md">
                 COD PAY
               </span>
             </div>
 
             <div className="max-h-[280px] space-y-3 overflow-y-auto pr-1">
               {items.map((item) => (
-                <article key={item.id} className="flex gap-3 bg-[#0A0A0A] border border-[#222222] p-3 chamfer-box">
-                  <img src={item.imageUrl || FALLBACK_IMAGE} alt={item.name || 'Cart item'} className="h-16 w-14 border border-[#222222] object-contain bg-[#141414] p-1" />
+                <article key={item.id} className="flex gap-3 rounded-lg border border-[#1C1C26] bg-[#050506] p-3">
+                  <img src={item.imageUrl || FALLBACK_IMAGE} alt={item.name || 'Cart item'} className="h-16 w-14 border border-[#1C1C26] object-contain bg-[#14141E] p-1" />
                   <div className="min-w-0 flex-1 space-y-1">
-                    <p className="truncate font-heading font-black italic text-xs uppercase text-white">{item.name}</p>
+                    <p className="truncate font-heading font-black text-xs uppercase text-white">{item.name}</p>
                     <p className="font-mono text-[10px] uppercase text-zinc-500">QTY {item.quantity}</p>
                   </div>
-                  <p className="font-heading font-black italic text-sm text-[#FFCC00]">{formatMoney(item.lineTotal || item.unitPrice * item.quantity || 0)}</p>
+                  <p className="font-heading font-black text-sm text-[#FFCC00]">{formatMoney(item.lineTotal || item.unitPrice * item.quantity || 0)}</p>
                 </article>
               ))}
             </div>
 
-            <div className="border-t border-[#222222] pt-4 font-mono text-xs space-y-2">
+            <div className="border-t border-[#1C1C26] pt-4 font-mono text-xs space-y-2">
               <div className="flex justify-between text-zinc-400"><span>SUBTOTAL</span><span>{formatMoney(subtotal)}</span></div>
               <div className="flex justify-between text-zinc-400"><span>DISPATCH & SHIPPING</span><span>{formatMoney(shipping)}</span></div>
-              <div className="flex justify-between border-t border-[#222222] pt-3 text-base font-bold text-white">
+              <div className="flex justify-between border-t border-[#1C1C26] pt-3 text-base font-bold text-white">
                 <span>TOTAL</span>
-                <span className="text-[#FFCC00] font-heading font-black italic text-xl">{formatMoney(total)}</span>
+                <span className="text-[#FFCC00] font-heading font-black text-xl">{formatMoney(total)}</span>
               </div>
             </div>
 

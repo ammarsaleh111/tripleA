@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 
 import { useAppContext } from '../context/AppContext.jsx';
 import { submitContactMessage } from '../services/api/contact.js';
@@ -66,7 +66,7 @@ const ContactPage = () => {
   return (
     <section className="mx-auto w-full max-w-4xl px-4 py-8 text-white">
       <ChamferCard className="p-8 sm:p-12 space-y-8">
-        <div className="text-center space-y-2 border-b border-[#282828] pb-6">
+        <div className="text-center space-y-2 border-b border-[#1C1C26] pb-6">
           <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">
             TRIPLE A SUPPORT
           </span>
@@ -88,7 +88,7 @@ const ContactPage = () => {
                 type="text"
                 required
                 placeholder="ENTER FULL NAME"
-                className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
+                className="w-full bg-[#050506] border border-[#1C1C26] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none rounded-xl placeholder:text-zinc-600"
               />
             </label>
 
@@ -100,7 +100,7 @@ const ContactPage = () => {
                 type="email"
                 required
                 placeholder="ENTER EMAIL ADDRESS"
-                className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
+                className="w-full bg-[#050506] border border-[#1C1C26] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none rounded-xl placeholder:text-zinc-600"
               />
             </label>
           </div>
@@ -113,7 +113,7 @@ const ContactPage = () => {
               type="text"
               required
               placeholder="MESSAGE SUBJECT"
-              className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input"
+              className="w-full bg-[#050506] border border-[#1C1C26] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none rounded-xl placeholder:text-zinc-600"
             />
           </label>
 
@@ -126,7 +126,7 @@ const ContactPage = () => {
               minLength={10}
               rows={6}
               placeholder="WRITE YOUR MESSAGE..."
-              className="w-full bg-[#0A0A0A] border border-[#282828] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none chamfer-input resize-none"
+              className="w-full bg-[#050506] border border-[#1C1C26] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none rounded-xl placeholder:text-zinc-600 resize-none"
             />
           </label>
 

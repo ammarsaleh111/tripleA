@@ -31,13 +31,13 @@ const statusTheme = {
   },
   processing: {
     label: 'Processing',
-    text: 'text-[var(--theme-accent)]',
-    surface: 'border-[var(--theme-accent)]/30 bg-[var(--theme-accent)]/10',
+    text: 'text-[#FFCC00]',
+    surface: 'border-[#FFCC00]/30 bg-[#FFCC00]/10',
   },
   shipped: {
     label: 'Shipped',
-    text: 'text-white/80',
-    surface: 'border-white/20 bg-white/5',
+    text: 'text-zinc-300',
+    surface: 'border-[#222230] bg-[#14141E]',
   },
   delivered: {
     label: 'Delivered',
@@ -78,22 +78,6 @@ const UserDashboardPage = () => {
 
     return undefined;
   }, [authToken, role]);
-
-  if (!authToken) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (!authUser) {
-    return (
-      <section className="mx-auto flex min-h-[65vh] w-full max-w-5xl items-center justify-center px-6 py-20 text-center">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-white/55">Restoring your dashboard...</p>
-      </section>
-    );
-  }
-
-  if (role === 'admin') {
-    return <Navigate to="/admin" replace />;
-  }
 
   const safeOrders = useMemo(() => {
     const value = Array.isArray(orders) ? [...orders] : [];
@@ -137,6 +121,24 @@ const UserDashboardPage = () => {
     };
   }, [safeOrders]);
 
+  if (!authToken) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!authUser) {
+    return (
+      <section className="mx-auto flex min-h-[65vh] w-full max-w-5xl items-center justify-center px-6 py-20 text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-[#FFCC00]">
+          Restoring your dashboard...
+        </p>
+      </section>
+    );
+  }
+
+  if (role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
   const recentOrders = safeOrders.slice(0, 6);
 
   const handleRefreshOrders = async () => {
@@ -149,133 +151,172 @@ const UserDashboardPage = () => {
   };
 
   return (
-    <section className="mx-auto w-full max-w-[1540px] px-2 py-3 text-white md:px-4">
-      <div className="storefront-shell p-5 sm:p-7">
+    <section className="mx-auto w-full max-w-[1500px] px-4 py-8 text-white sm:px-6">
+      {/* Hero Panel */}
+      <div className="rounded-2xl border border-[#1C1C26] bg-[#0B0B0E] p-6 sm:p-10">
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <p className="storefront-kicker">Customer Dashboard</p>
-            <h1 className="storefront-title mt-4 text-[clamp(3rem,7vw,5.6rem)] text-white">
-              Welcome, {authUser.firstName || 'Member'}
+            <p className="font-mono text-xs font-extrabold uppercase tracking-widest text-[#FFCC00]">
+              Customer Dashboard
+            </p>
+            <h1 className="mt-4 font-heading text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">
+              Welcome, {authUser.firstName || 'Athlete'}
             </h1>
-            <p className="storefront-subtitle mt-3 max-w-2xl">
+            <p className="mt-3 max-w-2xl font-mono text-xs uppercase tracking-wider leading-relaxed text-zinc-400">
               Manage your account, track your orders, and continue shopping from one place.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              <span className="storefront-chip">{authUser.tierStatus || 'Member'} Tier</span>
-              <span className="storefront-chip">{Number(authUser.rewardPoints || 0)} Points</span>
-              <span className="storefront-chip">Latest: {dashboardStats.latestOrderDate}</span>
+              <span className="rounded-full border border-[#222230] bg-[#14141E] px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-300">
+                {authUser.tierStatus || 'Member'} Tier
+              </span>
+              <span className="rounded-full border border-[#222230] bg-[#14141E] px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-300">
+                {Number(authUser.rewardPoints || 0)} Points
+              </span>
+              <span className="rounded-full border border-[#222230] bg-[#14141E] px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-300">
+                Latest: {dashboardStats.latestOrderDate}
+              </span>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/shop" className="storefront-primary px-6">
+              <Link
+                to="/shop"
+                className="rounded-xl bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-[0_0_25px_rgba(255,204,0,0.4)]"
+              >
                 Continue Shopping
               </Link>
-              <Link to="/cart" className="storefront-secondary px-6">
+              <Link
+                to="/cart"
+                className="rounded-xl border border-[#22222E] bg-[#14141E] px-6 py-3 font-heading text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-[#FFCC00] hover:text-[#FFCC00]"
+              >
                 Open Cart
               </Link>
-              <Link to="/" className="storefront-secondary px-6">
+              <Link
+                to="/"
+                className="rounded-xl border border-[#22222E] bg-[#14141E] px-6 py-3 font-heading text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-[#FFCC00] hover:text-[#FFCC00]"
+              >
                 Home
               </Link>
             </div>
           </div>
 
-          <aside className="storefront-surface p-5 sm:p-6">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">Account Snapshot</p>
+          <aside className="rounded-xl border border-[#1C1C26] bg-[#0B0B0F] p-5 sm:p-6">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Account Snapshot</p>
             <div className="mt-4 grid gap-3 text-sm">
-              <div className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-                <span className="text-white/55">Member Since</span>
-                <span className="font-semibold text-white">{authUser.createdAt ? formatOrderDate(authUser.createdAt) : 'Unknown'}</span>
+              <div className="flex items-center justify-between rounded-lg border border-[#1C1C26] bg-[#050506] px-3 py-2">
+                <span className="text-zinc-500">Member Since</span>
+                <span className="font-semibold text-white">
+                  {authUser.createdAt ? formatOrderDate(authUser.createdAt) : 'Unknown'}
+                </span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-                <span className="text-white/55">Active Orders</span>
-                <span className="font-semibold text-neon">{dashboardStats.activeOrders}</span>
+              <div className="flex items-center justify-between rounded-lg border border-[#1C1C26] bg-[#050506] px-3 py-2">
+                <span className="text-zinc-500">Active Orders</span>
+                <span className="font-semibold text-[#FFCC00]">{dashboardStats.activeOrders}</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-                <span className="text-white/55">Average Order</span>
+              <div className="flex items-center justify-between rounded-lg border border-[#1C1C26] bg-[#050506] px-3 py-2">
+                <span className="text-zinc-500">Average Order</span>
                 <span className="font-semibold text-white">{currencyFormatter.format(dashboardStats.averageOrderValue)}</span>
               </div>
-              <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Primary Email</p>
-                <p className="mt-1 text-sm font-semibold text-white break-all">{authUser.email || 'Not set'}</p>
+              <div className="rounded-lg border border-[#1C1C26] bg-[#050506] px-3 py-2">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Primary Email</p>
+                <p className="mt-1 break-all text-sm font-semibold text-white">{authUser.email || 'Not set'}</p>
               </div>
             </div>
           </aside>
         </div>
 
+        {/* Stat Cards */}
         <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <article className="storefront-surface p-4">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Total Orders</p>
-            <p className="mt-2 text-3xl font-bold text-white">{dashboardStats.totalOrders}</p>
+          <article className="rounded-xl border border-[#1C1C26] bg-[#0B0B0F] p-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Total Orders</p>
+            <p className="mt-2 font-heading text-3xl font-black text-white">{dashboardStats.totalOrders}</p>
           </article>
-          <article className="storefront-surface p-4">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Total Spend</p>
-            <p className="mt-2 text-3xl font-bold text-neon">{currencyFormatter.format(dashboardStats.totalSpent)}</p>
+          <article className="rounded-xl border border-[#1C1C26] bg-[#0B0B0F] p-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Total Spend</p>
+            <p className="mt-2 font-heading text-3xl font-black text-[#FFCC00]">
+              {currencyFormatter.format(dashboardStats.totalSpent)}
+            </p>
           </article>
-          <article className="storefront-surface p-4">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Average Order</p>
-            <p className="mt-2 text-3xl font-bold text-white">{currencyFormatter.format(dashboardStats.averageOrderValue)}</p>
+          <article className="rounded-xl border border-[#1C1C26] bg-[#0B0B0F] p-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Average Order</p>
+            <p className="mt-2 font-heading text-3xl font-black text-white">
+              {currencyFormatter.format(dashboardStats.averageOrderValue)}
+            </p>
           </article>
-          <article className="storefront-surface p-4">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-white/50">Reward Points</p>
-            <p className="mt-2 text-3xl font-bold text-white">{Number(authUser.rewardPoints || 0)}</p>
+          <article className="rounded-xl border border-[#1C1C26] bg-[#0B0B0F] p-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Reward Points</p>
+            <p className="mt-2 font-heading text-3xl font-black text-white">{Number(authUser.rewardPoints || 0)}</p>
           </article>
         </div>
 
+        {/* Status Counts */}
         <div className="mt-5 grid gap-3 md:grid-cols-5">
           {statusKeys.map((key) => {
             const config = statusTheme[key];
             return (
-              <article key={key} className={`storefront-surface p-3 ${config.surface}`}>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-white/60">{config.label}</p>
-                <p className={`mt-1 text-2xl font-bold ${config.text}`}>{dashboardStats.statusCounts[key]}</p>
+              <article key={key} className={`rounded-xl border bg-[#0B0B0F] p-3 ${config.surface}`}>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">{config.label}</p>
+                <p className={`mt-1 font-heading text-2xl font-black ${config.text}`}>
+                  {dashboardStats.statusCounts[key]}
+                </p>
               </article>
             );
           })}
         </div>
       </div>
 
+      {/* Profile + Orders */}
       <div className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <article className="storefront-surface p-5 sm:p-6">
-          <div className="flex items-end justify-between gap-3 border-b border-white/10 pb-4">
+        <article className="rounded-2xl border border-[#1C1C26] bg-[#0B0B0E] p-5 sm:p-6">
+          <div className="flex items-end justify-between gap-3 border-b border-[#1C1C26] pb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-neon">Profile</p>
-              <h2 className="storefront-title mt-2 text-[clamp(2.2rem,6vw,3.6rem)] text-white">Saved Details</h2>
+              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#FFCC00]">Profile</p>
+              <h2 className="mt-2 font-heading text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+                Saved Details
+              </h2>
             </div>
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Full Name</p>
-              <p className="mt-1 text-sm font-semibold text-white">{authUser.firstName} {authUser.lastName}</p>
+            <div className="rounded-lg border border-[#1C1C26] bg-[#050506] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Full Name</p>
+              <p className="mt-1 text-sm font-semibold text-white">
+                {authUser.firstName} {authUser.lastName}
+              </p>
             </div>
-            <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Email</p>
-              <p className="mt-1 text-sm font-semibold text-white break-all">{authUser.email || 'Not set'}</p>
+            <div className="rounded-lg border border-[#1C1C26] bg-[#050506] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Email</p>
+              <p className="mt-1 break-all text-sm font-semibold text-white">{authUser.email || 'Not set'}</p>
             </div>
-            <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Phone Number</p>
+            <div className="rounded-lg border border-[#1C1C26] bg-[#050506] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Phone Number</p>
               <p className="mt-1 text-sm font-semibold text-white">{authUser.phoneNumber || 'Not set'}</p>
             </div>
-            <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-white/45">Member Since</p>
-              <p className="mt-1 text-sm font-semibold text-white">{authUser.createdAt ? formatOrderDate(authUser.createdAt) : 'Unknown'}</p>
+            <div className="rounded-lg border border-[#1C1C26] bg-[#050506] p-3">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Member Since</p>
+              <p className="mt-1 text-sm font-semibold text-white">
+                {authUser.createdAt ? formatOrderDate(authUser.createdAt) : 'Unknown'}
+              </p>
             </div>
           </div>
         </article>
 
-        <article className="storefront-surface p-5 sm:p-6">
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-4">
+        <article className="rounded-2xl border border-[#1C1C26] bg-[#0B0B0E] p-5 sm:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#1C1C26] pb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-neon">Recent Orders</p>
-              <h2 className="storefront-title mt-2 text-[clamp(2.2rem,6vw,3.6rem)] text-white">Order Timeline</h2>
+              <p className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#FFCC00]">
+                Recent Orders
+              </p>
+              <h2 className="mt-2 font-heading text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+                Order Timeline
+              </h2>
             </div>
 
             <button
               type="button"
               onClick={handleRefreshOrders}
               disabled={ordersRefreshing}
-              className="storefront-secondary min-h-0 px-4 py-2 text-[10px] disabled:opacity-50"
+              className="rounded-lg border border-[#22222E] bg-[#14141E] px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-widest text-white transition-colors hover:border-[#FFCC00] hover:text-[#FFCC00] disabled:opacity-50"
             >
               {ordersRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -285,7 +326,7 @@ const UserDashboardPage = () => {
             <div className="mt-5 overflow-x-auto">
               <table className="min-w-[680px]">
                 <thead>
-                  <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45">
+                  <tr className="text-left font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                     <th className="px-3 py-3">Order</th>
                     <th className="px-3 py-3">Date</th>
                     <th className="px-3 py-3">Status</th>
@@ -297,16 +338,18 @@ const UserDashboardPage = () => {
                     const normalizedStatus = getNormalizedStatus(order.status);
                     const currentStatus = statusTheme[normalizedStatus] || {
                       label: order.status || 'Unknown',
-                      text: 'text-white/70',
-                      surface: 'border-white/15 bg-white/5',
+                      text: 'text-zinc-300',
+                      surface: 'border-[#222230] bg-[#14141E]',
                     };
 
                     return (
-                      <tr key={order.id} className="border-t border-white/10 text-sm text-white/80">
+                      <tr key={order.id} className="border-t border-[#1C1C26] text-sm text-zinc-300">
                         <td className="px-3 py-4 font-semibold text-white">{order.order_number}</td>
-                        <td className="px-3 py-4 text-white/60">{formatOrderDate(order.created_at)}</td>
+                        <td className="px-3 py-4 text-zinc-500">{formatOrderDate(order.created_at)}</td>
                         <td className="px-3 py-4">
-                          <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${currentStatus.surface} ${currentStatus.text}`}>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-widest ${currentStatus.surface} ${currentStatus.text}`}
+                          >
                             {currentStatus.label}
                           </span>
                         </td>
@@ -320,7 +363,7 @@ const UserDashboardPage = () => {
               </table>
             </div>
           ) : (
-            <p className="mt-6 text-[11px] uppercase tracking-[0.18em] text-white/50">
+            <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">
               No orders yet. Start shopping to build your timeline.
             </p>
           )}

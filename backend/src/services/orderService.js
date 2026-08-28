@@ -108,6 +108,7 @@ export const createCashOnDeliveryOrder = async ({
     }
 
     await insertOrderItems(connection, insertedOrder.id, normalizedItems);
+    await connection.query('DELETE FROM cart_items WHERE cart_id = ?', [cart.id]);
     await connection.commit();
 
     return {

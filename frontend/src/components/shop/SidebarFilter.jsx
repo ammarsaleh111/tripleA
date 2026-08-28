@@ -1,10 +1,14 @@
 import React from 'react';
 
 const categoryOptions = [
-  { label: 'Proteins', value: 'protein', count: 24 },
-  { label: 'Pre-Workouts', value: 'pre-workout', count: 15 },
-  { label: 'Amino Acids', value: 'amino-acids', count: 10 },
-  { label: 'Creatine', value: 'creatine', count: 8 },
+  { label: 'Supplements', value: 'supplements', count: null },
+  { label: 'Creatine', value: 'creatine', count: null },
+  { label: 'Protein', value: 'protein', count: null },
+  { label: 'Carb', value: 'carb', count: null },
+  { label: 'Pre-Workout', value: 'pre-workout', count: null },
+  { label: 'Vitamins', value: 'vitamins', count: null },
+  { label: 'Amino Acids', value: 'amino-acids', count: null },
+  { label: 'Gym Accessories', value: 'gym-accessories', count: null },
 ];
 
 const goalOptions = [
@@ -18,12 +22,14 @@ const SidebarFilter = ({ filters, onFilterChange }) => {
   const selectedGoal = filters?.goal || '';
   const minPrice = filters?.minPrice || '';
   const maxPrice = filters?.maxPrice || '';
+  const stockStatus = filters?.stockStatus || '';
 
   const handleClearAll = () => {
     onFilterChange('category', '');
     onFilterChange('goal', '');
     onFilterChange('minPrice', '');
     onFilterChange('maxPrice', '');
+    onFilterChange('stockStatus', '');
   };
 
   return (
@@ -34,7 +40,7 @@ const SidebarFilter = ({ filters, onFilterChange }) => {
         <h3 className="font-heading font-bold text-lg text-white">
           Filters
         </h3>
-        {(selectedCategory || selectedGoal || minPrice || maxPrice) && (
+        {(selectedCategory || selectedGoal || minPrice || maxPrice || stockStatus) && (
           <button
             type="button"
             onClick={handleClearAll}
@@ -82,7 +88,7 @@ const SidebarFilter = ({ filters, onFilterChange }) => {
                       {cat.label}
                     </span>
                   </div>
-                  <span className="text-xs font-mono text-zinc-600">({cat.count})</span>
+                  {cat.count !== null && <span className="text-xs font-mono text-zinc-600">({cat.count})</span>}
                 </button>
               </li>
             );
@@ -113,6 +119,26 @@ const SidebarFilter = ({ filters, onFilterChange }) => {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      <div className="mb-8 border-t border-[#222225] pt-6">
+        <h4 className="mb-4 font-mono text-xs uppercase tracking-widest text-zinc-400">Availability</h4>
+        <div className="flex flex-wrap gap-2.5">
+          {[['', 'All'], ['in_stock', 'In Stock'], ['out_of_stock', 'Out of Stock']].map(([value, label]) => (
+            <button
+              key={value || 'all'}
+              type="button"
+              onClick={() => onFilterChange('stockStatus', value)}
+              className={`rounded-full border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-all ${
+                stockStatus === value
+                  ? 'border-[#FFCC00] bg-[#FFCC00] font-extrabold text-black'
+                  : 'border-zinc-800 bg-[#0E0E10] text-zinc-400 hover:border-zinc-700 hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 

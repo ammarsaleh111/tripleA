@@ -14,6 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const schemaPath = path.resolve(__dirname, '../sql/schema.sql');
+const migrationsPath = path.resolve(__dirname, '../sql/migrations/002_product_options_variants.sql');
+const offersMigrationPath = path.resolve(__dirname, '../sql/migrations/003_offers.sql');
 
 const openPool = async () => {
   const connStr = process.env.DATABASE_URL || '';
@@ -76,13 +78,16 @@ const parseSqlStatements = (schema) => {
 };
 
 const validateEnvironment = () => {
-  const requiredVariables = [
-    'DATABASE_URL',
-    'ADMIN_EMAIL',
-    'ADMIN_PASSWORD',
-    'ADMIN_FIRST_NAME',
-    'ADMIN_LAST_NAME',
-  ];
+  const requiredVariables = ['DATABASE_URL'];
+
+  if (process.env.RUN_DEMO_SEED === 'true') {
+    requiredVariables.push(
+      'ADMIN_EMAIL',
+      'ADMIN_PASSWORD',
+      'ADMIN_FIRST_NAME',
+      'ADMIN_LAST_NAME',
+    );
+  }
 
   const missingVariables = requiredVariables.filter((name) => !process.env[name]);
 
@@ -103,6 +108,8 @@ const catalogSeed = [
     category: {
       name: 'Protein',
       slug: 'protein',
+      parentName: 'Supplements',
+      parentSlug: 'supplements',
       description: 'High-grade whey isolates, casein, and mass gainer blends for peak muscle recovery.',
     },
     product: {
@@ -111,6 +118,8 @@ const catalogSeed = [
       description: 'Ultra-pure whey protein isolate with 27g protein per scoop. Cold-filtered for maximum bioavailability.',
       materialsCare: 'Store in a cool dry place. Consume within 24 hours of mixing.',
       basePrice: 49.99,
+      hasFlavor: true,
+      hasWeight: true,
       isFeatured: true,
       images: [
         'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=900&q=80',
@@ -126,6 +135,8 @@ const catalogSeed = [
     category: {
       name: 'Creatine',
       slug: 'creatine',
+      parentName: 'Supplements',
+      parentSlug: 'supplements',
       description: 'Pure creatine monohydrate for explosive strength, endurance, and lean muscle gains.',
     },
     product: {
@@ -134,6 +145,8 @@ const catalogSeed = [
       description: 'Micronized creatine monohydrate. 5g per serving, unflavored. Lab tested for purity.',
       materialsCare: 'Keep sealed in a cool dry location. Take 5g daily with water.',
       basePrice: 24.99,
+      hasFlavor: true,
+      hasWeight: true,
       isFeatured: true,
       images: [
         'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=900&q=80',
@@ -149,6 +162,8 @@ const catalogSeed = [
     category: {
       name: 'Pre-Workout',
       slug: 'pre-workout',
+      parentName: 'Supplements',
+      parentSlug: 'supplements',
       description: 'Industrial-grade pre-workout formulas for sustained energy and unstoppable focus.',
     },
     product: {
@@ -157,6 +172,8 @@ const catalogSeed = [
       description: 'High-stim pre-workout with 350mg caffeine, L-Citrulline, and Beta-Alanine for maximum performance.',
       materialsCare: 'Shake well. Consume 30 minutes before training. Not for use by minors.',
       basePrice: 39.99,
+      hasFlavor: true,
+      hasWeight: true,
       isFeatured: true,
       images: [
         'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&q=80',
@@ -180,6 +197,8 @@ const catalogSeed = [
       description: '2:1:1 BCAA ratio with added L-Glutamine and electrolytes for intra-workout recovery.',
       materialsCare: 'Mix with 300ml cold water. Best consumed during or after training.',
       basePrice: 32.99,
+      hasFlavor: true,
+      hasWeight: true,
       isFeatured: false,
       images: [
         'https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=900&q=80',
@@ -193,8 +212,10 @@ const catalogSeed = [
   },
   {
     category: {
-      name: 'Mass Gainer',
-      slug: 'mass-gainer',
+      name: 'Carb',
+      slug: 'carb',
+      parentName: 'Supplements',
+      parentSlug: 'supplements',
       description: 'High-calorie mass gainers engineered for hard-gainers who need serious calories.',
     },
     product: {
@@ -203,6 +224,8 @@ const catalogSeed = [
       description: 'Loaded with 1000+ calories per serving, complex carbs, and 50g protein for rapid mass building.',
       materialsCare: 'Mix 3 scoops with 500ml whole milk. Best post-workout or between meals.',
       basePrice: 64.99,
+      hasFlavor: true,
+      hasWeight: true,
       isFeatured: true,
       images: [
         'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=900&q=80',
@@ -216,8 +239,8 @@ const catalogSeed = [
   },
   {
     category: {
-      name: 'Vitamins & Health',
-      slug: 'vitamins-health',
+      name: 'Vitamins',
+      slug: 'vitamins',
       description: 'Essential vitamins, minerals, and health supplements for athletic optimization.',
     },
     product: {
@@ -226,6 +249,8 @@ const catalogSeed = [
       description: 'Comprehensive multivitamin formulated for athletes. 26 essential vitamins and minerals per dose.',
       materialsCare: 'Take 1 tablet daily with food and water. Store below 25°C.',
       basePrice: 19.99,
+      hasFlavor: false,
+      hasWeight: true,
       isFeatured: false,
       images: [
         'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=900&q=80',
@@ -274,6 +299,15 @@ const dateDaysAgo = (days) => {
   return new Date(now - offset);
 };
 
+const parseWeightFromSize = (size) => {
+  const match = String(size || '').trim().match(/^(\d+(?:\.\d+)?)\s*(kg|g)\b/i);
+  if (!match) return { weightValue: null, weightUnit: null };
+  return {
+    weightValue: Number(Number(match[1]).toFixed(2)),
+    weightUnit: match[2].toLowerCase(),
+  };
+};
+
 // ── Seed functions ────────────────────────────────────────────────────────────
 
 const seedAdminAccount = async (connection) => {
@@ -316,6 +350,31 @@ const seedAdminAccount = async (connection) => {
 };
 
 const upsertCategory = async (connection, category) => {
+  let parentId = null;
+
+  if (category.parentSlug) {
+    const [parentRows] = await connection.execute(
+      'SELECT id FROM categories WHERE slug = ? LIMIT 1',
+      [category.parentSlug],
+    );
+    parentId = parentRows[0]?.id;
+
+    if (parentId) {
+      await connection.execute(
+        'UPDATE categories SET name = ?, description = ?, parent_id = NULL WHERE id = ?',
+        [category.parentName || category.parentSlug, null, parentId],
+      );
+    } else {
+      const [parentInsert] = await connection.execute(
+        `INSERT INTO categories (name, slug, description, parent_id)
+         VALUES (?, ?, ?, NULL)
+         RETURNING id AS "insertId"`,
+        [category.parentName || category.parentSlug, category.parentSlug, null],
+      );
+      parentId = parentInsert.insertId;
+    }
+  }
+
   const [existing] = await connection.execute(
     'SELECT id FROM categories WHERE slug = ? LIMIT 1',
     [category.slug],
@@ -324,17 +383,17 @@ const upsertCategory = async (connection, category) => {
 
   if (existingId) {
     await connection.execute(
-      'UPDATE categories SET name = ?, description = ? WHERE id = ?',
-      [category.name, category.description || null, existingId],
+      'UPDATE categories SET name = ?, description = ?, parent_id = ? WHERE id = ?',
+      [category.name, category.description || null, parentId, existingId],
     );
     return existingId;
   }
 
   const [insertResult] = await connection.execute(
-    `INSERT INTO categories (name, slug, description)
-     VALUES (?, ?, ?)
+    `INSERT INTO categories (name, slug, description, parent_id)
+     VALUES (?, ?, ?, ?)
      RETURNING id AS "insertId"`,
-    [category.name, category.slug, category.description || null],
+    [category.name, category.slug, category.description || null, parentId],
   );
 
   return insertResult.insertId;
@@ -351,24 +410,25 @@ const upsertProduct = async (connection, product, categoryId) => {
     await connection.execute(
       `UPDATE products
        SET category_id = ?, name = ?, description = ?,
-           materials_care = ?, base_price = ?, is_featured = ?
+           materials_care = ?, base_price = ?, has_flavor = ?, has_weight = ?, is_featured = ?
        WHERE id = ?`,
-      [categoryId, product.name, product.description, product.materialsCare, product.basePrice, product.isFeatured, existingId],
+      [categoryId, product.name, product.description, product.materialsCare, product.basePrice, Boolean(product.hasFlavor), Boolean(product.hasWeight), product.isFeatured, existingId],
     );
     return existingId;
   }
 
   const [insertResult] = await connection.execute(
-    `INSERT INTO products (category_id, name, slug, description, materials_care, base_price, is_featured)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO products (category_id, name, slug, description, materials_care, base_price, has_flavor, has_weight, is_featured)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING id AS "insertId"`,
-    [categoryId, product.name, product.slug, product.description, product.materialsCare, product.basePrice, product.isFeatured],
+    [categoryId, product.name, product.slug, product.description, product.materialsCare, product.basePrice, Boolean(product.hasFlavor), Boolean(product.hasWeight), product.isFeatured],
   );
 
   return insertResult.insertId;
 };
 
 const upsertVariant = async (connection, productId, variant) => {
+  const parsedWeight = parseWeightFromSize(variant.size);
   const [existing] = await connection.execute(
     'SELECT id FROM product_variants WHERE sku = ? LIMIT 1',
     [variant.sku],
@@ -379,18 +439,18 @@ const upsertVariant = async (connection, productId, variant) => {
     await connection.execute(
       `UPDATE product_variants
        SET product_id = ?, size = ?, color = ?, color_hex = ?,
-           price_modifier = ?, stock_quantity = ?
+           flavor = ?, weight_value = ?, weight_unit = ?, price_modifier = ?, stock_quantity = ?
        WHERE id = ?`,
-      [productId, variant.size, variant.color, variant.colorHex || null, variant.priceModifier || 0, variant.stockQuantity || 0, existingId],
+      [productId, variant.size, variant.color, variant.colorHex || null, variant.color, parsedWeight.weightValue, parsedWeight.weightUnit, variant.priceModifier || 0, variant.stockQuantity || 0, existingId],
     );
     return;
   }
 
   await connection.execute(
     `INSERT INTO product_variants
-       (product_id, sku, size, color, color_hex, price_modifier, stock_quantity)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [productId, variant.sku, variant.size, variant.color, variant.colorHex || null, variant.priceModifier || 0, variant.stockQuantity || 0],
+       (product_id, sku, size, color, color_hex, flavor, weight_value, weight_unit, price_modifier, stock_quantity)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [productId, variant.sku, variant.size, variant.color, variant.colorHex || null, variant.color, parsedWeight.weightValue, parsedWeight.weightUnit, variant.priceModifier || 0, variant.stockQuantity || 0],
   );
 };
 
@@ -703,13 +763,20 @@ const initializeDatabase = async () => {
       await dataPool.query(statement);
     }
 
-    await seedAdminAccount(connection);
-    await seedCatalogData(connection);
-    await seedDemoOperationalData(connection);
+    const productOptionsMigration = await fs.readFile(migrationsPath, 'utf8');
+    await dataPool.query(productOptionsMigration);
+    const offersMigration = await fs.readFile(offersMigrationPath, 'utf8');
+    await dataPool.query(offersMigration);
 
     console.log('Database initialized successfully.');
-    console.log(`Admin account ready: ${process.env.ADMIN_EMAIL}`);
-    console.log(`Demo customer password: ${DEMO_CUSTOMER_PASSWORD}`);
+
+    if (process.env.RUN_DEMO_SEED === 'true') {
+      await seedAdminAccount(connection);
+      await seedCatalogData(connection);
+      await seedDemoOperationalData(connection);
+      console.log(`Admin account ready: ${process.env.ADMIN_EMAIL}`);
+      console.log(`Demo customer password: ${DEMO_CUSTOMER_PASSWORD}`);
+    }
   } catch (error) {
     console.error('Database initialization failed.');
     const message = error?.message || error?.detail || String(error);

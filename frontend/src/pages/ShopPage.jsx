@@ -5,97 +5,11 @@ import SidebarFilter from '../components/shop/SidebarFilter.jsx';
 import ChamferCard from '../components/common/ChamferCard.jsx';
 import { getProducts as getProductsApi } from '../services/api/products.js';
 
-const fallbackSupplementCatalog = [
-  {
-    id: 'whey-isolate',
-    slug: 'triplea-whey-isolate',
-    defaultVariantId: 1,
-    totalStock: 85,
-    name: 'Iso-Surge Elite Whey',
-    price: 59.99,
-    colorName: 'Protein',
-    imageUrl: 'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=700&q=80',
-    isNew: true,
-    rating: 5,
-    reviewCount: 124,
-    badgeText: 'BEST SELLER',
-  },
-  {
-    id: 'nitric-surge',
-    slug: 'nitric-surge-preworkout',
-    defaultVariantId: 3,
-    totalStock: 78,
-    name: 'Ignition Protocol V2',
-    price: 44.99,
-    colorName: 'Pre-Workout',
-    imageUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=700&q=80',
-    isNew: false,
-    rating: 5,
-    reviewCount: 89,
-    badgeText: '',
-  },
-  {
-    id: 'bcaa-matrix',
-    slug: 'bcaa-recovery-matrix',
-    defaultVariantId: 4,
-    totalStock: 85,
-    name: 'Hydra-Surge BCAA',
-    price: 34.99,
-    colorName: 'Amino Acids',
-    imageUrl: 'https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=700&q=80',
-    isNew: true,
-    rating: 5,
-    reviewCount: 42,
-    badgeText: 'NEW ARRIVAL',
-  },
-  {
-    id: 'pure-creatine',
-    slug: 'pure-creatine-monohydrate',
-    defaultVariantId: 2,
-    totalStock: 112,
-    name: 'Pure Creatine Monohydrate',
-    price: 24.99,
-    colorName: 'Creatine',
-    imageUrl: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=700&q=80',
-    isNew: false,
-    rating: 5,
-    reviewCount: 211,
-    badgeText: 'BEST SELLER',
-  },
-  {
-    id: 'mass-gainer-pro',
-    slug: 'mass-gainer-pro-1000',
-    defaultVariantId: 5,
-    totalStock: 30,
-    name: 'Mass Gainer Pro 1000',
-    price: 64.99,
-    colorName: 'Protein',
-    imageUrl: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=700&q=80',
-    isNew: false,
-    rating: 4.9,
-    reviewCount: 142,
-    badgeText: 'BEST SELLER',
-  },
-  {
-    id: 'multi-v-iron',
-    slug: 'iron-core-multi-v',
-    defaultVariantId: 6,
-    totalStock: 28,
-    name: 'Iron Core Multi-V',
-    price: 19.99,
-    colorName: 'Vitamins',
-    imageUrl: 'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=700&q=80',
-    isNew: false,
-    rating: 5,
-    reviewCount: 65,
-    badgeText: '',
-  },
-];
-
 const ShopPage = () => {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   
   const [meta, setMeta] = useState({
@@ -107,7 +21,9 @@ const ShopPage = () => {
 
   const [filters, setFilters] = useState({
     category: searchParams.get('category') || '',
+    search: searchParams.get('search') || '',
     goal: searchParams.get('goal') || '',
+    stockStatus: searchParams.get('stock_status') || '',
     minPrice: '',
     maxPrice: '',
     sort_by: searchParams.get('sort_by') || 'featured',
@@ -127,11 +43,14 @@ const ShopPage = () => {
       id: item.id,
       slug: item.slug,
       defaultVariantId: Number(item.default_variant_id || item.id) || null,
-      defaultVariantStock: Number(item.default_variant_stock || item.total_stock || 10),
-      totalStock: Number(item.total_stock || 10),
+      defaultVariantStock: Number(item.default_variant_stock || 0),
+      totalStock: Number(item.total_stock || 0),
       name: displayName || String(item.name || '').toUpperCase(),
-      price: Number(item.base_price || item.price || 49.99),
-      colorName: item.category_name || 'Supplements',
+      price: Number(item.base_price ?? item.price ?? 0),
+      colorName: item.parent_category_name ? `${item.parent_category_name} / ${item.category_name}` : item.category_name || 'Supplements',
+      categorySlug: item.category_slug || '',
+      parentCategorySlug: item.parent_category_slug || '',
+      hasOptions: Boolean(item.has_flavor || item.has_weight || Number(item.variant_count || 0) > 1),
       imageUrl:
         item.primary_image ||
         item.imageUrl ||
@@ -155,27 +74,29 @@ const ShopPage = () => {
     const loadProducts = async () => {
       try {
         setIsLoading(true);
+        setLoadError('');
         const response = await getProductsApi({
           category: filters.category,
+          search: filters.search || undefined,
+          price_min: filters.minPrice || undefined,
+          price_max: filters.maxPrice || undefined,
+          stock_status: filters.stockStatus || undefined,
           sort_by: filters.sort_by,
           page: filters.page,
           limit: filters.limit
         });
-        const nextProducts = Array.isArray(response?.data) && response.data.length > 0
-          ? response.data.map(mapApiProductToCard)
-          : fallbackSupplementCatalog;
-
-        setProducts(nextProducts);
+        setProducts(Array.isArray(response?.data) ? response.data.map(mapApiProductToCard) : []);
         setMeta({
-          totalCount: Number(response?.meta?.totalCount || nextProducts.length),
+          totalCount: Number(response?.meta?.totalCount || 0),
           totalPages: Number(response?.meta?.totalPages || 1),
           currentPage: Number(response?.meta?.currentPage || filters.page),
           limit: Number(response?.meta?.limit || filters.limit),
         });
       } catch (error) {
-        setProducts(fallbackSupplementCatalog);
+        setProducts([]);
+        setLoadError(error?.response?.data?.message || 'Unable to load products from the database.');
         setMeta({
-          totalCount: fallbackSupplementCatalog.length,
+          totalCount: 0,
           totalPages: 1,
           currentPage: 1,
           limit: 12,
@@ -186,12 +107,13 @@ const ShopPage = () => {
     };
 
     loadProducts();
-  }, [filters.category, filters.sort_by, filters.page, filters.limit]);
+  }, [filters.category, filters.search, filters.minPrice, filters.maxPrice, filters.stockStatus, filters.sort_by, filters.page, filters.limit]);
 
   useEffect(() => {
     setFilters((current) => ({
       ...current,
       category: searchParams.get('category') || '',
+      search: searchParams.get('search') || '',
       sort_by: searchParams.get('sort_by') || current.sort_by || 'featured',
       page: 1,
     }));
@@ -199,7 +121,12 @@ const ShopPage = () => {
 
   // Client side filters mapping for supplementary parameters
   const filteredProducts = products.filter((p) => {
-    if (filters.category && !p.colorName.toLowerCase().includes(filters.category.toLowerCase())) {
+    if (
+      filters.category &&
+      p.categorySlug !== filters.category &&
+      p.parentCategorySlug !== filters.category &&
+      !p.colorName.toLowerCase().includes(filters.category.toLowerCase())
+    ) {
       return false;
     }
     // Filter goals
@@ -296,13 +223,14 @@ const ShopPage = () => {
 
           {!isLoading && filteredProducts.length === 0 && (
             <ChamferCard className="p-16 text-center space-y-4 rounded-sm bg-[#141416]/50 border border-[#222225]">
-              <p className="font-heading font-black text-xl uppercase text-white">NO FORMULATIONS MATCHED</p>
-              <p className="font-mono text-xs text-zinc-500">Try resetting your filters or adjusting your budget limits.</p>
+              <p className="font-heading font-black text-xl uppercase text-white">{loadError ? 'CATALOG UNAVAILABLE' : 'NO FORMULATIONS MATCHED'}</p>
+              <p className="font-mono text-xs text-zinc-500">{loadError || 'Try resetting your filters or adjusting your budget limits.'}</p>
               <button
                 type="button"
                 onClick={() => {
                   handleFilterChange('category', '');
                   handleFilterChange('goal', '');
+                  handleFilterChange('stockStatus', '');
                   handleFilterChange('minPrice', '');
                   handleFilterChange('maxPrice', '');
                 }}

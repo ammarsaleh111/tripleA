@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext.jsx';
 import ChamferCard from '../components/common/ChamferCard.jsx';
 
@@ -27,7 +27,7 @@ const CartPage = () => {
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-8 text-white">
       {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-[#282828] pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#1C1C24] pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="font-mono text-xs text-[#FFCC00] uppercase tracking-widest">ORDER SUMMARY</span>
           <h1 className="font-heading font-black text-4xl sm:text-6xl uppercase text-white mt-1">YOUR CART</h1>
@@ -39,7 +39,7 @@ const CartPage = () => {
           to="/shop"
           className="font-mono text-xs text-zinc-400 hover:text-[#FFCC00] uppercase tracking-widest transition-colors"
         >
-          ← CONTINUE SHOPPING
+          â†گ CONTINUE SHOPPING
         </Link>
       </div>
 
@@ -70,21 +70,23 @@ const CartPage = () => {
           {/* Decorative empty cart icon */}
           <div className="relative">
             <div className="absolute inset-0 animate-pulse rounded-full bg-[var(--theme-accent)]/5 blur-3xl" />
-            <div className="relative grid h-28 w-28 place-items-center rounded-full border border-white/10 bg-[#111111]">
+            <div className="relative grid h-28 w-28 place-items-center rounded-full border border-[#1C1C26] bg-[#050506]">
               <svg className="h-12 w-12 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
           </div>
-          <h2 className="storefront-title mt-8 text-3xl text-zinc-300">Your bag is empty</h2>
+          <h2 className="mt-8 font-heading text-3xl font-black uppercase tracking-tight text-zinc-300">
+            Your cart is empty
+          </h2>
           <p className="mt-3 max-w-sm text-center text-sm leading-relaxed text-zinc-500">
-            Looks like you haven't added anything to your bag yet. Explore our collection and find something you'll love.
+            Looks like you haven't added anything to your cart yet. Explore our supplements and build your next stack.
           </p>
           <Link
             to="/shop"
-            className="storefront-primary mt-8 px-8 py-3"
+            className="mt-8 rounded-xl bg-[#FFCC00] px-8 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-[0_0_25px_rgba(255,204,0,0.4)]"
           >
-            Browse Collection
+            Shop Supplements
           </Link>
         </div>
       )}
@@ -103,7 +105,7 @@ const CartPage = () => {
               return (
                 <article
                   key={item.id}
-                  className="group storefront-surface overflow-hidden p-0 transition-all duration-300 ease-in-out hover:border-white/20 hover:shadow-[0_8px_30px_rgba(255,204,0,0.06)]"
+                  className="group overflow-hidden rounded-xl border border-[#1C1C26] bg-[#0B0B0E] transition-all duration-300 ease-in-out hover:border-[#FFCC00]/40 hover:shadow-[0_8px_30px_rgba(255,204,0,0.06)]"
                   style={{ animationDelay: `${index * 60}ms` }}
                 >
                   <div className="flex flex-col sm:flex-row">
@@ -162,7 +164,7 @@ const CartPage = () => {
                       {/* Bottom row: quantity + line total */}
                       <div className="mt-4 flex items-center justify-between">
                         {/* Quantity Stepper */}
-                        <div className="inline-flex items-center overflow-hidden rounded-lg border border-white/10 bg-black/40">
+                        <div className="inline-flex items-center overflow-hidden rounded-lg border border-[#1C1C26] bg-[#050506]">
                           <button
                             type="button"
                             disabled={isMutatingCart || Number(item.quantity || 0) <= 1}
@@ -171,9 +173,9 @@ const CartPage = () => {
                               updateCartItemQuantity({ cartItemId: item.id, quantity: Math.max(1, item.quantity - 1) })
                             }
                           >
-                            −
+                            âˆ’
                           </button>
-                          <span className="grid h-9 w-10 place-items-center border-x border-white/10 text-sm font-bold text-white">
+                          <span className="grid h-9 w-10 place-items-center border-x border-[#1C1C26] text-sm font-bold text-white">
                             {String(item.quantity).padStart(2, '0')}
                           </span>
                           <button
@@ -203,20 +205,20 @@ const CartPage = () => {
 
           {/* Order Summary Sidebar */}
           <aside className="h-fit lg:sticky lg:top-24">
-            <div className="storefront-surface overflow-hidden">
+            <div className="overflow-hidden rounded-2xl border border-[#1C1C26] bg-[#0B0B0E]">
               {/* Summary Header */}
-              <div className="border-b border-white/10 px-6 py-5">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-white/65">Order Summary</p>
+              <div className="border-b border-[#1C1C26] px-6 py-5">
+                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">Order Summary</p>
               </div>
 
               {/* Summary Body */}
               <div className="space-y-0 px-6 py-5">
                 {/* Item List Preview */}
-                <div className="space-y-3 border-b border-white/8 pb-5">
+                <div className="space-y-3 border-b border-[#1C1C26] pb-5">
                   {items.map((item) => (
                     <div key={item.id} className="flex items-center justify-between text-sm">
                       <span className="flex-1 truncate pr-4 text-zinc-400">
-                        {item.name} <span className="text-zinc-600">×{item.quantity}</span>
+                        {item.name} <span className="text-zinc-600">أ—{item.quantity}</span>
                       </span>
                       <span className="text-zinc-300">
                         {formatMoney(Number(item.lineTotal || item.totalPrice || (item.unitPrice || item.price || 0) * (item.quantity || 0)))}
@@ -226,7 +228,7 @@ const CartPage = () => {
                 </div>
 
                 {/* Price Breakdown */}
-                <div className="space-y-3 border-b border-white/8 py-5">
+                <div className="space-y-3 border-b border-[#1C1C26] py-5">
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-400">Subtotal</span>
                     <span className="text-zinc-300">{formatMoney(subtotal)}</span>
@@ -245,8 +247,8 @@ const CartPage = () => {
 
                 {/* Total */}
                 <div className="flex items-center justify-between pt-5">
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-white/65">Total</span>
-                  <span className="font-display text-3xl font-bold leading-none text-[var(--theme-accent)]">{formatMoney(total)}</span>
+                  <span className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">Total</span>
+                  <span className="font-heading text-3xl font-black leading-none text-[#FFCC00]">{formatMoney(total)}</span>
                 </div>
 
                 {/* Free Shipping Hint */}
@@ -255,7 +257,7 @@ const CartPage = () => {
                     <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--theme-accent)]/70">
                       Add {formatMoney(100 - subtotal)} more for free shipping
                     </p>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#14141E]">
                       <div
                         className="h-full rounded-full bg-[var(--theme-accent)] transition-all duration-500"
                         style={{ width: `${Math.min(100, (subtotal / 100) * 100)}%` }}
@@ -271,17 +273,17 @@ const CartPage = () => {
                   type="button"
                   onClick={() => navigate('/checkout')}
                   disabled={cartLoading || cartSyncing || !items.length}
-                  className="storefront-primary w-full py-3.5 text-sm"
+                  className="w-full rounded-xl bg-[#FFCC00] py-3.5 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-[0_0_25px_rgba(255,204,0,0.4)] disabled:opacity-40 disabled:hover:translate-y-0"
                 >
                   Proceed To Checkout
                 </button>
 
-                <p className="mt-3 text-center text-[10px] uppercase tracking-[0.16em] text-white/40">
+                <p className="mt-3 text-center text-[10px] uppercase tracking-[0.16em] text-zinc-500">
                   Payment: Cash On Delivery (COD)
                 </p>
 
                 {/* Security Badges */}
-                <div className="mt-4 flex items-center justify-center gap-4 border-t border-white/8 pt-4">
+                <div className="mt-4 flex items-center justify-center gap-4 border-t border-[#1C1C26] pt-4">
                   <div className="flex items-center gap-1.5 text-zinc-500">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />

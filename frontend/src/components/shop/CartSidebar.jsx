@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAppContext } from '../../context/AppContext.jsx';
@@ -100,12 +100,12 @@ const CartSidebar = ({ isOpen, onClose }) => {
 
       {/* Sidebar Drawer */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[440px] transform flex-col bg-[#141414] border-l border-[#282828] shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-[440px] transform flex-col bg-[#0B0B0E] border-l border-[#1C1C26] shadow-2xl transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between border-b border-[#282828] px-6 py-5 bg-[#0A0A0A]">
+        {/* â”€â”€ Header â”€â”€ */}
+        <div className="flex items-center justify-between border-b border-[#1C1C26] px-6 py-5 bg-[#050506]">
           <div className="flex items-center gap-3">
             <div className="w-1 h-6 bg-[#FFCC00]" />
             <div>
@@ -124,11 +124,11 @@ const CartSidebar = ({ isOpen, onClose }) => {
             className="p-2 text-zinc-400 hover:text-white transition-colors"
             aria-label="Close cart"
           >
-            ✕
+            âœ•
           </button>
         </div>
 
-        {/* ── Scrollable Items ── */}
+        {/* â”€â”€ Scrollable Items â”€â”€ */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           {/* Loading State */}
           {cartLoading && !cartItems.length && (
@@ -156,12 +156,12 @@ const CartSidebar = ({ isOpen, onClose }) => {
           {/* Empty State */}
           {!cartLoading && !cartItems.length && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 bg-[#0A0A0A] border border-[#282828] flex items-center justify-center mb-4 chamfer-box">
-                <span className="text-2xl text-zinc-600">🛒</span>
+              <div className="w-16 h-16 rounded-xl border border-[#1C1C26] bg-[#050506] flex items-center justify-center mb-4">
+                <span className="text-2xl text-zinc-600">ًں›’</span>
               </div>
-              <p className="font-heading font-black italic text-lg uppercase text-white">Cart is Empty</p>
+              <p className="font-heading font-black text-lg uppercase text-white">Cart is Empty</p>
               <p className="mt-2 max-w-[220px] font-mono text-xs text-zinc-500">
-                Browse supplements & equipment to fill your arsenal.
+                Browse supplements to fuel your next session.
               </p>
             </div>
           )}
@@ -175,10 +175,10 @@ const CartSidebar = ({ isOpen, onClose }) => {
               return (
                 <article
                   key={item.id}
-                  className="bg-[#0A0A0A] border border-[#282828] p-3.5 flex items-start gap-3.5 chamfer-box transition-all hover:border-[#FFCC00]/40"
+                  className="rounded-lg border border-[#1C1C26] bg-[#0B0B0F] p-3.5 flex items-start gap-3.5 transition-all hover:border-[#FFCC00]/40"
                 >
                   {/* Thumbnail */}
-                  <div className="h-20 w-16 bg-[#141414] border border-[#222222] flex-shrink-0 flex items-center justify-center p-1">
+                  <div className="h-20 w-16 bg-[#14141E] border border-[#222230] flex-shrink-0 flex items-center justify-center p-1">
                     <img
                       src={item.imageUrl || FALLBACK_IMAGE}
                       alt={item.name || 'Cart item'}
@@ -189,7 +189,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                   {/* Info */}
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-heading font-black italic text-sm uppercase text-white truncate">
+                      <h3 className="font-heading font-black text-sm uppercase text-white truncate">
                         {item.name || 'Product'}
                       </h3>
                       <button
@@ -199,7 +199,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                         className="text-zinc-500 hover:text-red-400 transition-colors text-xs font-mono"
                         aria-label="Remove item"
                       >
-                        ✕
+                        âœ•
                       </button>
                     </div>
 
@@ -209,7 +209,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
 
                     {/* Quantity modifier */}
                     <div className="pt-2 flex items-center justify-between">
-                      <div className="flex items-center border border-[#282828] bg-[#141414]">
+                      <div className="flex items-center rounded-lg border border-[#1C1C26] bg-[#14141E]">
                         <button
                           type="button"
                           onClick={() => handleUpdateQuantity(item.id, -1)}
@@ -218,7 +218,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                         >
                           -
                         </button>
-                        <span className="w-8 text-center font-mono text-xs font-bold text-white border-x border-[#282828]">
+                        <span className="w-8 text-center font-mono text-xs font-bold text-white border-x border-[#1C1C26]">
                           {Number(item.quantity || 0)}
                         </span>
                         <button
@@ -231,7 +231,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                         </button>
                       </div>
 
-                      <span className="font-heading font-black italic text-sm text-white">
+                      <span className="font-heading font-black text-sm text-white">
                         {formatMoney(subtotalValue)}
                       </span>
                     </div>
@@ -242,8 +242,8 @@ const CartSidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* ── Footer ── */}
-        <div className="border-t border-[#282828] bg-[#0A0A0A] p-6 space-y-4">
+        {/* â”€â”€ Footer â”€â”€ */}
+        <div className="border-t border-[#1C1C26] bg-[#050506] p-6 space-y-4">
           {cartItems.length > 0 && (
             <button
               type="button"
@@ -256,9 +256,9 @@ const CartSidebar = ({ isOpen, onClose }) => {
           )}
 
           {/* Total */}
-          <div className="flex items-center justify-between pt-2 border-t border-[#222222]">
+          <div className="flex items-center justify-between pt-2 border-t border-[#1C1C26]">
             <span className="font-mono text-xs uppercase tracking-widest text-zinc-400">TOTAL</span>
-            <span className="font-heading font-black italic text-2xl text-[#FFCC00]">
+            <span className="font-heading font-black text-2xl text-[#FFCC00]">
               {formatMoney(total)}
             </span>
           </div>

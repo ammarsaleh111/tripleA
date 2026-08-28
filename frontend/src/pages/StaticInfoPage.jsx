@@ -82,25 +82,31 @@ const StaticInfoPage = ({ variant = 'help' }) => {
   const topic = searchParams.get('topic');
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-2 py-3 text-white md:px-4">
-      <div className="storefront-shell p-5 sm:p-10">
-        <p className="storefront-kicker">{content.eyebrow}</p>
-        <h1 className="storefront-title mt-3 text-[clamp(2.6rem,6vw,4.8rem)] text-white">
+    <section className="mx-auto w-full max-w-5xl px-4 py-8 text-white sm:px-6">
+      <div className="rounded-2xl border border-[#1C1C26] bg-[#0B0B0E] p-6 sm:p-10">
+        <p className="font-mono text-xs font-extrabold uppercase tracking-widest text-[#FFCC00]">
+          {content.eyebrow}
+        </p>
+        <h1 className="mt-3 font-heading text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">
           {content.title}
         </h1>
-        <p className="storefront-subtitle mt-4 max-w-2xl">{content.description}</p>
+        <p className="mt-4 max-w-2xl font-mono text-xs uppercase tracking-wider leading-relaxed text-zinc-400">
+          {content.description}
+        </p>
 
         {topic === 'oauth' && resolvedVariant === 'help' && (
-          <div className="storefront-surface mt-6 p-4 text-sm text-white/70">
+          <div className="mt-6 rounded-xl border border-[#1C1C26] bg-[#050506] p-4 text-sm text-zinc-400">
             Social login buttons point here until providers are connected.
           </div>
         )}
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {content.sections.map((section) => (
-            <article key={section.title} className="storefront-surface p-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">{section.title}</p>
-              <p className="mt-2 text-sm text-white/72">{section.body}</p>
+            <article key={section.title} className="rounded-xl border border-[#1C1C26] bg-[#0B0B0F] p-4">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                {section.title}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-300">{section.body}</p>
             </article>
           ))}
         </div>
@@ -108,13 +114,13 @@ const StaticInfoPage = ({ variant = 'help' }) => {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             to={content.primaryTo}
-            className="storefront-primary px-6"
+            className="rounded-xl bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-[0_0_25px_rgba(255,204,0,0.4)]"
           >
             {content.primaryLabel}
           </Link>
           <Link
             to={content.secondaryTo}
-            className="storefront-secondary px-6"
+            className="rounded-xl border border-[#22222E] bg-[#14141E] px-6 py-3 font-heading text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-[#FFCC00] hover:text-[#FFCC00]"
           >
             {content.secondaryLabel}
           </Link>

@@ -41,9 +41,23 @@ npm install
 npm run dev
 ```
 
-Initialize the database schema and seed data:
+Initialize the database schema without inserting application data:
 
 ```bash
 cd backend
 npm run db:init
+```
+
+Demo data is opt-in:
+
+```bash
+cd backend
+npm run db:seed:demo
+```
+
+To remove application data while preserving the existing admin account:
+
+```bash
+cd backend
+npm run db:reset
 ```

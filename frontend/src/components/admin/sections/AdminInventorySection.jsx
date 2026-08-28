@@ -7,55 +7,139 @@ import {
   updateAdminProduct,
 } from '../../../services/api/admin.js';
 
+const MAX_IMAGES = 20;
+
 const categoryOptions = [
-  'Protein',
-  'Creatine',
-  'Pre-Workout',
-  'Amino Acids',
-  'Mass Gainer',
-  'Vitamins & Health',
+  { label: 'Supplements', value: 'Supplements', slug: 'supplements' },
+  { label: 'Vitamins', value: 'Vitamins', slug: 'vitamins' },
+  { label: 'Amino Acids', value: 'Amino Acids', slug: 'amino-acids' },
+  { label: 'Gym Accessories', value: 'Gym Accessories', slug: 'gym-accessories' },
 ];
 
-const colorOptions = [
-  'Black', 'White', 'Gray', 'Silver', 'Gold',
-  'Red','Blue', 'Green',
-  'Yellow', 'Orange', 
-  'Purple', 'Pink', 'Beige', 'Brown'
+const supplementSubcategoryOptions = [
+  { label: 'Creatine', value: 'Creatine', slug: 'creatine' },
+  { label: 'Protein', value: 'Protein', slug: 'protein' },
+  { label: 'Carb', value: 'Carb', slug: 'carb' },
+  { label: 'Pre-Workout', value: 'Pre-Workout', slug: 'pre-workout' },
 ];
 
 const createEmptyVariant = () => ({
   id: null,
-  size: 'L',
-  color: 'Black',
+  flavor: '',
+  weightValue: '',
+  weightUnit: 'g',
+  stockQuantity: 0,
 });
 
 const createEmptyForm = () => ({
   name: '',
   description: '',
   basePrice: '',
-  categoryName: categoryOptions[0],
+  categoryName: 'Supplements',
+  subcategoryName: 'Protein',
+  hasFlavor: false,
+  hasWeight: false,
+  flavors: [''],
+  weights: [{ value: '', unit: 'g' }],
   variants: [createEmptyVariant()],
-  imageUrl: '',
+  images: [''],
 });
 
-const normalizeProductToForm = (product) => ({
-  name: product?.name || '',
-  description: product?.description || '',
-  basePrice: String(product?.basePrice ?? ''),
-  categoryName: categoryOptions.includes(product?.categoryName) ? product.categoryName : categoryOptions[0],
-  variants:
-    Array.isArray(product?.variants) && product.variants.length
-      ? product.variants.map((variant) => ({
-          id: variant.id,
-          size: variant.size || 'One Size',
-          color: colorOptions.includes(variant.color) ? variant.color : 'Black',
-        }))
-      : [createEmptyVariant()],
-  imageUrl:
-    Array.isArray(product?.images) && product.images.length
-      ? product.images.find((image) => image.isPrimary)?.imageUrl || product.images[0]?.imageUrl || ''
-      : product?.primaryImage || '',
-});
+const uniqueTrimmed = (items) => {
+  const seen = new Set();
+  return items
+    .map((item) => String(item || '').trim())
+    .filter((item) => {
+      const key = item.toLowerCase();
+      if (!item || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+const variantKey = ({ flavor = '', weightValue = '', weightUnit = '' }) =>
+  `${String(flavor).trim().toLowerCase()}::${String(weightValue).trim()}::${String(weightUnit).trim()}`;
+
+const weightLabel = (weight) => {
+  const value = String(weight?.value ?? weight?.weightValue ?? '').trim();
+  const unit = String(weight?.unit ?? weight?.weightUnit ?? 'g').trim();
+  return value && unit ? `${Number(value).toString()} ${unit}` : '';
+};
+
+const buildVariantsFromOptions = ({ hasFlavor, hasWeight, flavors, weights, variants }) => {
+  const previousMap = new Map((variants || []).map((variant) => [variantKey(variant), variant]));
+  const activeFlavors = hasFlavor ? uniqueTrimmed(flavors) : [''];
+  const activeWeights = hasWeight
+    ? weights
+        .map((weight) => ({ value: String(weight.value || '').trim(), unit: weight.unit === 'kg' ? 'kg' : 'g' }))
+        .filter((weight) => weight.value && Number(weight.value) > 0)
+    : [{ value: '', unit: '' }];
+
+  if (!activeFlavors.length || !activeWeights.length) return [];
+
+  return activeFlavors.flatMap((flavor) =>
+    activeWeights.map((weight) => {
+      const previous = previousMap.get(variantKey({ flavor, weightValue: weight.value, weightUnit: weight.unit }));
+      return {
+        id: previous?.id || null,
+        flavor,
+        weightValue: weight.value,
+        weightUnit: weight.unit,
+        stockQuantity: previous?.stockQuantity ?? 0,
+      };
+    }),
+  );
+};
+
+const inferCategoryFields = (product) => {
+  if (product?.parentCategoryName === 'Supplements' || product?.parentCategorySlug === 'supplements') {
+    return { categoryName: 'Supplements', subcategoryName: product.categoryName || 'Protein' };
+  }
+
+  const direct = categoryOptions.find(
+    (category) => category.label === product?.categoryName || category.slug === product?.categorySlug,
+  );
+  return {
+    categoryName: direct?.value || 'Supplements',
+    subcategoryName: direct?.value === 'Supplements' ? 'Protein' : '',
+  };
+};
+
+const normalizeProductToForm = (product) => {
+  const variants = Array.isArray(product?.variants) && product.variants.length
+    ? product.variants.map((variant) => ({
+        id: variant.id,
+        flavor: variant.flavor || variant.color || '',
+        weightValue: variant.weightValue ?? variant.weight_value ?? '',
+        weightUnit: variant.weightUnit || variant.weight_unit || 'g',
+        stockQuantity: Number(variant.stockQuantity ?? variant.stock_quantity ?? 0),
+      }))
+    : [createEmptyVariant()];
+  const hasFlavor = Boolean(product?.hasFlavor) || variants.some((variant) => variant.flavor);
+  const hasWeight = Boolean(product?.hasWeight) || variants.some((variant) => variant.weightValue);
+  const { categoryName, subcategoryName } = inferCategoryFields(product);
+  const images = Array.isArray(product?.images) && product.images.length
+    ? product.images.map((image) => image.imageUrl).filter(Boolean).slice(0, MAX_IMAGES)
+    : [product?.primaryImage || ''];
+  const uniqueWeights = variants
+    .filter((variant) => variant.weightValue)
+    .map((variant) => ({ value: String(variant.weightValue), unit: variant.weightUnit || 'g' }))
+    .filter((weight, index, list) => list.findIndex((item) => weightLabel(item) === weightLabel(weight)) === index);
+
+  return {
+    name: product?.name || '',
+    description: product?.description || '',
+    basePrice: String(product?.basePrice ?? ''),
+    categoryName,
+    subcategoryName,
+    hasFlavor,
+    hasWeight,
+    flavors: hasFlavor ? uniqueTrimmed(variants.map((variant) => variant.flavor)) : [''],
+    weights: hasWeight && uniqueWeights.length ? uniqueWeights : [{ value: '', unit: 'g' }],
+    variants,
+    images: images.length ? images : [''],
+  };
+};
 
 const formatDateTime = (value) => {
   if (!value) return '--';
@@ -70,35 +154,46 @@ const parseNonNegativeNumber = (value, fallback = 0) => {
 };
 
 const createPayloadFromForm = ({ form, removedVariantIds, isEdit }) => {
+  const category = categoryOptions.find((item) => item.value === form.categoryName) || categoryOptions[0];
+  const subcategory = supplementSubcategoryOptions.find((item) => item.value === form.subcategoryName);
+  const imageCount = form.images.filter((image) => String(image || '').trim()).length;
+  const variants = buildVariantsFromOptions(form);
+
+  if (!String(form.name || '').trim()) throw new Error('Product name is required.');
+  if (!String(form.description || '').trim()) throw new Error('Description is required.');
+  if (!Number.isFinite(parseNonNegativeNumber(form.basePrice, NaN))) throw new Error('Price must be a valid number.');
+  if (category.slug === 'supplements' && !subcategory) throw new Error('Supplements require a subcategory.');
+  if (!variants.length) throw new Error('Add at least one valid option or disable Flavor and Weight.');
+  if (imageCount > MAX_IMAGES) throw new Error(`You can add up to ${MAX_IMAGES} image URLs.`);
+
   const payload = {
     name: String(form.name || '').trim(),
     description: String(form.description || '').trim(),
     base_price: parseNonNegativeNumber(form.basePrice, NaN),
-    category_name: String(form.categoryName || '').trim(),
-    variants: form.variants.map((variant) => ({
+    category_name: category.value,
+    category_slug: category.slug,
+    subcategory_name: category.slug === 'supplements' ? subcategory?.value : undefined,
+    subcategory_slug: category.slug === 'supplements' ? subcategory?.slug : undefined,
+    has_flavor: Boolean(form.hasFlavor),
+    has_weight: Boolean(form.hasWeight),
+    variants: variants.map((variant) => ({
       id: variant.id || undefined,
-      size: String(variant.size || '').trim() || 'One Size',
-      color: colorOptions.includes(variant.color) ? variant.color : 'Black',
+      flavor: form.hasFlavor ? variant.flavor : null,
+      weight_value: form.hasWeight ? Number(variant.weightValue) : null,
+      weight_unit: form.hasWeight ? variant.weightUnit : null,
+      size: form.hasWeight ? `${Number(variant.weightValue).toString()} ${variant.weightUnit}` : 'Standard',
+      color: form.hasFlavor ? variant.flavor : 'Default',
       color_hex: null,
       price_modifier: 0,
-      stock_quantity: 100,
+      stock_quantity: parseNonNegativeNumber(variant.stockQuantity, 0),
     })),
-    images: form.imageUrl ? [{ image_url: form.imageUrl, is_primary: true }] : [],
+    images: uniqueTrimmed(form.images).slice(0, MAX_IMAGES).map((imageUrl, index) => ({
+      image_url: imageUrl,
+      is_primary: index === 0,
+    })),
   };
 
-  if (!payload.name) throw new Error('Product name is required.');
-  if (!payload.description) throw new Error('Description is required.');
-  if (!Number.isFinite(payload.base_price)) throw new Error('Price must be a valid number.');
-  if (!payload.category_name) throw new Error('Category is required.');
-
-  if (!payload.variants.length) {
-    payload.variants = [{ size: 'One Size', color: 'Black', price_modifier: 0, stock_quantity: 100 }];
-  }
-
-  if (isEdit && removedVariantIds.length) {
-    payload.removed_variant_ids = removedVariantIds;
-  }
-
+  if (isEdit && removedVariantIds.length) payload.removed_variant_ids = removedVariantIds;
   return payload;
 };
 
@@ -154,6 +249,19 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
     refreshProducts();
   }, [page, searchQuery]);
 
+  const syncVariantRows = (draft) => {
+    const nextVariants = buildVariantsFromOptions(draft);
+    const removedIds = draft.variants
+      .filter((variant) => variant.id && !nextVariants.some((nextVariant) => nextVariant.id === variant.id))
+      .map((variant) => variant.id);
+
+    if (removedIds.length) {
+      setRemovedVariantIds((current) => Array.from(new Set([...current, ...removedIds])));
+    }
+
+    return { ...draft, variants: nextVariants.length ? nextVariants : draft.variants };
+  };
+
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingProductId(null);
@@ -180,31 +288,40 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
   };
 
   const updateFormField = (field, value) => {
-    setFormData((previous) => ({ ...previous, [field]: value }));
+    setFormData((previous) => {
+      const next = { ...previous, [field]: value };
+      if (field === 'categoryName' && value !== 'Supplements') next.subcategoryName = '';
+      if (field === 'categoryName' && value === 'Supplements' && !next.subcategoryName) next.subcategoryName = 'Protein';
+      if (field === 'hasFlavor' || field === 'hasWeight') return syncVariantRows(next);
+      return next;
+    });
   };
 
-  const addVariant = () => {
-    setFormData((previous) => ({ ...previous, variants: [...previous.variants, createEmptyVariant()] }));
-  };
-
-  const updateVariant = (index, field, value) => {
-    setFormData((previous) => ({
+  const updateOptionList = (field, index, value) => {
+    setFormData((previous) => syncVariantRows({
       ...previous,
-      variants: previous.variants.map((variant, variantIndex) =>
-        variantIndex === index ? { ...variant, [field]: value } : variant,
-      ),
+      [field]: previous[field].map((item, itemIndex) => (itemIndex === index ? value : item)),
     }));
   };
 
-  const removeVariant = (index) => {
-    setFormData((previous) => {
-      if (previous.variants.length === 1) return previous;
-      const variant = previous.variants[index];
-      if (variant?.id) {
-        setRemovedVariantIds((current) => (current.includes(variant.id) ? current : [...current, variant.id]));
-      }
-      return { ...previous, variants: previous.variants.filter((_, variantIndex) => variantIndex !== index) };
-    });
+  const addOption = (field, value) => {
+    setFormData((previous) => ({ ...previous, [field]: [...previous[field], value] }));
+  };
+
+  const removeOption = (field, index) => {
+    setFormData((previous) => syncVariantRows({
+      ...previous,
+      [field]: previous[field].filter((_, itemIndex) => itemIndex !== index),
+    }));
+  };
+
+  const updateVariantStock = (index, value) => {
+    setFormData((previous) => ({
+      ...previous,
+      variants: previous.variants.map((variant, variantIndex) =>
+        variantIndex === index ? { ...variant, stockQuantity: value } : variant,
+      ),
+    }));
   };
 
   const handleSaveProduct = async (event) => {
@@ -260,22 +377,11 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
       <div className="mb-8 flex flex-col gap-5 border-b border-white/10 pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="font-display text-3xl font-bold uppercase tracking-tighter text-white">Inventory Management</h2>
-          <p className="mt-2 text-[10px] uppercase tracking-widest text-gray-400">Simple catalog CRUD synced with MySQL</p>
+          <p className="mt-2 text-[10px] uppercase tracking-widest text-gray-400">Simple catalog CRUD synced with PostgreSQL</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(event) => {
-              setSearchQuery(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Search by product or slug"
-            className="w-64 max-w-full border border-white/10 bg-[#121212] px-4 py-3 text-[11px] uppercase tracking-wider text-white outline-none focus:border-[var(--theme-accent)]"
-          />
-          <button type="button" onClick={openCreateForm} className="bg-[var(--theme-accent)] px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[var(--theme-accent-hover)]">
-            Add Product
-          </button>
+          <input type="text" value={searchQuery} onChange={(event) => { setSearchQuery(event.target.value); setPage(1); }} placeholder="Search by product or slug" className="w-64 max-w-full border border-white/10 bg-[#121212] px-4 py-3 text-[11px] uppercase tracking-wider text-white outline-none focus:border-[var(--theme-accent)]" />
+          <button type="button" onClick={openCreateForm} className="bg-[var(--theme-accent)] px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-black transition-colors hover:bg-[var(--theme-accent-hover)]">Add Product</button>
         </div>
       </div>
 
@@ -316,7 +422,7 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
                     <p className="font-semibold text-white">{product.name}</p>
                     <p className="mt-1 text-[10px] uppercase tracking-widest text-white/45">/{product.slug}</p>
                   </td>
-                  <td className="px-5 py-4 text-white/75">{product.categoryName || 'Uncategorized'}</td>
+                  <td className="px-5 py-4 text-white/75">{product.parentCategoryName ? `${product.parentCategoryName} / ${product.categoryName}` : product.categoryName || 'Uncategorized'}</td>
                   <td className="px-5 py-4">{Number(product.basePrice || 0).toFixed(2)} EGP</td>
                   <td className="px-5 py-4">{Number(product.totalStock || 0)}</td>
                   <td className="px-5 py-4">{Number(product.variantCount || 0)}</td>
@@ -364,12 +470,20 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
                   <span className="block text-[10px] uppercase tracking-widest text-white/45">Price</span>
                   <input value={formData.basePrice} onChange={(event) => updateFormField('basePrice', event.target.value)} type="number" min="0" step="0.01" className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required />
                 </label>
-                <label className="space-y-2 md:col-span-2">
+                <label className="space-y-2">
                   <span className="block text-[10px] uppercase tracking-widest text-white/45">Category</span>
                   <select value={formData.categoryName} onChange={(event) => updateFormField('categoryName', event.target.value)} className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required>
-                    {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                    {categoryOptions.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}
                   </select>
                 </label>
+                {formData.categoryName === 'Supplements' && (
+                  <label className="space-y-2">
+                    <span className="block text-[10px] uppercase tracking-widest text-white/45">Supplements Subcategory</span>
+                    <select value={formData.subcategoryName} onChange={(event) => updateFormField('subcategoryName', event.target.value)} className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required>
+                      {supplementSubcategoryOptions.map((subcategory) => <option key={subcategory.value} value={subcategory.value}>{subcategory.label}</option>)}
+                    </select>
+                  </label>
+                )}
               </div>
 
               <label className="block space-y-2">
@@ -378,49 +492,73 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
               </label>
 
               <div className="border border-white/10 p-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Variants</p>
-                  <button type="button" onClick={addVariant} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)]">Add Variant</button>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Product Options</p>
+                  <div className="flex flex-wrap gap-4 text-[10px] uppercase tracking-widest text-white/70">
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={formData.hasFlavor} onChange={(event) => updateFormField('hasFlavor', event.target.checked)} /> Flavor</label>
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={formData.hasWeight} onChange={(event) => updateFormField('hasWeight', event.target.checked)} /> Weight</label>
+                  </div>
                 </div>
+
+                {formData.hasFlavor && (
+                  <div className="mb-5 space-y-3">
+                    <p className="text-[10px] uppercase tracking-widest text-white/45">Flavors</p>
+                    {formData.flavors.map((flavor, index) => (
+                      <div key={`flavor-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_110px]">
+                        <input value={flavor} onChange={(event) => updateOptionList('flavors', index, event.target.value)} type="text" placeholder="Chocolate" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]" />
+                        <button type="button" onClick={() => removeOption('flavors', index)} disabled={formData.flavors.length === 1} className="border border-red-500/40 bg-[#2a1313] px-3 py-2 text-[10px] uppercase tracking-widest text-red-200 disabled:cursor-not-allowed disabled:opacity-40">Remove</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => addOption('flavors', '')} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)]">Add Flavor</button>
+                  </div>
+                )}
+
+                {formData.hasWeight && (
+                  <div className="mb-5 space-y-3">
+                    <p className="text-[10px] uppercase tracking-widest text-white/45">Weights</p>
+                    {formData.weights.map((weight, index) => (
+                      <div key={`weight-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_110px]">
+                        <input value={weight.value} onChange={(event) => updateOptionList('weights', index, { ...weight, value: event.target.value })} type="number" min="0" step="0.01" placeholder="500" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]" />
+                        <select value={weight.unit} onChange={(event) => updateOptionList('weights', index, { ...weight, unit: event.target.value })} className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]">
+                          <option value="g">g</option>
+                          <option value="kg">kg</option>
+                        </select>
+                        <button type="button" onClick={() => removeOption('weights', index)} disabled={formData.weights.length === 1} className="border border-red-500/40 bg-[#2a1313] px-3 py-2 text-[10px] uppercase tracking-widest text-red-200 disabled:cursor-not-allowed disabled:opacity-40">Remove</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => addOption('weights', { value: '', unit: 'g' })} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)]">Add Weight</button>
+                  </div>
+                )}
+
                 <div className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Variant Stock</p>
                   {formData.variants.map((variant, index) => (
-                    <div key={variant.id || `variant-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_110px]">
-                      <input value={variant.size} onChange={(event) => updateVariant(index, 'size', event.target.value)} type="text" placeholder="Size" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]" />
-                      <select value={variant.color} onChange={(event) => updateVariant(index, 'color', event.target.value)} className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]">
-                        {colorOptions.map((color) => <option key={color} value={color}>{color}</option>)}
-                      </select>
-                      <button type="button" onClick={() => removeVariant(index)} disabled={formData.variants.length === 1} className="border border-red-500/40 bg-[#2a1313] px-3 py-2 text-[10px] uppercase tracking-widest text-red-200 disabled:cursor-not-allowed disabled:opacity-40">Remove</button>
+                    <div key={`${variantKey(variant)}-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px]">
+                      <div className="border border-white/10 bg-[#151515] px-3 py-2 text-sm text-white/80">
+                        {[variant.flavor, variant.weightValue ? `${Number(variant.weightValue).toString()} ${variant.weightUnit}` : ''].filter(Boolean).join(' / ') || 'Standard Product'}
+                      </div>
+                      <input value={variant.stockQuantity} onChange={(event) => updateVariantStock(index, event.target.value)} type="number" min="0" step="1" placeholder="Stock" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]" />
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 text-[10px] uppercase tracking-widest text-white/40">Stock defaults to 100 and price modifier defaults to 0 for every variant.</p>
               </div>
 
               <div className="border border-white/10 p-4">
-                <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Image Link</p>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--theme-accent)]">Image Links</p>
+                  <button type="button" onClick={() => addOption('images', '')} disabled={formData.images.length >= MAX_IMAGES} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)] disabled:cursor-not-allowed disabled:opacity-40">Add Image</button>
+                </div>
                 <div className="space-y-4">
-                  <label className="block space-y-2">
-                    <span className="block text-[10px] uppercase tracking-widest text-white/45">Image URL</span>
-                    <input
-                      value={formData.imageUrl}
-                      onChange={(event) => updateFormField('imageUrl', event.target.value)}
-                      type="url"
-                      placeholder="https://example.com/product-image.jpg"
-                      className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]"
-                    />
-                  </label>
-                  {formData.imageUrl ? (
-                    <div className="grid gap-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-center">
-                      <img src={formData.imageUrl} alt="Product preview" className="h-44 w-full border border-white/10 object-cover md:h-36" />
-                      <div className="min-w-0">
-                        <p className="truncate text-xs text-white/65">{formData.imageUrl}</p>
-                        <button type="button" onClick={() => updateFormField('imageUrl', '')} className="mt-4 border border-red-500/40 bg-[#2a1313] px-4 py-2 text-[10px] uppercase tracking-widest text-red-200">
-                          Remove
-                        </button>
-                      </div>
+                  {formData.images.map((imageUrl, index) => (
+                    <div key={`image-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_110px]">
+                      <input value={imageUrl} onChange={(event) => updateOptionList('images', index, event.target.value)} type="url" placeholder="https://example.com/product-image.jpg" className="w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" />
+                      <button type="button" onClick={() => removeOption('images', index)} disabled={formData.images.length === 1} className="border border-red-500/40 bg-[#2a1313] px-3 py-2 text-[10px] uppercase tracking-widest text-red-200 disabled:cursor-not-allowed disabled:opacity-40">Remove</button>
                     </div>
+                  ))}
+                  {formData.images.find((imageUrl) => String(imageUrl || '').trim()) ? (
+                    <img src={formData.images.find((imageUrl) => String(imageUrl || '').trim())} alt="Product preview" className="h-44 w-full border border-white/10 object-cover md:h-36" />
                   ) : (
-                    <p className="text-xs text-white/45">Paste a direct image link here. The product will use that URL in the gallery.</p>
+                    <p className="text-xs text-white/45">Paste direct image links here. The first URL is used as the primary image.</p>
                   )}
                 </div>
               </div>

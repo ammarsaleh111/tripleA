@@ -49,6 +49,10 @@ export const getCartItemsForCheckout = async (db, cartId) => {
       ci.quantity,
       pv.id AS variant_id,
       pv.sku,
+      pv.flavor,
+      pv.weight_value,
+      pv.weight_unit,
+      pv.stock_quantity,
       pv.price_modifier,
       p.id AS product_id,
       p.name AS product_name,
@@ -72,6 +76,10 @@ export const getCartItemsForCheckout = async (db, cartId) => {
       variantId: item.variant_id,
       sku: item.sku,
       productName: item.product_name,
+      variantName: [item.flavor, item.weight_value && item.weight_unit ? `${Number(item.weight_value).toString()} ${item.weight_unit}` : null]
+        .filter(Boolean)
+        .join(' / ') || 'Standard',
+      stockQuantity: Number(item.stock_quantity || 0),
       quantity,
       priceAtPurchase: Number(priceAtPurchase.toFixed(2)),
       lineTotal: Number((priceAtPurchase * quantity).toFixed(2)),
@@ -134,6 +142,18 @@ export const insertOrder = async (connection, orderPayload) => {
 
 export const insertOrderItems = async (connection, orderId, items) => {
   for (const item of items) {
+    const [stockRows] = await connection.query(
+      'SELECT stock_quantity FROM product_variants WHERE id = ? FOR UPDATE',
+      [item.variantId],
+    );
+    const availableStock = Number(stockRows[0]?.stock_quantity || 0);
+
+    if (availableStock < item.quantity) {
+      const error = new Error(`Only ${availableStock} units available for ${item.productName}.`);
+      error.statusCode = 400;
+      throw error;
+    }
+
     await connection.query(
       `
       INSERT INTO order_items (
@@ -154,6 +174,11 @@ export const insertOrderItems = async (connection, orderId, items) => {
         item.quantity,
         item.priceAtPurchase,
       ],
+    );
+
+    await connection.query(
+      'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ?',
+      [item.quantity, item.variantId],
     );
   }
 };

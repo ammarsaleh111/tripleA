@@ -5,7 +5,7 @@ import { useAppContext } from '../context/AppContext.jsx';
 import ProductCard from '../components/shop/ProductCard.jsx';
 
 const DEFAULT_SHIPPING_MESSAGE =
-  'Cash on Delivery available. Fast delivery on elite gym supplements.';
+  'Cash on Delivery available. Fast delivery on all supplement orders.';
 const FALLBACK_PRODUCT_IMAGE =
   'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=900&q=80';
 
@@ -15,12 +15,12 @@ const FEATURE_PANELS = [
     body: 'Formulated for intensive training sessions and maximum muscle recovery.',
   },
   {
-    title: 'Premium Gear',
-    body: 'Selected for reliable quality and strong product feel.',
+    title: 'Premium Quality',
+    body: 'Independently lab tested for purity, potency, and label accuracy.',
   },
   {
     title: 'COD Checkout',
-    body: 'Order fast and pay cash when your gear arrives.',
+    body: 'Order fast and pay cash when your delivery arrives.',
   },
 ];
 
@@ -33,31 +33,30 @@ const EMPTY_PRODUCT = {
   reviewCount: 0,
   colors: [],
   sizes: [],
+  hasFlavor: false,
+  hasWeight: false,
   description: 'Product details are unavailable.',
-  materials: 'Gear details are unavailable.',
+  materials: 'Specification details are unavailable.',
   shipping: DEFAULT_SHIPPING_MESSAGE,
   images: [FALLBACK_PRODUCT_IMAGE],
   variants: [],
 };
 
-const categoryLabel = (categoryName) =>
-  String(categoryName || '').toLowerCase() === 'football jerseys' ? 'T-shirts' : categoryName || EMPTY_PRODUCT.category;
-
 const Accordion = ({ title, content, isOpen, onClick }) => {
   const safeContent = String(content || '').trim() || 'No details available right now.';
 
   return (
-    <div className="border-b border-white/10">
+    <div className="border-b border-[#1C1C26]">
       <button
         type="button"
         className="group flex w-full items-center justify-between py-4 text-left transition-all duration-300 ease-in-out hover:text-white"
         onClick={onClick}
       >
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 transition-all duration-300 ease-in-out group-hover:text-neon">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 transition-all duration-300 ease-in-out group-hover:text-[#FFCC00]">
           {title}
         </span>
         <svg
-          className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180 text-neon' : 'text-zinc-500'}`}
+          className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#FFCC00]' : 'text-zinc-500'}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -103,15 +102,24 @@ const ProductDetailPage = () => {
           throw new Error('Invalid product response payload.');
         }
 
-        const colorSource = Array.isArray(data.availableColors)
-          ? data.availableColors
-          : Array.from(
-              new Map(
-                (data.variants || [])
-                  .filter((variant) => variant.color)
-                  .map((variant) => [variant.color, { name: variant.color, hex: variant.color_hex || '#1f1f1f' }]),
-              ).values(),
-            );
+        const hasFlavor = Boolean(data.has_flavor ?? data.hasFlavor);
+        const hasWeight = Boolean(data.has_weight ?? data.hasWeight);
+        const colorSource = hasFlavor
+          ? Array.isArray(data.availableFlavors)
+            ? data.availableFlavors
+            : Array.isArray(data.availableColors)
+            ? data.availableColors
+            : Array.from(
+                new Map(
+                  (data.variants || [])
+                    .filter((variant) => variant.flavor || variant.color)
+                    .map((variant) => [
+                      variant.flavor || variant.color,
+                      { name: variant.flavor || variant.color, hex: variant.color_hex || '#1f1f1f' },
+                    ]),
+                ).values(),
+              )
+          : [];
 
         const mappedColors = colorSource.map((color, index) => ({
           id: `api-color-${index + 1}`,
@@ -120,19 +128,25 @@ const ProductDetailPage = () => {
         }));
 
         const mappedImages = (data.images || []).map((image) => image.image_url).filter(Boolean);
-        const mappedSizes = Array.isArray(data.availableSizes)
-          ? data.availableSizes
-          : Array.from(new Set((data.variants || []).map((variant) => variant.size).filter(Boolean)));
+        const mappedSizes = hasWeight
+          ? Array.isArray(data.availableWeights)
+            ? data.availableWeights.map((weight) => weight.label || `${Number(weight.value).toString()} ${weight.unit}`)
+            : Array.isArray(data.availableSizes)
+            ? data.availableSizes
+            : Array.from(new Set((data.variants || []).map((variant) => variant.weight_label || variant.size).filter(Boolean)))
+          : [];
 
         const nextProduct = {
           id: data.id,
           name: data.name || EMPTY_PRODUCT.name,
-          category: categoryLabel(data.category_name),
+          category: data.category_name || EMPTY_PRODUCT.category,
           price: Number(data.base_price || 0),
           rating: Number(data.reviews?.rating || 0),
           reviewCount: Number(data.reviews?.count || 0),
           colors: mappedColors,
           sizes: mappedSizes,
+          hasFlavor,
+          hasWeight,
           description: data.description || EMPTY_PRODUCT.description,
           materials: data.materials_care || EMPTY_PRODUCT.materials,
           shipping: DEFAULT_SHIPPING_MESSAGE,
@@ -141,8 +155,8 @@ const ProductDetailPage = () => {
         };
 
         setProduct(nextProduct);
-        setSelectedColor(nextProduct.colors[0] || null);
-        setSelectedSize(nextProduct.sizes[0] || '');
+        setSelectedColor(nextProduct.hasFlavor ? nextProduct.colors[0] || null : null);
+        setSelectedSize(nextProduct.hasWeight ? nextProduct.sizes[0] || '' : '');
         setQuantity(1);
         setActiveImage(0);
       } catch (error) {
@@ -170,11 +184,13 @@ const ProductDetailPage = () => {
   const selectedVariant = useMemo(
     () =>
       (product.variants || []).find((variant) => {
-        const sizeMatch = selectedSize
-          ? String(variant.size || '').toUpperCase() === String(selectedSize || '').toUpperCase()
+        const variantWeightLabel = variant.weight_label ||
+          (variant.weight_value && variant.weight_unit ? `${Number(variant.weight_value).toString()} ${variant.weight_unit}` : variant.size);
+        const sizeMatch = product.hasWeight && selectedSize
+          ? String(variantWeightLabel || '').toUpperCase() === String(selectedSize || '').toUpperCase()
           : true;
-        const colorMatch = selectedColor
-          ? String(variant.color || '').toLowerCase() === String(selectedColor?.name || '').toLowerCase()
+        const colorMatch = product.hasFlavor && selectedColor
+          ? String(variant.flavor || variant.color || '').toLowerCase() === String(selectedColor?.name || '').toLowerCase()
           : true;
         return sizeMatch && colorMatch;
       }) || null,
@@ -188,7 +204,7 @@ const ProductDetailPage = () => {
   const shortDescription = useMemo(() => {
     const value = String(product.description || '').replace(/\s+/g, ' ').trim();
     if (!value) {
-      return 'Industrial grade gym supplement engineered for maximum performance.';
+      return 'Premium supplement engineered for maximum performance.';
     }
     if (value.length <= 150) {
       return value;
@@ -229,9 +245,10 @@ const ProductDetailPage = () => {
 
     const selectedVariantId = Number(selectedVariant.id);
     const selectedQuantity = Math.min(Math.max(1, quantity), maxSelectableQuantity);
-    const selectedVariantLabel = `${
-      selectedVariant.color || selectedColor?.name || 'Default'
-    } / ${selectedVariant.size || selectedSize || 'One Size'}`;
+    const selectedVariantLabel = [
+      selectedVariant.flavor || selectedVariant.color || selectedColor?.name,
+      selectedVariant.weight_label || selectedVariant.size || selectedSize,
+    ].filter(Boolean).join(' / ') || 'Standard';
 
     const result = await addCartItem({
       variantId: selectedVariantId,
@@ -244,8 +261,9 @@ const ProductDetailPage = () => {
         slug,
         name: product.name,
         variant: selectedVariantLabel,
-        color: selectedVariant.color || selectedColor?.name || null,
-        size: selectedVariant.size || selectedSize || null,
+        color: selectedVariant.flavor || selectedVariant.color || selectedColor?.name || null,
+        flavor: selectedVariant.flavor || selectedVariant.color || selectedColor?.name || null,
+        size: selectedVariant.weight_label || selectedVariant.size || selectedSize || null,
         unitPrice: Number(product.price || 0),
         quantity: selectedQuantity,
         imageUrl: product.images?.[0] || FALLBACK_PRODUCT_IMAGE,
@@ -270,11 +288,6 @@ const ProductDetailPage = () => {
 
   const handleShowSizeGuide = () => {
     setShowSizeGuide(true);
-  };
-
-  const handleExploreConstruction = () => {
-    setOpenAccordion('materials');
-    materialsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   useEffect(() => {
@@ -317,39 +330,45 @@ const ProductDetailPage = () => {
   }, [slug]);
 
   const stockStatusLabel = !selectedVariant
-    ? 'Select size and color'
+    ? `Select ${[product.hasFlavor ? 'flavor' : '', product.hasWeight ? 'weight' : ''].filter(Boolean).join(' and ') || 'option'}`
     : selectedStock > 0
       ? `${selectedStock} in stock`
       : 'Out of stock';
 
   const stockStatusClass = !selectedVariant
-    ? 'text-white/55'
+    ? 'text-zinc-400'
     : selectedStock > 0
-      ? 'text-neon'
+      ? 'text-[#FFCC00]'
       : 'text-red-400';
 
   return (
-    <section className="mx-auto w-full max-w-[1540px] px-0 py-2 text-white sm:px-2 sm:py-3 md:px-4">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-        <Link to="/" className="cursor-pointer transition-all duration-300 ease-in-out hover:text-white">Home</Link>
+    <section className="mx-auto w-full max-w-[1500px] px-4 py-8 text-white sm:px-6">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+        <Link to="/" className="cursor-pointer transition-colors hover:text-[#FFCC00]">Home</Link>
         <span>&gt;</span>
-        <Link to="/shop" className="cursor-pointer transition-all duration-300 ease-in-out hover:text-white">Shop</Link>
+        <Link to="/shop" className="cursor-pointer transition-colors hover:text-[#FFCC00]">Shop</Link>
         <span>&gt;</span>
         <span className="text-white">{product.name}</span>
       </div>
 
       {errorMessage && !isLoading && (
-        <div className="storefront-surface mt-4 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-yellow-400">{errorMessage}</p>
-          <Link to="/shop" className="storefront-secondary px-4">Back To Shop</Link>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#1C1C26] bg-[#0B0B0E] px-4 py-3">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#FFCC00]">{errorMessage}</p>
+          <Link
+            to="/shop"
+            className="rounded-lg border border-[#22222E] bg-[#14141E] px-4 py-2 font-mono text-xs font-bold uppercase tracking-widest text-white transition-colors hover:border-[#FFCC00] hover:text-[#FFCC00]"
+          >
+            Back To Shop
+          </Link>
         </div>
       )}
 
       <div className="mt-4 grid gap-5 xl:grid-cols-[minmax(0,1fr)_430px]">
-        <div className="storefront-surface p-4 sm:p-5">
-          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/35">
+        {/* Gallery Panel */}
+        <div className="bg-[#0B0B0E] border border-[#1C1C26] rounded-2xl p-4 sm:p-5">
+          <div className="relative overflow-hidden rounded-xl border border-[#1C1C26] bg-[#050506]">
             {isLoading ? (
-              <div className="h-[320px] animate-pulse bg-white/10 sm:h-[460px] lg:h-[560px]" />
+              <div className="h-[320px] animate-pulse bg-[#14141E] sm:h-[460px] lg:h-[560px]" />
             ) : (
               <img
                 src={product.images[activeImage] || FALLBACK_PRODUCT_IMAGE}
@@ -361,8 +380,10 @@ const ProductDetailPage = () => {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
             <div className="absolute left-3 top-3 flex items-center gap-2">
-              <span className="storefront-chip">{product.category}</span>
-              <span className="storefront-chip">
+              <span className="rounded-full border border-[#FFCC00]/25 bg-black/60 px-2.5 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-[#FFCC00] backdrop-blur-md">
+                {product.category}
+              </span>
+              <span className="rounded-full border border-[#FFCC00]/25 bg-black/60 px-2.5 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-[#FFCC00] backdrop-blur-md">
                 {activeImage + 1} / {product.images.length}
               </span>
             </div>
@@ -372,7 +393,7 @@ const ProductDetailPage = () => {
                 <button
                   type="button"
                   onClick={goToPreviousImage}
-                  className="storefront-icon-button absolute left-3 top-1/2 -translate-y-1/2"
+                  className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-[#22222E] bg-black/60 text-zinc-300 backdrop-blur-md transition-colors hover:border-[#FFCC00] hover:text-[#FFCC00]"
                   aria-label="Previous image"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -382,7 +403,7 @@ const ProductDetailPage = () => {
                 <button
                   type="button"
                   onClick={goToNextImage}
-                  className="storefront-icon-button absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-[#22222E] bg-black/60 text-zinc-300 backdrop-blur-md transition-colors hover:border-[#FFCC00] hover:text-[#FFCC00]"
                   aria-label="Next image"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -402,7 +423,7 @@ const ProductDetailPage = () => {
                 className={`overflow-hidden rounded-lg border transition-all duration-300 ${
                   activeImage === index
                     ? 'border-[#FFCC00] shadow-[0_0_0_1px_rgba(255,204,0,0.35)]'
-                    : 'border-white/10 hover:border-white/35'
+                    : 'border-[#1C1C26] hover:border-zinc-600'
                 }`}
                 aria-label={`Show image ${index + 1}`}
               >
@@ -412,13 +433,20 @@ const ProductDetailPage = () => {
           </div>
         </div>
 
-        <aside className="storefront-surface h-fit p-5 sm:p-6 xl:sticky xl:top-28">
-          <p className="storefront-kicker">Gym Supplement</p>
-          <h1 className="storefront-title mt-4 text-[clamp(2.8rem,7vw,4.8rem)] text-white">{product.name}</h1>
-          <p className="mt-3 text-sm leading-relaxed text-white/70">{shortDescription}</p>
+        {/* Purchase Panel */}
+        <aside className="h-fit rounded-2xl border border-[#1C1C26] bg-[#0B0B0E] p-5 sm:p-6 xl:sticky xl:top-28">
+          <p className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-[#FFCC00]">
+            {product.category}
+          </p>
+          <h1 className="mt-4 font-heading text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">
+            {product.name}
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-400">{shortDescription}</p>
 
           <div className="mt-5 flex items-end justify-between gap-4">
-            <p className="text-4xl font-bold text-[#FFCC00]">${product.price.toFixed(2)}</p>
+            <p className="font-heading text-4xl font-black tracking-tight text-[#FFCC00]">
+              ${product.price.toFixed(2)}
+            </p>
             <div className="flex items-center gap-1">
               <div className="flex text-[#FFCC00]">
                 {[...Array(5)].map((_, index) => (
@@ -431,15 +459,16 @@ const ProductDetailPage = () => {
                   </svg>
                 ))}
               </div>
-              <span className="ml-1 text-[10px] uppercase tracking-[0.14em] text-white/55">
+              <span className="ml-1 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
                 {product.reviewCount} reviews
               </span>
             </div>
           </div>
 
           <div className="mt-6 space-y-7">
+            {product.hasFlavor && (
             <div>
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+              <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
                 Flavor / {selectedColor?.name || 'N/A'}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -463,20 +492,22 @@ const ProductDetailPage = () => {
                     </button>
                   ))
                 ) : (
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-zinc-500">No flavor options</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">No flavor options</p>
                 )}
               </div>
             </div>
+            )}
 
+            {product.hasWeight && (
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Size</p>
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">Weight</p>
                 <button
                   type="button"
                   onClick={handleShowSizeGuide}
                   className="font-mono text-xs uppercase tracking-widest text-[#FFCC00] hover:underline"
                 >
-                  SIZE GUIDE
+                  WEIGHT GUIDE
                 </button>
               </div>
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
@@ -486,37 +517,42 @@ const ProductDetailPage = () => {
                       key={size}
                       type="button"
                       onClick={() => setSelectedSize(size)}
-                      className={`py-2.5 font-mono text-xs font-bold uppercase transition-all chamfer-input ${
+                      className={`rounded-lg border py-2.5 font-mono text-xs font-bold uppercase transition-all ${
                         selectedSize === size
                           ? 'border-[#FFCC00] bg-[#FFCC00] text-black'
-                          : 'border-[#282828] bg-[#0A0A0A] text-zinc-300 hover:border-zinc-500'
+                          : 'border-[#1C1C26] bg-[#050506] text-zinc-300 hover:border-zinc-500'
                       }`}
                     >
                       {size}
                     </button>
                   ))
                 ) : (
-                  <p className="col-span-full font-mono text-xs uppercase tracking-widest text-zinc-500">No size options</p>
+                  <p className="col-span-full font-mono text-xs uppercase tracking-widest text-zinc-500">
+                    No size options
+                  </p>
                 )}
               </div>
             </div>
+            )}
 
             <div>
               <p className="mb-3 font-mono text-xs uppercase tracking-widest text-zinc-400">QUANTITY</p>
-              <div className="inline-flex items-center overflow-hidden border border-[#282828] bg-[#0A0A0A]">
+              <div className="inline-flex items-center overflow-hidden rounded-lg border border-[#1C1C26] bg-[#050506]">
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                  className="px-4 py-2 font-mono text-sm text-zinc-400 hover:text-[#FFCC00]"
+                  className="px-4 py-2 font-mono text-sm text-zinc-400 transition-colors hover:text-[#FFCC00]"
                   aria-label="Decrease quantity"
                 >
                   -
                 </button>
-                <span className="min-w-10 px-2 text-center font-mono text-sm font-bold text-white">{quantity}</span>
+                <span className="min-w-10 border-x border-[#1C1C26] px-2 text-center font-mono text-sm font-bold text-white">
+                  {quantity}
+                </span>
                 <button
                   type="button"
                   onClick={() => setQuantity((current) => Math.min(maxSelectableQuantity, current + 1))}
-                  className="px-4 py-2 font-mono text-sm text-zinc-400 hover:text-[#FFCC00]"
+                  className="px-4 py-2 font-mono text-sm text-zinc-400 transition-colors hover:text-[#FFCC00]"
                   aria-label="Increase quantity"
                 >
                   +
@@ -529,7 +565,7 @@ const ProductDetailPage = () => {
             type="button"
             onClick={handleAddToCart}
             disabled={!canAddToCart}
-            className="btn-primary mt-7 flex w-full items-center justify-center gap-2 py-4 disabled:opacity-40"
+            className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-[#FFCC00] py-4 font-heading text-xs font-black uppercase tracking-widest text-black shadow-lg transition-all hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-[0_0_25px_rgba(255,204,0,0.4)] disabled:opacity-40 disabled:hover:translate-y-0"
           >
             {selectedStock > 0 ? 'ADD TO CART' : 'UNAVAILABLE'}
           </button>
@@ -538,7 +574,7 @@ const ProductDetailPage = () => {
             type="button"
             onClick={handleBuyNow}
             disabled={!canAddToCart}
-            className="btn-secondary mt-3 flex w-full items-center justify-center gap-2 py-4 disabled:opacity-40"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#22222E] bg-[#14141E] py-4 font-heading text-xs font-bold uppercase tracking-widest text-white transition-all hover:border-[#FFCC00] hover:bg-white hover:text-black disabled:opacity-40"
           >
             BUY NOW (EXPRESS CHECKOUT)
           </button>
@@ -549,24 +585,26 @@ const ProductDetailPage = () => {
           </div>
 
           {cartFeedback && (
-            <p className="mt-3 font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00] animate-pulse">{cartFeedback}</p>
+            <p className="mt-3 animate-pulse font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">
+              {cartFeedback}
+            </p>
           )}
 
-          <div ref={materialsSectionRef} className="mt-8 border-t border-[#282828]">
-            <Accordion 
-              title="PRODUCT DETAILS" 
+          <div ref={materialsSectionRef} className="mt-8 border-t border-[#1C1C26]">
+            <Accordion
+              title="PRODUCT DETAILS"
               content={product.description}
               isOpen={openAccordion === 'description'}
               onClick={() => setOpenAccordion(openAccordion === 'description' ? '' : 'description')}
             />
-            <Accordion 
-              title="INGREDIENTS & SPECIFICATIONS" 
+            <Accordion
+              title="INGREDIENTS & SPECIFICATIONS"
               content={product.materials}
               isOpen={openAccordion === 'materials'}
               onClick={() => setOpenAccordion(openAccordion === 'materials' ? '' : 'materials')}
             />
-            <Accordion 
-              title="SHIPPING & DISPATCH" 
+            <Accordion
+              title="SHIPPING & DISPATCH"
               content={product.shipping}
               isOpen={openAccordion === 'shipping'}
               onClick={() => setOpenAccordion(openAccordion === 'shipping' ? '' : 'shipping')}
@@ -575,41 +613,46 @@ const ProductDetailPage = () => {
         </aside>
       </div>
 
+      {/* Feature Panels */}
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {FEATURE_PANELS.map((panel, index) => (
-          <article key={panel.title} className="bg-[#141414] border border-[#282828] p-6 chamfer-box">
+          <article
+            key={panel.title}
+            className="rounded-xl border border-[#1C1C26] bg-[#0B0B0F] p-6 transition-all duration-500 hover:-translate-y-1 hover:border-[#FFCC00]/50"
+          >
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">0{index + 1}</p>
-            <h3 className="mt-2 font-heading font-black italic text-xl uppercase text-white">{panel.title}</h3>
+            <h3 className="mt-2 font-heading text-xl font-black uppercase tracking-tight text-white">{panel.title}</h3>
             <p className="mt-2 font-mono text-xs leading-relaxed text-zinc-400">{panel.body}</p>
           </article>
         ))}
       </div>
 
+      {/* Size Guide Modal */}
       {showSizeGuide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 py-6">
-          <div className="bg-[#141414] border border-[#282828] w-full max-w-3xl p-6 shadow-2xl chamfer-box">
-            <div className="flex items-start justify-between gap-4 border-b border-[#282828] pb-4">
+          <div className="w-full max-w-3xl rounded-2xl border border-[#1C1C26] bg-[#0B0B0E] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-[#1C1C26] pb-4">
               <div>
                 <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">SPECIFICATIONS</p>
-                <h3 className="mt-1 font-heading font-black italic text-3xl uppercase text-white">
+                <h3 className="mt-1 font-heading text-3xl font-black uppercase tracking-tight text-white">
                   SUPPLEMENT SPEC GUIDE
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowSizeGuide(false)}
-                className="btn-secondary text-xs px-3 py-2"
+                className="rounded-lg border border-[#22222E] bg-[#14141E] px-3 py-2 font-mono text-xs font-bold uppercase tracking-widest text-white transition-colors hover:border-[#FFCC00] hover:text-[#FFCC00]"
               >
                 CLOSE
               </button>
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="bg-[#0A0A0A] border border-[#282828] p-4 chamfer-box">
+              <div className="rounded-xl border border-[#1C1C26] bg-[#050506] p-4">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">DOSAGE & FORMULA</p>
                 <p className="mt-2 font-mono text-xl font-bold text-white">1 SCOOP (30g)</p>
               </div>
-              <div className="bg-[#0A0A0A] border border-[#282828] p-4 chamfer-box">
+              <div className="rounded-xl border border-[#1C1C26] bg-[#050506] p-4">
                 <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">RECOMMENDED USAGE</p>
                 <p className="mt-2 font-mono text-xs text-zinc-300">Consume 30 minutes pre or post training.</p>
               </div>
@@ -618,11 +661,19 @@ const ProductDetailPage = () => {
         </div>
       )}
 
+      {/* Related Products */}
       {relatedProducts.length > 0 && (
         <section className="mt-12">
-          <div className="mb-6 flex items-end justify-between gap-4 border-b border-[#282828] pb-4">
-            <h2 className="font-heading font-black italic text-3xl uppercase text-white">RELATED SUPPLEMENTS</h2>
-            <Link to="/shop" className="font-mono text-xs text-[#FFCC00] hover:underline">VIEW ALL →</Link>
+          <div className="mb-6 flex items-end justify-between gap-4 border-b border-[#1C1C24] pb-6">
+            <h2 className="font-heading text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+              RELATED <span className="text-[#FFCC00]">SUPPLEMENTS</span>
+            </h2>
+            <Link
+              to="/shop"
+              className="shrink-0 font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00] hover:underline"
+            >
+              VIEW ALL →
+            </Link>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {relatedProducts.map((item) => (

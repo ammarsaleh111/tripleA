@@ -518,17 +518,24 @@ const MainLayout = () => {
                   <div className="space-y-3">
                     <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Popular Categories</span>
                     <div className="flex flex-wrap gap-2">
-                      {['Protein', 'Creatine', 'Pre-Workout', 'Amino Acids'].map((cat) => (
+                      {[
+                        { label: 'Supplements', slug: 'supplements' },
+                        { label: 'Protein', slug: 'protein' },
+                        { label: 'Creatine', slug: 'creatine' },
+                        { label: 'Pre-Workout', slug: 'pre-workout' },
+                        { label: 'Vitamins', slug: 'vitamins' },
+                        { label: 'Amino Acids', slug: 'amino-acids' },
+                      ].map((cat) => (
                         <button
-                          key={cat}
+                          key={cat.slug}
                           type="button"
                           onClick={() => {
                             setIsSearchOpen(false);
-                            navigate(`/shop?category=${cat.toLowerCase()}`);
+                            navigate(`/shop?category=${cat.slug}`);
                           }}
                           className="px-3.5 py-1.5 bg-[#141416] border border-[#222225] hover:border-zinc-700 text-xs font-mono rounded-sm text-zinc-300 transition-colors uppercase tracking-wider"
                         >
-                          {cat}
+                          {cat.label}
                         </button>
                       ))}
                     </div>

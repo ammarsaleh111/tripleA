@@ -10,69 +10,6 @@ const HERO_BG_IMAGE =
 const COMMERCIAL_SHOT_IMAGE =
   'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=1000&q=85';
 
-const fallbackProducts = [
-  {
-    id: 'whey-isolate',
-    slug: 'triplea-whey-isolate',
-    defaultVariantId: 1,
-    totalStock: 85,
-    name: 'TITANIUM WHEY ISOLATE',
-    price: 54.99,
-    colorName: 'Protein',
-    imageUrl: 'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=800&q=80',
-    isNew: true,
-    rating: 5.0,
-    reviewCount: 1245,
-    badgeText: 'BEST SELLER',
-    description: 'Ultra-fast absorbing cold-filtered whey protein.'
-  },
-  {
-    id: 'nitric-surge',
-    slug: 'nitric-surge-preworkout',
-    defaultVariantId: 3,
-    totalStock: 78,
-    name: 'IGNITION PRE-WORKOUT',
-    price: 39.99,
-    colorName: 'Pre-Workout',
-    imageUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80',
-    isNew: true,
-    rating: 4.9,
-    reviewCount: 885,
-    badgeText: 'NEW ARRIVAL',
-    description: 'Explosive energy & laser focus matrix.'
-  },
-  {
-    id: 'bcaa-matrix',
-    slug: 'bcaa-recovery-matrix',
-    defaultVariantId: 4,
-    totalStock: 85,
-    name: 'ELITE BCAA MATRIX',
-    price: 29.99,
-    colorName: 'Amino Acids',
-    imageUrl: 'https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=800&q=80',
-    isNew: false,
-    rating: 4.8,
-    reviewCount: 482,
-    badgeText: '',
-    description: 'Intra-workout hydration & muscle recovery.'
-  },
-  {
-    id: 'pure-creatine',
-    slug: 'pure-creatine-monohydrate',
-    defaultVariantId: 2,
-    totalStock: 112,
-    name: 'PURE CREATINE',
-    price: 24.99,
-    colorName: 'Creatine',
-    imageUrl: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=800&q=80',
-    isNew: false,
-    rating: 5.0,
-    reviewCount: 2115,
-    badgeText: 'BEST SELLER',
-    description: '100% Micronized Creatine Monohydrate.'
-  },
-];
-
 const marqueeItems = [
   '⚡ 100% AUTHENTIC FORMULATIONS',
   '🚚 FREE EXPRESS SHIPPING ON ORDERS $100+',
@@ -200,10 +137,10 @@ const HomePage = () => {
         const response = await getProductsApi({ sort_by: 'featured', limit: 8, page: 1 });
         const mapped = Array.isArray(response?.data) ? response.data.map(mapProduct) : [];
         if (isMounted) {
-          setProducts(mapped.length >= 4 ? mapped : fallbackProducts);
+          setProducts(mapped);
         }
       } catch {
-        if (isMounted) setProducts(fallbackProducts);
+        if (isMounted) setProducts([]);
       }
     };
 

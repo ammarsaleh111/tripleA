@@ -5,6 +5,19 @@ import { randomUUID } from 'node:crypto';
 import { getDatabase } from '../config/db.js';
 
 const MAX_PAGE_LIMIT = 200;
+const MAX_PRODUCT_IMAGES = 20;
+const MAIN_CATEGORIES = new Map([
+  ['supplements', 'Supplements'],
+  ['vitamins', 'Vitamins'],
+  ['amino-acids', 'Amino Acids'],
+  ['gym-accessories', 'Gym Accessories'],
+]);
+const SUPPLEMENT_SUBCATEGORIES = new Map([
+  ['creatine', 'Creatine'],
+  ['protein', 'Protein'],
+  ['carb', 'Carb'],
+  ['pre-workout', 'Pre-Workout'],
+]);
 
 const UPLOAD_ROOT = path.resolve(process.cwd(), 'uploads', 'admin-products');
 const ALLOWED_UPLOAD_MIME_TYPES = new Map([
@@ -217,6 +230,8 @@ const getCategoryInput = (payload) => ({
   categoryId: payload.category_id ?? payload.categoryId,
   categorySlug: payload.category_slug ?? payload.categorySlug,
   categoryName: payload.category_name ?? payload.categoryName,
+  subcategorySlug: payload.subcategory_slug ?? payload.subcategorySlug,
+  subcategoryName: payload.subcategory_name ?? payload.subcategoryName,
 });
 
 const hasCategoryInput = (payload) => {
@@ -231,6 +246,58 @@ const hasCategoryInput = (payload) => {
 
 const resolveCategoryId = async (connection, payload) => {
   const category = getCategoryInput(payload);
+
+  if (category.categoryName !== undefined && category.categoryName !== null && category.categoryName !== '') {
+    const categorySlug = normalizeSlug(category.categorySlug || category.categoryName);
+    const canonicalCategoryName = MAIN_CATEGORIES.get(categorySlug) || requireStringField(category.categoryName, 'Category name', 100);
+
+    if (MAIN_CATEGORIES.has(categorySlug)) {
+      const [existingMain] = await connection.query('SELECT id FROM categories WHERE slug = ? LIMIT 1', [categorySlug]);
+      let parentId = existingMain[0]?.id;
+
+      if (parentId) {
+        await connection.query('UPDATE categories SET name = ?, parent_id = NULL WHERE id = ?', [canonicalCategoryName, parentId]);
+      } else {
+        const [insertMain] = await connection.query(
+          'INSERT INTO categories (name, slug, parent_id) VALUES (?, ?, NULL) RETURNING id',
+          [canonicalCategoryName, categorySlug],
+        );
+        parentId = insertMain.insertId;
+      }
+
+      if (categorySlug !== 'supplements') {
+        return parentId;
+      }
+
+      const subcategoryRaw = category.subcategorySlug || category.subcategoryName;
+      const subcategorySlug = normalizeSlug(subcategoryRaw);
+
+      if (!SUPPLEMENT_SUBCATEGORIES.has(subcategorySlug)) {
+        throw createHttpError(400, 'Supplements products require a valid subcategory.');
+      }
+
+      const subcategoryName = SUPPLEMENT_SUBCATEGORIES.get(subcategorySlug);
+      const [existingSubcategory] = await connection.query('SELECT id FROM categories WHERE slug = ? LIMIT 1', [
+        subcategorySlug,
+      ]);
+
+      if (existingSubcategory[0]?.id) {
+        await connection.query('UPDATE categories SET name = ?, parent_id = ? WHERE id = ?', [
+          subcategoryName,
+          parentId,
+          existingSubcategory[0].id,
+        ]);
+        return existingSubcategory[0].id;
+      }
+
+      const [insertSubcategory] = await connection.query(
+        'INSERT INTO categories (name, slug, parent_id) VALUES (?, ?, ?) RETURNING id',
+        [subcategoryName, subcategorySlug, parentId],
+      );
+
+      return insertSubcategory.insertId;
+    }
+  }
 
   if (category.categoryId !== undefined) {
     if (category.categoryId === null || category.categoryId === '') {
@@ -338,12 +405,35 @@ const normalizeVariantsInput = (variantsInput) => {
       throw createHttpError(400, `variants[${index}].price_modifier must be a number.`);
     }
 
+    const weightUnit = toOptionalString(variant?.weight_unit ?? variant?.weightUnit, 2);
+    const weightValueRaw = variant?.weight_value ?? variant?.weightValue;
+    let weightValue = null;
+
+    if (weightValueRaw !== undefined && weightValueRaw !== null && weightValueRaw !== '') {
+      weightValue = Number(weightValueRaw);
+      if (!Number.isFinite(weightValue) || weightValue <= 0) {
+        throw createHttpError(400, `variants[${index}].weight_value must be a positive number.`);
+      }
+      weightValue = Number(weightValue.toFixed(2));
+    }
+
+    if (weightUnit && !['g', 'kg'].includes(weightUnit)) {
+      throw createHttpError(400, `variants[${index}].weight_unit must be g or kg.`);
+    }
+
+    const flavor = toOptionalString(variant?.flavor ?? variant?.color, 50);
+    const size = toOptionalString(variant?.size, 50);
+    const weightLabel = weightValue && weightUnit ? `${Number(weightValue).toString()} ${weightUnit}` : size;
+
     return {
       id: variantId,
       sku: normalizeSku(variant?.sku),
-      size: toOptionalString(variant?.size, 50),
-      color: toOptionalString(variant?.color, 50),
+      size: weightLabel,
+      color: flavor,
       colorHex: toOptionalString(variant?.color_hex ?? variant?.colorHex, 10),
+      flavor,
+      weightValue,
+      weightUnit: weightValue && weightUnit ? weightUnit : null,
       priceModifier: Number(parsedPriceModifier.toFixed(2)),
       stockQuantity,
       index,
@@ -360,6 +450,10 @@ const normalizeImagesInput = (imagesInput) => {
   const seenUrls = new Set();
 
   for (let index = 0; index < imagesInput.length; index += 1) {
+    if (normalized.length >= MAX_PRODUCT_IMAGES) {
+      throw createHttpError(400, `Products can contain up to ${MAX_PRODUCT_IMAGES} image URLs.`);
+    }
+
     const image = imagesInput[index];
 
     let imageUrl = '';
@@ -492,7 +586,7 @@ const upsertProductVariants = async ({
       await connection.query(
         `
         UPDATE product_variants
-        SET sku = ?, size = ?, color = ?, color_hex = ?, price_modifier = ?, stock_quantity = ?
+        SET sku = ?, size = ?, color = ?, color_hex = ?, flavor = ?, weight_value = ?, weight_unit = ?, price_modifier = ?, stock_quantity = ?
         WHERE id = ? AND product_id = ?
         `,
         [
@@ -500,6 +594,9 @@ const upsertProductVariants = async ({
           nextSize,
           nextColor,
           nextColorHex,
+          variant.flavor,
+          variant.weightValue,
+          variant.weightUnit,
           nextPriceModifier,
           nextStock,
           existingVariant.id,
@@ -518,10 +615,13 @@ const upsertProductVariants = async ({
         size,
         color,
         color_hex,
+        flavor,
+        weight_value,
+        weight_unit,
         price_modifier,
         stock_quantity
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         productId,
@@ -529,6 +629,9 @@ const upsertProductVariants = async ({
         variant.size,
         variant.color,
         variant.colorHex,
+        variant.flavor,
+        variant.weightValue,
+        variant.weightUnit,
         variant.priceModifier,
         variant.stockQuantity,
       ],
@@ -553,11 +656,15 @@ const fetchProductsWithRelations = async (connection, productIds) => {
       p.description,
       p.materials_care,
       p.base_price,
+      p.has_flavor,
+      p.has_weight,
       p.is_featured,
       p.created_at,
       p.updated_at,
       c.name AS category_name,
       c.slug AS category_slug,
+      cp.name AS parent_category_name,
+      cp.slug AS parent_category_slug,
       COALESCE(
         (
           SELECT SUM(pv.stock_quantity)
@@ -586,6 +693,7 @@ const fetchProductsWithRelations = async (connection, productIds) => {
       ) AS primary_image
     FROM products p
     LEFT JOIN categories c ON c.id = p.category_id
+    LEFT JOIN categories cp ON cp.id = c.parent_id
     WHERE p.id IN (${placeholders})
     `,
     productIds,
@@ -600,6 +708,9 @@ const fetchProductsWithRelations = async (connection, productIds) => {
       size,
       color,
       color_hex,
+      flavor,
+      weight_value,
+      weight_unit,
       price_modifier,
       stock_quantity
     FROM product_variants
@@ -638,6 +749,9 @@ const fetchProductsWithRelations = async (connection, productIds) => {
       size: variant.size,
       color: variant.color,
       colorHex: variant.color_hex,
+      flavor: variant.flavor || variant.color,
+      weightValue: variant.weight_value === null || variant.weight_value === undefined ? null : Number(variant.weight_value),
+      weightUnit: variant.weight_unit,
       priceModifier: Number(variant.price_modifier || 0),
       stockQuantity: Number(variant.stock_quantity || 0),
     });
@@ -665,11 +779,15 @@ const fetchProductsWithRelations = async (connection, productIds) => {
       categoryId: product.category_id,
       categoryName: product.category_name,
       categorySlug: product.category_slug,
+      parentCategoryName: product.parent_category_name,
+      parentCategorySlug: product.parent_category_slug,
       name: product.name,
       slug: product.slug,
       description: product.description,
       materialsCare: product.materials_care,
       basePrice: Number(product.base_price || 0),
+      hasFlavor: Boolean(product.has_flavor),
+      hasWeight: Boolean(product.has_weight),
       isFeatured: Boolean(product.is_featured),
       totalStock: Number(product.total_stock || 0),
       variantCount: Number(product.variant_count || 0),
@@ -797,6 +915,8 @@ export const createAdminProduct = async (request, response, next) => {
     const description = requireStringField(request.body.description, 'Product description');
     const materialsCare = toOptionalString(request.body.materials_care ?? request.body.materialsCare);
     const basePrice = parseMoney(request.body.base_price ?? request.body.basePrice, 'base_price');
+    const hasFlavor = parseBoolean(request.body.has_flavor ?? request.body.hasFlavor, false);
+    const hasWeight = parseBoolean(request.body.has_weight ?? request.body.hasWeight, false);
     const isFeatured = parseBoolean(request.body.is_featured ?? request.body.isFeatured, false);
 
     const requestedSlug =
@@ -817,6 +937,9 @@ export const createAdminProduct = async (request, response, next) => {
           size: toOptionalString(request.body.default_size ?? request.body.defaultSize, 50) || 'One Size',
           color: toOptionalString(request.body.default_color ?? request.body.defaultColor, 50) || 'Default',
           colorHex: toOptionalString(request.body.default_color_hex ?? request.body.defaultColorHex, 10),
+          flavor: null,
+          weightValue: null,
+          weightUnit: null,
           priceModifier: 0,
           stockQuantity: parseNonNegativeInteger(
             request.body.stock_quantity ?? request.body.default_stock_quantity ?? 0,
@@ -841,12 +964,14 @@ export const createAdminProduct = async (request, response, next) => {
         description,
         materials_care,
         base_price,
+        has_flavor,
+        has_weight,
         is_featured
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
       `,
-      [categoryId, name, slug, description, materialsCare, basePrice, isFeatured],
+      [categoryId, name, slug, description, materialsCare, basePrice, hasFlavor, hasWeight, isFeatured],
     );
 
     const productId = productInsertResult.insertId;
@@ -896,7 +1021,7 @@ export const updateAdminProduct = async (request, response, next) => {
 
     const [productRows] = await connection.query(
       `
-      SELECT id, category_id, name, slug, description, materials_care, base_price, is_featured
+      SELECT id, category_id, name, slug, description, materials_care, base_price, has_flavor, has_weight, is_featured
       FROM products
       WHERE id = ?
       LIMIT 1
@@ -925,6 +1050,14 @@ export const updateAdminProduct = async (request, response, next) => {
     const nextBasePrice = hasOwn(request.body, 'base_price') || hasOwn(request.body, 'basePrice')
       ? parseMoney(request.body.base_price ?? request.body.basePrice, 'base_price')
       : Number(existingProduct.base_price || 0);
+
+    const nextHasFlavor = hasOwn(request.body, 'has_flavor') || hasOwn(request.body, 'hasFlavor')
+      ? parseBoolean(request.body.has_flavor ?? request.body.hasFlavor, Boolean(existingProduct.has_flavor))
+      : Boolean(existingProduct.has_flavor);
+
+    const nextHasWeight = hasOwn(request.body, 'has_weight') || hasOwn(request.body, 'hasWeight')
+      ? parseBoolean(request.body.has_weight ?? request.body.hasWeight, Boolean(existingProduct.has_weight))
+      : Boolean(existingProduct.has_weight);
 
     const nextIsFeatured = hasOwn(request.body, 'is_featured') || hasOwn(request.body, 'isFeatured')
       ? parseBoolean(request.body.is_featured ?? request.body.isFeatured, Boolean(existingProduct.is_featured))
@@ -955,7 +1088,7 @@ export const updateAdminProduct = async (request, response, next) => {
     await connection.query(
       `
       UPDATE products
-      SET category_id = ?, name = ?, slug = ?, description = ?, materials_care = ?, base_price = ?, is_featured = ?, updated_at = now()
+      SET category_id = ?, name = ?, slug = ?, description = ?, materials_care = ?, base_price = ?, has_flavor = ?, has_weight = ?, is_featured = ?, updated_at = now()
       WHERE id = ?
       `,
       [
@@ -965,6 +1098,8 @@ export const updateAdminProduct = async (request, response, next) => {
         nextDescription,
         nextMaterialsCare,
         nextBasePrice,
+        nextHasFlavor,
+        nextHasWeight,
         nextIsFeatured,
         productId,
       ],
@@ -973,7 +1108,7 @@ export const updateAdminProduct = async (request, response, next) => {
     if (shouldUpdateVariants || removedVariantIds.length) {
       const [existingVariants] = await connection.query(
         `
-        SELECT id, sku, size, color, color_hex, price_modifier, stock_quantity
+        SELECT id, sku, size, color, color_hex, flavor, weight_value, weight_unit, price_modifier, stock_quantity
         FROM product_variants
         WHERE product_id = ?
         `,

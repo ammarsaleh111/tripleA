@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT NOT NULL,
     materials_care TEXT NULL,
     base_price DECIMAL(10, 2) NOT NULL,
+    has_flavor BOOLEAN NOT NULL DEFAULT FALSE,
+    has_weight BOOLEAN NOT NULL DEFAULT FALSE,
     is_featured BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -65,9 +67,13 @@ CREATE TABLE IF NOT EXISTS product_variants (
     size VARCHAR(50) NULL,
     color VARCHAR(50) NULL,
     color_hex VARCHAR(10) NULL,
+    flavor VARCHAR(50) NULL,
+    weight_value DECIMAL(10, 2) NULL,
+    weight_unit VARCHAR(2) NULL,
     price_modifier DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     stock_quantity INT NOT NULL DEFAULT 0,
     CONSTRAINT UQ_product_variants_sku UNIQUE (sku),
+    CONSTRAINT CK_product_variants_weight_unit CHECK (weight_unit IS NULL OR weight_unit IN ('g', 'kg')),
     CONSTRAINT FK_product_variants_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 

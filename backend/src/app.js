@@ -15,10 +15,14 @@ const defaultAllowedOrigins = [
   'http://127.0.0.1:5174',
 ].join(',');
 
-const allowedOrigins = (process.env.CORS_ORIGINS || defaultAllowedOrigins)
+const configuredOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const allowedOrigins = Array.from(new Set([
+  ...defaultAllowedOrigins.split(','),
+  ...configuredOrigins,
+]));
 
 app.use(
   cors({

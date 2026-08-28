@@ -1,11 +1,6 @@
 import { getDatabase } from '../config/db.js';
 
 const MAX_LIMIT = 48;
-const OTHER_CATEGORY_SLUGS = [
-  'amino-acids',
-  'mass-gainer',
-  'vitamins-health',
-];
 
 const toFiniteNumber = (value, fallback = null) => {
   const parsed = Number(value);
@@ -23,6 +18,8 @@ export const getProducts = async (req, res, next) => {
       color,
       price_min,
       price_max,
+      stock_status,
+      search,
       sort_by = 'featured',
       page = 1,
       limit = 12,
@@ -32,6 +29,8 @@ export const getProducts = async (req, res, next) => {
     const parsedLimit = Math.min(MAX_LIMIT, Math.max(1, toFiniteNumber(limit, 12)));
     const parsedMinPrice = toFiniteNumber(price_min);
     const parsedMaxPrice = toFiniteNumber(price_max);
+    const stockStatus = String(stock_status || '').trim().toLowerCase();
+    const searchTerm = String(search || '').trim();
 
     if (parsedMinPrice !== null && parsedMaxPrice !== null && parsedMinPrice > parsedMaxPrice) {
       return res.status(400).json({
@@ -48,21 +47,33 @@ export const getProducts = async (req, res, next) => {
       });
     }
 
+    if (stockStatus && !['in_stock', 'out_of_stock'].includes(stockStatus)) {
+      return res.status(400).json({ success: false, message: 'Invalid stock_status value.' });
+    }
+
     const db = getDatabase();
 
     let fromAndWhere = `
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
+      LEFT JOIN categories cp ON cp.id = c.parent_id
       WHERE 1=1
     `;
     const filterParams = [];
 
-    if (category === 'others') {
-      fromAndWhere += ` AND c.slug IN (${OTHER_CATEGORY_SLUGS.map(() => '?').join(', ')})`;
-      filterParams.push(...OTHER_CATEGORY_SLUGS);
-    } else if (category) {
-      fromAndWhere += ' AND c.slug = ?';
-      filterParams.push(category);
+    if (category) {
+      fromAndWhere += `
+        AND (
+          c.slug = ?
+          OR EXISTS (
+            SELECT 1
+            FROM categories c_parent
+            WHERE c_parent.id = c.parent_id
+              AND c_parent.slug = ?
+          )
+        )
+      `;
+      filterParams.push(category, category);
     }
 
     if (parsedMinPrice !== null) {
@@ -73,6 +84,19 @@ export const getProducts = async (req, res, next) => {
     if (parsedMaxPrice !== null) {
       fromAndWhere += ' AND p.base_price <= ?';
       filterParams.push(parsedMaxPrice);
+    }
+
+    if (searchTerm) {
+      fromAndWhere += `
+        AND (
+          p.name ILIKE ?
+          OR p.description ILIKE ?
+          OR c.name ILIKE ?
+          OR cp.name ILIKE ?
+        )
+      `;
+      const searchToken = `%${searchTerm}%`;
+      filterParams.push(searchToken, searchToken, searchToken, searchToken);
     }
 
     if (size) {
@@ -99,6 +123,24 @@ export const getProducts = async (req, res, next) => {
       filterParams.push(color);
     }
 
+    if (stockStatus === 'in_stock') {
+      fromAndWhere += `
+        AND EXISTS (
+          SELECT 1 FROM product_variants pv_stock
+          WHERE pv_stock.product_id = p.id AND pv_stock.stock_quantity > 0
+        )
+      `;
+    }
+
+    if (stockStatus === 'out_of_stock') {
+      fromAndWhere += `
+        AND NOT EXISTS (
+          SELECT 1 FROM product_variants pv_stock
+          WHERE pv_stock.product_id = p.id AND pv_stock.stock_quantity > 0
+        )
+      `;
+    }
+
     let orderClause = ' ORDER BY p.is_featured DESC, p.created_at DESC';
     if (sort_by === 'newest') {
       orderClause = ' ORDER BY p.created_at DESC';
@@ -119,9 +161,13 @@ export const getProducts = async (req, res, next) => {
         p.name,
         p.slug,
         p.base_price,
+        p.has_flavor,
+        p.has_weight,
         p.is_featured,
         c.name AS category_name,
         c.slug AS category_slug,
+        cp.name AS parent_category_name,
+        cp.slug AS parent_category_slug,
         (
           SELECT pv.id
           FROM product_variants pv
@@ -147,6 +193,14 @@ export const getProducts = async (req, res, next) => {
           ),
           0
         ) AS total_stock,
+        COALESCE(
+          (
+            SELECT COUNT(*)
+            FROM product_variants pv
+            WHERE pv.product_id = p.id
+          ),
+          0
+        ) AS variant_count,
         COALESCE(
           (
             SELECT pi.image_url
@@ -189,7 +243,9 @@ export const getProducts = async (req, res, next) => {
           color: color || null,
           price_min: parsedMinPrice,
           price_max: parsedMaxPrice,
+          search: searchTerm || null,
           sort_by,
+          stock_status: stockStatus || null,
         },
       },
     });
@@ -217,9 +273,14 @@ export const getProductBySlug = async (req, res, next) => {
     const query = `
       SELECT 
         p.id, p.name, p.slug, p.description, p.materials_care, p.base_price,
-        c.name as category_name
+        p.has_flavor, p.has_weight,
+        c.name as category_name,
+        c.slug as category_slug,
+        cp.name as parent_category_name,
+        cp.slug as parent_category_slug
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
+      LEFT JOIN categories cp ON cp.id = c.parent_id
       WHERE p.slug = ?
     `;
 
@@ -239,7 +300,7 @@ export const getProductBySlug = async (req, res, next) => {
     
     // Fetch variants (Sizes, Colors, Stock)
     const [variants] = await db.query(
-      'SELECT id, sku, size, color, color_hex, price_modifier, stock_quantity FROM product_variants WHERE product_id = ?',
+      'SELECT id, sku, size, color, color_hex, flavor, weight_value, weight_unit, price_modifier, stock_quantity FROM product_variants WHERE product_id = ? ORDER BY id ASC',
       [product.id],
     );
     
@@ -249,21 +310,48 @@ export const getProductBySlug = async (req, res, next) => {
       [product.id],
     );
 
-    const availableSizes = [...new Set(variants.map((variant) => variant.size).filter(Boolean))];
-    const availableColors = [
+    const availableWeights = [
       ...new Map(
         variants
-          .filter((variant) => variant.color)
-          .map((variant) => [variant.color, { name: variant.color, hex: variant.color_hex || null }]),
+          .filter((variant) => variant.weight_value && variant.weight_unit)
+          .map((variant) => [
+            `${variant.weight_value}-${variant.weight_unit}`,
+            {
+              value: Number(variant.weight_value),
+              unit: variant.weight_unit,
+              label: `${Number(variant.weight_value).toString()} ${variant.weight_unit}`,
+            },
+          ]),
       ).values(),
     ];
+    const availableFlavors = [
+      ...new Map(
+        variants
+          .filter((variant) => variant.flavor || variant.color)
+          .map((variant) => [
+            variant.flavor || variant.color,
+            { name: variant.flavor || variant.color, hex: variant.color_hex || null },
+          ]),
+      ).values(),
+    ];
+    const availableSizes = product.has_weight ? availableWeights.map((weight) => weight.label) : [];
+    const availableColors = product.has_flavor ? availableFlavors : [];
 
     res.status(200).json({
       success: true,
       data: {
         ...product,
         images,
-        variants,
+        variants: variants.map((variant) => ({
+          ...variant,
+          flavor: variant.flavor || variant.color,
+          weight_label:
+            variant.weight_value && variant.weight_unit
+              ? `${Number(variant.weight_value).toString()} ${variant.weight_unit}`
+              : variant.size,
+        })),
+        availableFlavors,
+        availableWeights,
         availableSizes,
         availableColors,
         reviews: {

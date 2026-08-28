@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext.jsx';
 
 const ProductCard = ({ product }) => {
   const { addCartItem } = useAppContext();
+  const navigate = useNavigate();
   const [cartFeedback, setCartFeedback] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
@@ -11,6 +12,11 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = async (event) => {
     event.preventDefault();
     event.stopPropagation();
+
+    if (product.hasOptions) {
+      navigate(`/products/${product.slug}`);
+      return;
+    }
 
     if (!product.defaultVariantId) {
       setCartFeedback('Unavailable');
@@ -44,7 +50,7 @@ const ProductCard = ({ product }) => {
       return;
     }
 
-    setCartFeedback('✓ Added');
+    setCartFeedback('Added');
     setTimeout(() => setCartFeedback(''), 2000);
   };
 
@@ -148,7 +154,7 @@ const ProductCard = ({ product }) => {
             >
               <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover/btn:translate-x-full" />
               <span className="relative">
-                {isOutOfStock ? 'OUT OF STOCK' : isAdding ? 'ADDING…' : '+ ADD TO CART'}
+                {isOutOfStock ? 'OUT OF STOCK' : product.hasOptions ? 'VIEW OPTIONS' : isAdding ? 'ADDING...' : '+ ADD TO CART'}
               </span>
             </button>
           </div>
