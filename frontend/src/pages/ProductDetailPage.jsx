@@ -141,6 +141,9 @@ const ProductDetailPage = () => {
           name: data.name || EMPTY_PRODUCT.name,
           category: data.category_name || EMPTY_PRODUCT.category,
           price: Number(data.base_price || 0),
+          effectivePrice: Number(data.effective_price || data.base_price || 0),
+          discountType: data.discount_type || null,
+          discountValue: data.discount_value === null ? null : Number(data.discount_value),
           rating: Number(data.reviews?.rating || 0),
           reviewCount: Number(data.reviews?.count || 0),
           colors: mappedColors,
@@ -264,7 +267,7 @@ const ProductDetailPage = () => {
         color: selectedVariant.flavor || selectedVariant.color || selectedColor?.name || null,
         flavor: selectedVariant.flavor || selectedVariant.color || selectedColor?.name || null,
         size: selectedVariant.weight_label || selectedVariant.size || selectedSize || null,
-        unitPrice: Number(product.price || 0),
+        unitPrice: Number(product.effectivePrice || product.price || 0),
         quantity: selectedQuantity,
         imageUrl: product.images?.[0] || FALLBACK_PRODUCT_IMAGE,
       },
@@ -306,7 +309,13 @@ const ProductDetailPage = () => {
                 defaultVariantStock: Number(item.default_variant_stock || 0),
                 totalStock: Number(item.total_stock || 0),
                 name: item.name,
-                price: Number(item.base_price || 0),
+                price: Number(item.effective_price || item.base_price || 0),
+                originalPrice: Number(item.base_price || 0),
+                discountLabel: item.discount_type
+                  ? item.discount_type === 'percentage'
+                    ? `${Number(item.discount_value || 0)}% OFF`
+                    : `${Number(item.discount_value || 0).toFixed(2)} EGP OFF`
+                  : '',
                 colorName: item.category_name || 'Supplements',
                 imageUrl:
                   item.primary_image ||
@@ -444,9 +453,21 @@ const ProductDetailPage = () => {
           <p className="mt-3 text-sm leading-relaxed text-zinc-400">{shortDescription}</p>
 
           <div className="mt-5 flex items-end justify-between gap-4">
-            <p className="font-heading text-4xl font-black tracking-tight text-[#FFCC00]">
-              ${product.price.toFixed(2)}
-            </p>
+            <div>
+              <p className="font-heading text-4xl font-black tracking-tight text-[#FFCC00]">
+                {Number(product.effectivePrice || product.price || 0).toFixed(2)} EGP
+              </p>
+              {Number(product.effectivePrice || product.price || 0) < Number(product.price || 0) && (
+                <p className="mt-1 font-mono text-xs font-bold uppercase tracking-widest text-zinc-500">
+                  <span className="line-through">{Number(product.price || 0).toFixed(2)} EGP</span>
+                  <span className="ml-2 text-red-400">
+                    {product.discountType === 'percentage'
+                      ? `${Number(product.discountValue || 0)}% OFF`
+                      : `${Number(product.discountValue || 0).toFixed(2)} EGP OFF`}
+                  </span>
+                </p>
+              )}
+            </div>
             <div className="flex items-center gap-1">
               <div className="flex text-[#FFCC00]">
                 {[...Array(5)].map((_, index) => (

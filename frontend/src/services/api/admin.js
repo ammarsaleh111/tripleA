@@ -30,6 +30,16 @@ export const getAdminOrders = async (params = {}) => {
   return response.data;
 };
 
+export const getAdminCustomers = async (params = {}) => {
+  const response = await apiClient.get('/admin/customers', { params });
+  return response.data;
+};
+
+export const getAdminCustomerById = async (customerId) => {
+  const response = await apiClient.get(`/admin/customers/${customerId}`);
+  return response.data;
+};
+
 export const getAdminOrderById = async (orderId) => {
   const response = await apiClient.get(`/admin/orders/${orderId}`);
   return response.data;
@@ -55,4 +65,28 @@ export const deleteAdminMessage = async (messageId) => {
   return response.data;
 };
 
+export const getAdminOffers = async () => {
+  const response = await apiClient.get('/admin/offers');
+  return response.data;
+};
+
+export const createAdminOffer = async (payload) => {
+  const response = await apiClient.post('/admin/offers', payload);
+  return response.data;
+};
+
+export const updateAdminOffer = async (offerId, payload) => {
+  const response = await apiClient.put(`/admin/offers/${offerId}`, payload);
+  return response.data;
+};
+
+export const updateAdminOfferStatus = async (offerId, payload) => {
+  const response = await apiClient.patch(`/admin/offers/${offerId}/status`, payload);
+  return response.data;
+};
+
+export const deleteAdminOffer = async (offerId) => {
+  const response = await apiClient.delete(`/admin/offers/${offerId}`);
+  return response.data;
+};
 

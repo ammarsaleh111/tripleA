@@ -46,6 +46,7 @@ export const getCartItemsForCheckout = async (db, cartId) => {
     `
     SELECT
       ci.id AS cart_item_id,
+      ci.item_type,
       ci.quantity,
       pv.id AS variant_id,
       pv.sku,
@@ -56,22 +57,42 @@ export const getCartItemsForCheckout = async (db, cartId) => {
       pv.price_modifier,
       p.id AS product_id,
       p.name AS product_name,
-      p.base_price
+      p.base_price,
+      ad.discount_type,
+      ad.discount_value,
+      CASE
+        WHEN ad.discount_type = 'percentage' THEN ROUND((p.base_price + pv.price_modifier) * (1 - ad.discount_value / 100), 2)
+        WHEN ad.discount_type = 'fixed' THEN GREATEST(0, ROUND((p.base_price + pv.price_modifier) - ad.discount_value, 2))
+        ELSE p.base_price + pv.price_modifier
+      END AS effective_price
     FROM cart_items ci
     JOIN product_variants pv ON pv.id = ci.variant_id
     JOIN products p ON p.id = pv.product_id
+    LEFT JOIN LATERAL (
+      SELECT o.discount_type, o.discount_value
+      FROM offers o
+      WHERE o.offer_type = 'product_discount'
+        AND o.product_id = p.id
+        AND o.is_active = TRUE
+        AND now() >= o.starts_at
+        AND (o.ends_at IS NULL OR now() < o.ends_at)
+      ORDER BY o.created_at DESC, o.id DESC
+      LIMIT 1
+    ) ad ON TRUE
     WHERE ci.cart_id = ?
+      AND ci.item_type = 'product'
     ORDER BY ci.id ASC
     `,
     [cartId],
   );
 
-  return items.map((item) => {
+  const mappedItems = items.map((item) => {
     const quantity = Number(item.quantity || 0);
-    const priceAtPurchase = Number(item.base_price || 0) + Number(item.price_modifier || 0);
+    const priceAtPurchase = Number(item.effective_price || (Number(item.base_price || 0) + Number(item.price_modifier || 0)));
 
     return {
       cartItemId: item.cart_item_id,
+      itemType: 'product',
       productId: item.product_id,
       variantId: item.variant_id,
       sku: item.sku,
@@ -85,6 +106,122 @@ export const getCartItemsForCheckout = async (db, cartId) => {
       lineTotal: Number((priceAtPurchase * quantity).toFixed(2)),
     };
   });
+
+  const [bundles] = await db.query(
+    `
+    SELECT ci.id AS cart_item_id, ci.quantity, ci.offer_id, ci.variant_selections,
+      o.name, o.bundle_price, o.is_active, o.starts_at, o.ends_at,
+      COALESCE((
+        SELECT json_agg(json_build_object('productId', p.id, 'name', p.name))
+        FROM bundle_offer_products bop
+        JOIN products p ON p.id = bop.product_id
+        WHERE bop.offer_id = o.id
+      ), '[]'::json) AS components
+    FROM cart_items ci
+    JOIN offers o ON o.id = ci.offer_id
+    WHERE ci.cart_id = ?
+      AND ci.item_type = 'bundle'
+    ORDER BY ci.id ASC
+    `,
+    [cartId],
+  );
+
+  // Resolve the exact variant per bundle component from the customer's stored
+  // selections. Every selection is re-verified against bundle_offer_products so
+  // a tampered cart cannot purchase a variant outside the bundle.
+  const bundleItems = [];
+  for (const item of bundles) {
+    const selections = item.variant_selections && typeof item.variant_selections === 'object'
+      ? item.variant_selections
+      : {};
+
+    const [componentRows] = await db.query(
+      `
+      SELECT bop.product_id, p.name AS product_name
+      FROM bundle_offer_products bop
+      JOIN products p ON p.id = bop.product_id
+      WHERE bop.offer_id = ?
+      ORDER BY bop.product_id ASC
+      `,
+      [item.offer_id],
+    );
+
+    if (!componentRows.length) {
+      const error = new Error('Bundle offer has no products.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const components = [];
+    for (const component of componentRows) {
+      const productId = Number(component.product_id);
+      const selectedVariantId = Number(selections[String(productId)] ?? selections[productId] ?? 0);
+
+      let variantId = null;
+      let sku = null;
+
+      if (Number.isInteger(selectedVariantId) && selectedVariantId > 0) {
+        const [variantRows] = await db.query(
+          `
+          SELECT pv.id, pv.sku
+          FROM product_variants pv
+          JOIN bundle_offer_products bop
+            ON bop.product_id = pv.product_id AND bop.offer_id = ?
+          WHERE pv.id = ?
+          LIMIT 1
+          `,
+          [item.offer_id, selectedVariantId],
+        );
+
+        if (!variantRows.length) {
+          const error = new Error('A selected bundle option is no longer valid. Please rebuild the bundle in your cart.');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        variantId = variantRows[0].id;
+        sku = variantRows[0].sku;
+      } else {
+        // Component has a single variant (no flavor/weight choice): use it.
+        const [variantRows] = await db.query(
+          `
+          SELECT pv.id, pv.sku
+          FROM product_variants pv
+          WHERE pv.product_id = ?
+          ORDER BY pv.id ASC
+          LIMIT 1
+          `,
+          [productId],
+        );
+
+        if (!variantRows.length) {
+          const error = new Error(`A product in this bundle has no purchasable variant: ${component.product_name}.`);
+          error.statusCode = 400;
+          throw error;
+        }
+
+        variantId = variantRows[0].id;
+        sku = variantRows[0].sku;
+      }
+
+      components.push({ productId, variantId, sku });
+    }
+
+    bundleItems.push({
+      cartItemId: item.cart_item_id,
+      itemType: 'bundle',
+      offerId: item.offer_id,
+      productName: item.name,
+      sku: `BUNDLE-${item.offer_id}`,
+      variantId: null,
+      quantity: Number(item.quantity || 0),
+      priceAtPurchase: Number(item.bundle_price || 0),
+      lineTotal: Number((Number(item.bundle_price || 0) * Number(item.quantity || 0)).toFixed(2)),
+      components,
+    });
+  }
+
+  return [...mappedItems, ...bundleItems];
 };
 
 export const getDefaultAddressId = async (db, userId) => {
@@ -113,19 +250,27 @@ export const insertOrder = async (connection, orderPayload) => {
       order_number,
       user_id,
       shipping_address_id,
+      customer_name,
+      customer_phone,
+      customer_email,
+      customer_address,
       subtotal,
       tax,
       shipping_cost,
       total_amount,
       status
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     RETURNING id
     `,
     [
       orderPayload.orderNumber,
       orderPayload.userId || null,
       orderPayload.shippingAddressId || null,
+      orderPayload.customerName || null,
+      orderPayload.customerPhone || null,
+      orderPayload.customerEmail || null,
+      orderPayload.customerAddress || null,
       orderPayload.subtotal,
       orderPayload.tax,
       orderPayload.shippingCost,
@@ -142,6 +287,97 @@ export const insertOrder = async (connection, orderPayload) => {
 
 export const insertOrderItems = async (connection, orderId, items) => {
   for (const item of items) {
+    if (item.itemType === 'bundle') {
+      const [offerRows] = await connection.query(
+        `
+        SELECT id, bundle_price
+        FROM offers
+        WHERE id = ?
+          AND offer_type = 'bundle'
+          AND is_active = TRUE
+          AND now() >= starts_at
+          AND (ends_at IS NULL OR now() < ends_at)
+        FOR UPDATE
+        `,
+        [item.offerId],
+      );
+
+      if (!offerRows.length || Number(offerRows[0].bundle_price) !== Number(item.priceAtPurchase)) {
+        const error = new Error('Bundle offer is no longer available at the expected price.');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      // Lock the exact variants the customer selected (or the single variant of
+      // an unambiguous component) and verify stock for every component before
+      // any write. Any failure rolls back the whole order transaction.
+      const componentVariantIds = (item.components || []).map((component) => Number(component.variantId));
+
+      if (!componentVariantIds.length) {
+        const error = new Error('Bundle offer has no products.');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const placeholders = componentVariantIds.map(() => '?').join(', ');
+      const [componentRows] = await connection.query(
+        `
+        SELECT pv.id AS variant_id, pv.sku, pv.stock_quantity, p.name
+        FROM product_variants pv
+        JOIN products p ON p.id = pv.product_id
+        WHERE pv.id IN (${placeholders})
+        FOR UPDATE
+        `,
+        componentVariantIds,
+      );
+
+      if (componentRows.length !== componentVariantIds.length) {
+        const error = new Error('A bundle component is no longer available.');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      for (const component of componentRows) {
+        const availableStock = Number(component.stock_quantity || 0);
+        if (availableStock < item.quantity) {
+          const error = new Error(`Only ${availableStock} units available for ${component.name}.`);
+          error.statusCode = 400;
+          throw error;
+        }
+      }
+
+      await connection.query(
+        `
+        INSERT INTO order_items (
+          order_id, variant_id, offer_id, item_type, product_name, sku, quantity, price_at_purchase, metadata
+        )
+        VALUES (?, NULL, ?, 'bundle', ?, ?, ?, ?, ?::jsonb)
+        `,
+        [
+          orderId,
+          item.offerId,
+          item.productName,
+          item.sku,
+          item.quantity,
+          item.priceAtPurchase,
+          JSON.stringify({ components: item.components || [] }),
+        ],
+      );
+
+      for (const component of componentRows) {
+        const [updateResult] = await connection.query(
+          'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?',
+          [item.quantity, component.variant_id, item.quantity],
+        );
+        if (!updateResult.affectedRows) {
+          const error = new Error(`Insufficient stock for ${component.name}. Order rolled back.`);
+          error.statusCode = 400;
+          throw error;
+        }
+      }
+      continue;
+    }
+
     const [stockRows] = await connection.query(
       'SELECT stock_quantity FROM product_variants WHERE id = ? FOR UPDATE',
       [item.variantId],
@@ -159,12 +395,14 @@ export const insertOrderItems = async (connection, orderId, items) => {
       INSERT INTO order_items (
         order_id,
         variant_id,
+        offer_id,
+        item_type,
         product_name,
         sku,
         quantity,
         price_at_purchase
       )
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, NULL, 'product', ?, ?, ?, ?)
       `,
       [
         orderId,
@@ -176,10 +414,15 @@ export const insertOrderItems = async (connection, orderId, items) => {
       ],
     );
 
-    await connection.query(
-      'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ?',
-      [item.quantity, item.variantId],
+    const [updateResult] = await connection.query(
+      'UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?',
+      [item.quantity, item.variantId, item.quantity],
     );
+    if (!updateResult.affectedRows) {
+      const error = new Error(`Insufficient stock for ${item.productName}. Order rolled back.`);
+      error.statusCode = 400;
+      throw error;
+    }
   }
 };
 

@@ -1224,6 +1224,29 @@ export const deleteAdminProduct = async (request, response, next) => {
       });
     }
 
+    // Deleting a product must never silently corrupt offers: it would cascade
+    // away product discounts and silently shrink bundles below their minimum.
+    const [offerUsageRows] = await connection.query(
+      `
+      SELECT
+        (SELECT COUNT(*) FROM offers WHERE product_id = ?) AS discount_offers,
+        (SELECT COUNT(DISTINCT offer_id) FROM bundle_offer_products WHERE product_id = ?) AS bundle_offers
+      `,
+      [productId, productId],
+    );
+
+    const discountOfferCount = Number(offerUsageRows[0]?.discount_offers || 0);
+    const bundleOfferCount = Number(offerUsageRows[0]?.bundle_offers || 0);
+
+    if (discountOfferCount > 0 || bundleOfferCount > 0) {
+      return response.status(409).json({
+        success: false,
+        message:
+          `This product is referenced by ${discountOfferCount} discount offer(s) and ${bundleOfferCount} bundle offer(s). ` +
+          'Delete or update those offers first.',
+      });
+    }
+
     await connection.beginTransaction();
     transactionStarted = true;
 

@@ -12,9 +12,9 @@ import TopSellingPanel from '../components/admin/TopSellingPanel.jsx';
 import AdminInventorySection from '../components/admin/sections/AdminInventorySection.jsx';
 import AdminOrdersSection from '../components/admin/sections/AdminOrdersSection.jsx';
 import AdminCustomersSection from '../components/admin/sections/AdminCustomersSection.jsx';
-import AdminAnalyticsSection from '../components/admin/sections/AdminAnalyticsSection.jsx';
 import AdminSettingsSection from '../components/admin/sections/AdminSettingsSection.jsx';
 import AdminMessagesSection from '../components/admin/sections/AdminMessagesSection.jsx';
+import AdminOffersSection from '../components/admin/sections/AdminOffersSection.jsx';
 
 import { useAppContext } from '../context/AppContext.jsx';
 import { getAdminDashboard } from '../services/api/admin.js';
@@ -44,11 +44,6 @@ const EMPTY_DASHBOARD_DATA = {
     shipped: 0,
     delivered: 0,
     cancelled: 0,
-  },
-  analytics: {
-    averageOrderValue: 0,
-    cartAbandonmentRate: 0,
-    returnCustomerRate: 0,
   },
   inventory: {
     totalProducts: 0,
@@ -196,17 +191,12 @@ const AdminDashboardPage = () => {
         );
       case 'Orders':
         return <AdminOrdersSection onOrdersMutated={() => reloadDashboard({ silent: true })} />;
+      case 'Offers':
+        return <AdminOffersSection />;
       case 'Messages':
         return <AdminMessagesSection onMessagesMutated={() => reloadDashboard({ silent: true })} />;
       case 'Customers':
-        return <AdminCustomersSection customers={dashboardData.customers} />;
-      case 'Analytics':
-        return (
-          <AdminAnalyticsSection
-            revenueSeries={dashboardData.revenueSeries}
-            analytics={dashboardData.analytics}
-          />
-        );
+        return <AdminCustomersSection />;
       case 'Settings':
         return <AdminSettingsSection />;
       case 'Dashboard':

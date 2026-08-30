@@ -124,7 +124,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
             className="p-2 text-zinc-400 hover:text-white transition-colors"
             aria-label="Close cart"
           >
-            âœ•
+            close
           </button>
         </div>
 
@@ -199,7 +199,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                         className="text-zinc-500 hover:text-red-400 transition-colors text-xs font-mono"
                         aria-label="Remove item"
                       >
-                        âœ•
+                        close
                       </button>
                     </div>
 

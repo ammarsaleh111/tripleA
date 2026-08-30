@@ -9,6 +9,7 @@ export const validateCreateOrderRequest = (req, res, next) => {
   const body = req.body || {};
   const customerName = normalizeText(body.customerName || body.name);
   const customerPhone = normalizeText(body.customerPhone || body.phone);
+  const customerEmail = normalizeText(body.customerEmail || body.email).toLowerCase();
   const customerAddress = normalizeText(body.customerAddress || body.address);
   const paymentMethod = normalizeText(body.paymentMethod || body.payment_method || 'COD').toUpperCase();
   const total = normalizeMoney(body.total);
@@ -29,6 +30,10 @@ export const validateCreateOrderRequest = (req, res, next) => {
     return res.status(400).json({ success: false, message: 'customerAddress is required.' });
   }
 
+  if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+    return res.status(400).json({ success: false, message: 'customerEmail must be a valid email address.' });
+  }
+
   if (!Number.isFinite(total) || total <= 0) {
     return res.status(400).json({ success: false, message: 'total is required.' });
   }
@@ -38,6 +43,7 @@ export const validateCreateOrderRequest = (req, res, next) => {
     sessionId: String(req.headers['x-session-id'] || req.body?.session_id || req.query?.session_id || '').trim(),
     customerName,
     customerPhone,
+    customerEmail: customerEmail || null,
     customerAddress,
     total,
   };

@@ -88,6 +88,33 @@ CREATE TABLE IF NOT EXISTS product_images (
     CONSTRAINT FK_product_images_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE NO ACTION
 );
 
+CREATE TABLE IF NOT EXISTS offers (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    offer_type VARCHAR(20) NOT NULL,
+    product_id INT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    bundle_price DECIMAL(10, 2) NULL,
+    discount_type VARCHAR(20) NULL,
+    discount_value DECIMAL(10, 2) NULL,
+    starts_at TIMESTAMPTZ NOT NULL,
+    ends_at TIMESTAMPTZ NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT CK_offers_type CHECK (offer_type IN ('bundle', 'product_discount')),
+    CONSTRAINT CK_offers_dates CHECK (ends_at IS NULL OR ends_at > starts_at),
+    CONSTRAINT FK_offers_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS bundle_offer_products (
+    offer_id INT NOT NULL,
+    product_id INT NOT NULL,
+    PRIMARY KEY (offer_id, product_id),
+    CONSTRAINT FK_bundle_offer_products_offer FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE,
+    CONSTRAINT FK_bundle_offer_products_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS carts (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INT NULL,
@@ -100,10 +127,23 @@ CREATE TABLE IF NOT EXISTS carts (
 CREATE TABLE IF NOT EXISTS cart_items (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cart_id INT NOT NULL,
-    variant_id INT NOT NULL,
+    variant_id INT NULL,
+    offer_id INT NULL,
+    item_type VARCHAR(20) NOT NULL DEFAULT 'product',
+    variant_selections JSONB NULL,
     quantity INT NOT NULL DEFAULT 1,
+    CONSTRAINT CK_cart_items_type CHECK (item_type IN ('product', 'bundle')),
+    CONSTRAINT CK_cart_items_target CHECK (
+        (item_type = 'product' AND variant_id IS NOT NULL AND offer_id IS NULL)
+        OR
+        (item_type = 'bundle' AND variant_id IS NULL AND offer_id IS NOT NULL)
+    ),
+    CONSTRAINT CK_cart_items_selections CHECK (
+        variant_selections IS NULL OR jsonb_typeof(variant_selections) = 'object'
+    ),
     CONSTRAINT FK_cart_items_cart FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
-    CONSTRAINT FK_cart_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE CASCADE
+    CONSTRAINT FK_cart_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE CASCADE,
+    CONSTRAINT FK_cart_items_offer FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -111,6 +151,10 @@ CREATE TABLE IF NOT EXISTS orders (
     order_number VARCHAR(50) NOT NULL,
     user_id INT NULL,
     shipping_address_id INT NULL,
+    customer_name VARCHAR(255) NULL,
+    customer_phone VARCHAR(50) NULL,
+    customer_email VARCHAR(255) NULL,
+    customer_address TEXT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
     tax DECIMAL(10, 2) NOT NULL,
     shipping_cost DECIMAL(10, 2) NOT NULL,
@@ -128,13 +172,18 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS order_items (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     order_id INT NOT NULL,
-    variant_id INT NOT NULL,
+    variant_id INT NULL,
+    offer_id INT NULL,
+    item_type VARCHAR(20) NOT NULL DEFAULT 'product',
     product_name VARCHAR(255) NOT NULL,
     sku VARCHAR(100) NOT NULL,
     quantity INT NOT NULL,
     price_at_purchase DECIMAL(10, 2) NOT NULL,
+    metadata JSONB NULL,
+    CONSTRAINT CK_order_items_type CHECK (item_type IN ('product', 'bundle')),
     CONSTRAINT FK_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    CONSTRAINT FK_order_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+    CONSTRAINT FK_order_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id),
+    CONSTRAINT FK_order_items_offer FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
@@ -172,3 +221,7 @@ CREATE INDEX IF NOT EXISTS idx_order_number ON orders (order_number);
 CREATE INDEX IF NOT EXISTS idx_user_email ON users (email);
 CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages (status);
 CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages (created_at);
+CREATE INDEX IF NOT EXISTS idx_cart_items_offer ON cart_items (offer_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_offer ON order_items (offer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders (customer_email);
+CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON orders (customer_phone);

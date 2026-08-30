@@ -7,7 +7,7 @@ import ChamferCard from '../components/common/ChamferCard.jsx';
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80';
 
-const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
+const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
 
 const inputClassName =
   'w-full bg-[#050506] border border-[#1C1C26] text-white px-4 py-3 font-mono text-xs focus:border-[#FFCC00] focus:outline-none rounded-xl placeholder:text-zinc-600';

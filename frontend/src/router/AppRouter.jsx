@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import MainLayout from '../components/layout/MainLayout.jsx';
+import AppIntroLoader from '../components/common/AppIntroLoader.jsx';
 import { useAppContext } from '../context/AppContext.jsx';
 import AdminDashboardPage from '../pages/AdminDashboardPage.jsx';
 import CartPage from '../pages/CartPage.jsx';
@@ -59,27 +60,30 @@ const CustomerDashboardRoute = () => {
 
 const AppRouter = () => {
   return (
-    <Routes>
-      <Route path="/admin" element={<AdminDashboardPage />} />
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/auth/reset-password" element={<AuthPage initialMode="reset" />} />
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<HomeEntryRoute />} />
-        <Route path="/dashboard" element={<CustomerDashboardRoute />} />
-        <Route path="/shop" element={<ShopPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/products/:slug" element={<ProductDetailPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/order-success" element={<OrderSuccessPage />} />
-        <Route path="/help" element={<StaticInfoPage variant="help" />} />
-        <Route path="/terms" element={<StaticInfoPage variant="terms" />} />
-        <Route path="/privacy" element={<StaticInfoPage variant="privacy" />} />
-        <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <AppIntroLoader />
+      <Routes>
+        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/reset-password" element={<AuthPage initialMode="reset" />} />
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<HomeEntryRoute />} />
+          <Route path="/dashboard" element={<CustomerDashboardRoute />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/products/:slug" element={<ProductDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
+          <Route path="/help" element={<StaticInfoPage variant="help" />} />
+          <Route path="/terms" element={<StaticInfoPage variant="terms" />} />
+          <Route path="/privacy" element={<StaticInfoPage variant="privacy" />} />
+          <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 };
 

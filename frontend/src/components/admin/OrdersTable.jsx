@@ -78,7 +78,7 @@ const OrdersTable = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-[760px]">
+        <table className="min-w-[760px] w-full">
           <thead className="bg-[var(--theme-bg-canvas)]">
             <tr className="text-left text-[9px] font-bold uppercase tracking-[0.24em] text-zinc-500">
               <th className="px-6 py-4">Order ID</th>

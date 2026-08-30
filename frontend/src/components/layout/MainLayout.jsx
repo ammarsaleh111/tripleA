@@ -166,9 +166,11 @@ const MainLayout = () => {
           
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <span className="font-heading font-black text-2xl tracking-tighter text-[#FFCC00] group-hover:text-yellow-300 transition-colors">
-              TRIPLE A
-            </span>
+            <img
+              src="https://www.image2url.com/r2/default/images/1788104618184-8c7362c7-6f4f-4dc9-a2a3-ac83d48b33e2.jpg"
+              alt="TRIPLE A Supplements"
+              className="h-9 w-auto object-contain grayscale-0 group-hover:brightness-110 transition-[filter] duration-300"
+            />
           </Link>
 
           {/* Desktop Navigation Links */}

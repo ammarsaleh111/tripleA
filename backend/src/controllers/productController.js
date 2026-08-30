@@ -1,6 +1,17 @@
 import { getDatabase } from '../config/db.js';
 
 const MAX_LIMIT = 48;
+const activeDiscountSubquery = `
+  SELECT od.discount_type, od.discount_value
+  FROM offers od
+  WHERE od.offer_type = 'product_discount'
+    AND od.product_id = p.id
+    AND od.is_active = TRUE
+    AND now() >= od.starts_at
+    AND (od.ends_at IS NULL OR now() < od.ends_at)
+  ORDER BY od.created_at DESC, od.id DESC
+  LIMIT 1
+`;
 
 const toFiniteNumber = (value, fallback = null) => {
   const parsed = Number(value);
@@ -57,6 +68,7 @@ export const getProducts = async (req, res, next) => {
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN categories cp ON cp.id = c.parent_id
+      LEFT JOIN LATERAL (${activeDiscountSubquery}) ad ON TRUE
       WHERE 1=1
     `;
     const filterParams = [];
@@ -164,6 +176,13 @@ export const getProducts = async (req, res, next) => {
         p.has_flavor,
         p.has_weight,
         p.is_featured,
+        ad.discount_type,
+        ad.discount_value,
+        CASE
+          WHEN ad.discount_type = 'percentage' THEN ROUND(p.base_price * (1 - ad.discount_value / 100), 2)
+          WHEN ad.discount_type = 'fixed' THEN GREATEST(0, ROUND(p.base_price - ad.discount_value, 2))
+          ELSE p.base_price
+        END AS effective_price,
         c.name AS category_name,
         c.slug AS category_slug,
         cp.name AS parent_category_name,
@@ -230,7 +249,12 @@ export const getProducts = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: products,
+      data: products.map((product) => ({
+        ...product,
+        base_price: Number(product.base_price || 0),
+        effective_price: Number(product.effective_price || product.base_price || 0),
+        discount_value: product.discount_value === null ? null : Number(product.discount_value),
+      })),
       meta: {
         count: products.length,
         totalCount,
@@ -274,6 +298,13 @@ export const getProductBySlug = async (req, res, next) => {
       SELECT 
         p.id, p.name, p.slug, p.description, p.materials_care, p.base_price,
         p.has_flavor, p.has_weight,
+        ad.discount_type,
+        ad.discount_value,
+        CASE
+          WHEN ad.discount_type = 'percentage' THEN ROUND(p.base_price * (1 - ad.discount_value / 100), 2)
+          WHEN ad.discount_type = 'fixed' THEN GREATEST(0, ROUND(p.base_price - ad.discount_value, 2))
+          ELSE p.base_price
+        END AS effective_price,
         c.name as category_name,
         c.slug as category_slug,
         cp.name as parent_category_name,
@@ -281,6 +312,7 @@ export const getProductBySlug = async (req, res, next) => {
       FROM products p
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN categories cp ON cp.id = c.parent_id
+      LEFT JOIN LATERAL (${activeDiscountSubquery}) ad ON TRUE
       WHERE p.slug = ?
     `;
 
@@ -341,6 +373,9 @@ export const getProductBySlug = async (req, res, next) => {
       success: true,
       data: {
         ...product,
+        base_price: Number(product.base_price || 0),
+        effective_price: Number(product.effective_price || product.base_price || 0),
+        discount_value: product.discount_value === null ? null : Number(product.discount_value),
         images,
         variants: variants.map((variant) => ({
           ...variant,

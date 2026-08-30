@@ -46,6 +46,7 @@ export const createCashOnDeliveryOrder = async ({
   actor,
   customerName,
   customerPhone,
+  customerEmail,
   customerAddress,
   total,
 }) => {
@@ -90,6 +91,10 @@ export const createCashOnDeliveryOrder = async ({
           orderNumber,
           userId: resolvedActor.userId,
           shippingAddressId,
+          customerName,
+          customerPhone,
+          customerEmail,
+          customerAddress,
           subtotal,
           tax,
           shippingCost,

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 const AdminSettingsSection = () => {
-  const [storeName, setStoreName] = useState('TRIPLE A GYM');
+  const [storeName, setStoreName] = useState('TRIPLE A');
   const [supportEmail, setSupportEmail] = useState('ops@tripleagym.com');
   const [toggles, setToggles] = useState([false, true, true]);
   const [savedMessage, setSavedMessage] = useState('');
@@ -14,7 +14,7 @@ const AdminSettingsSection = () => {
 
     try {
       const parsed = JSON.parse(stored);
-      setStoreName(parsed.storeName || 'TRIPLE A GYM');
+      setStoreName(parsed.storeName || 'TRIPLE A');
       setSupportEmail(parsed.supportEmail || 'ops@tripleagym.com');
       if (Array.isArray(parsed.toggles) && parsed.toggles.length === 3) {
         setToggles(parsed.toggles);

@@ -16,6 +16,9 @@ const __dirname = path.dirname(__filename);
 const schemaPath = path.resolve(__dirname, '../sql/schema.sql');
 const migrationsPath = path.resolve(__dirname, '../sql/migrations/002_product_options_variants.sql');
 const offersMigrationPath = path.resolve(__dirname, '../sql/migrations/003_offers.sql');
+const offerCartOrdersMigrationPath = path.resolve(__dirname, '../sql/migrations/004_offer_cart_orders.sql');
+const offerVariantSelectionsMigrationPath = path.resolve(__dirname, '../sql/migrations/005_offer_variant_selections.sql');
+const orderGuestContactMigrationPath = path.resolve(__dirname, '../sql/migrations/006_order_guest_contact.sql');
 
 const openPool = async () => {
   const connStr = process.env.DATABASE_URL || '';
@@ -767,6 +770,12 @@ const initializeDatabase = async () => {
     await dataPool.query(productOptionsMigration);
     const offersMigration = await fs.readFile(offersMigrationPath, 'utf8');
     await dataPool.query(offersMigration);
+    const offerCartOrdersMigration = await fs.readFile(offerCartOrdersMigrationPath, 'utf8');
+    await dataPool.query(offerCartOrdersMigration);
+    const offerVariantSelectionsMigration = await fs.readFile(offerVariantSelectionsMigrationPath, 'utf8');
+    await dataPool.query(offerVariantSelectionsMigration);
+    const orderGuestContactMigration = await fs.readFile(orderGuestContactMigrationPath, 'utf8');
+    await dataPool.query(orderGuestContactMigration);
 
     console.log('Database initialized successfully.');
 

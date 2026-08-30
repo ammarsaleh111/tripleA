@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   getCurrentUserProfile,
@@ -7,6 +7,7 @@ import {
 } from '../services/api/auth.js';
 import {
   addCartItem as addCartItemApi,
+  addBundleItem as addBundleItemApi,
   getCart as getCartApi,
   removeCartItem as removeCartItemApi,
   updateCartItem as updateCartItemApi,
@@ -166,6 +167,9 @@ export const AppProvider = ({ children }) => {
   const [cartError, setCartError] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [orders, setOrders] = useState([]);
+  // True until the app's real initialization finishes: session/profile restore
+  // (when a token exists) plus the initial cart load. Drives the intro loader.
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
 
   const persistGuestSessionId = useCallback((sessionId) => {
     localStorage.setItem(GUEST_SESSION_KEY, sessionId);
@@ -280,6 +284,45 @@ export const AppProvider = ({ children }) => {
       }
 
       const message = error?.response?.data?.message || 'Unable to add item to cart.';
+      setCartError(message);
+      return { success: false, message };
+    } finally {
+      setCartSyncing(false);
+    }
+  }, [getCartSessionId]);
+
+  const addBundleItem = useCallback(async ({ offerId, quantity = 1, variantSelections = null, optimisticItem = null }) => {
+    const numericOfferId = Number(offerId);
+    if (!Number.isInteger(numericOfferId) || numericOfferId <= 0) {
+      return { success: false, message: 'A valid bundle is required.' };
+    }
+
+    setCartError('');
+    setCartSyncing(true);
+    let previousSnapshot = null;
+
+    if (optimisticItem) {
+      setCart((current) => {
+        previousSnapshot = normalizeCartPayload(current);
+        return mutateCartItems(current, (items) => [
+          { ...optimisticItem, itemType: 'bundle', offerId: numericOfferId, quantity },
+          ...items,
+        ]);
+      });
+    }
+
+    try {
+      const response = await addBundleItemApi({
+        offerId: numericOfferId,
+        quantity: Math.max(1, sanitizeCartQuantity(quantity || 1)),
+        variantSelections: variantSelections && Object.keys(variantSelections).length ? variantSelections : null,
+        sessionId: getCartSessionId(),
+      });
+      if (response?.data) setCart(normalizeCartPayload(response.data));
+      return { success: true, data: response?.data };
+    } catch (error) {
+      if (previousSnapshot) setCart(previousSnapshot);
+      const message = error?.response?.data?.message || 'Unable to add bundle to cart.';
       setCartError(message);
       return { success: false, message };
     } finally {
@@ -571,6 +614,23 @@ export const AppProvider = ({ children }) => {
     }
   }, [authToken]);
 
+  // App bootstrap: the loading screen stays visible until the session profile
+  // (when a token exists) and the initial cart load have both settled. A safety
+  // timeout guarantees the splash can never get permanently stuck.
+  const bootstrapStartedRef = useRef(false);
+  useEffect(() => {
+    if (bootstrapStartedRef.current) {
+      return undefined;
+    }
+    bootstrapStartedRef.current = true;
+
+    const safetyTimeout = setTimeout(() => setIsBootstrapping(false), 8000);
+
+    return () => {
+      clearTimeout(safetyTimeout);
+    };
+  }, []);
+
   useEffect(() => {
     if (guestSessionId) {
       localStorage.setItem(GUEST_SESSION_KEY, guestSessionId);
@@ -581,8 +641,26 @@ export const AppProvider = ({ children }) => {
   }, [guestSessionId, persistGuestSessionId]);
 
   useEffect(() => {
-    loadCart();
-  }, [loadCart]);
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      const tasks = [loadCart({ silent: true })];
+      if (authToken) {
+        tasks.push(loadProfile());
+      }
+      await Promise.allSettled(tasks);
+      if (!cancelled) {
+        setIsBootstrapping(false);
+      }
+    };
+
+    bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (authToken) {
@@ -616,8 +694,9 @@ export const AppProvider = ({ children }) => {
       checkoutLoading,
       orders,
       guestSessionId,
-      refreshCart: loadCart,
+      isBootstrapping,
       addCartItem,
+      addBundleItem,
       updateCartItemQuantity,
       removeCartItemById,
       checkoutCart,
@@ -637,6 +716,7 @@ export const AppProvider = ({ children }) => {
       checkoutLoading,
       orders,
       guestSessionId,
+      isBootstrapping,
     ],
   );
 

@@ -18,6 +18,10 @@ import {
 	getAdminMessages,
 	updateAdminMessage,
 } from '../controllers/adminMessageController.js';
+import {
+	getAdminCustomerById,
+	getAdminCustomers,
+} from '../controllers/adminCustomerController.js';
 import { requireAdmin, requireAuth } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -36,6 +40,8 @@ router.patch('/orders/:id/status', updateAdminOrderStatus);
 router.get('/messages', getAdminMessages);
 router.patch('/messages/:id', updateAdminMessage);
 router.delete('/messages/:id', deleteAdminMessage);
+router.get('/customers', getAdminCustomers);
+router.get('/customers/:id', getAdminCustomerById);
 
 export default router;
 

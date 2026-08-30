@@ -4,10 +4,74 @@ import ProductCard from '../components/shop/ProductCard.jsx';
 import SidebarFilter from '../components/shop/SidebarFilter.jsx';
 import ChamferCard from '../components/common/ChamferCard.jsx';
 import { getProducts as getProductsApi } from '../services/api/products.js';
+import { getActiveOffers as getActiveOffersApi } from '../services/api/offers.js';
+import BundleVariantModal from '../components/common/BundleVariantModal.jsx';
+import { useAppContext } from '../context/AppContext.jsx';
+
+const BundleOfferCard = ({ offer, onAddBundle, isAdding }) => {
+  const needsSelection = (offer.products || []).some((product) => (product.variants || []).length > 1);
+  const includedProducts = Array.isArray(offer.products) ? offer.products : [];
+  const baseTotal = includedProducts.reduce((sum, product) => sum + Number(product.basePrice || product.base_price || 0), 0);
+  const savings = Math.max(0, baseTotal - Number(offer.bundlePrice || 0));
+
+  return (
+    <article className="rounded-xl border border-[#1C1C26] bg-[#0B0B0E] p-5 transition-all duration-300 hover:border-[#FFCC00]/40">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <span className="rounded-full bg-[#FFCC00] px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-black">
+            Bundle Offer
+          </span>
+          <h3 className="mt-4 font-heading text-xl font-black uppercase leading-tight text-white">
+            {offer.name}
+          </h3>
+        </div>
+        <span className={offer.isAvailable ? 'font-mono text-[10px] font-bold uppercase text-[#FFCC00]' : 'font-mono text-[10px] font-bold uppercase text-red-400'}>
+          {offer.isAvailable ? 'In Stock' : 'Out Of Stock'}
+        </span>
+      </div>
+
+      <p className="mt-3 min-h-10 text-xs leading-relaxed text-zinc-400">
+        {offer.description || 'Curated supplement stack with bundle pricing.'}
+      </p>
+
+      <ul className="mt-4 space-y-1.5 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+        {includedProducts.map((product) => (
+          <li key={product.id}>+ {product.name}</li>
+        ))}
+      </ul>
+
+      <div className="mt-5 flex items-end justify-between gap-4">
+        <div>
+          <p className="font-heading text-3xl font-black text-[#FFCC00]">
+            {Number(offer.bundlePrice || 0).toFixed(2)} EGP
+          </p>
+          {savings > 0 && (
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              Save {savings.toFixed(2)} EGP
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          disabled={!offer.isAvailable || isAdding}
+          onClick={() => onAddBundle(offer)}
+          className="rounded-lg bg-[#FFCC00] px-4 py-2 font-heading text-xs font-black uppercase text-black transition-all hover:bg-yellow-300 disabled:opacity-40"
+        >
+          {isAdding ? 'Adding...' : needsSelection ? 'Choose Options' : 'Add Bundle'}
+        </button>
+      </div>
+    </article>
+  );
+};
 
 const ShopPage = () => {
   const [searchParams] = useSearchParams();
+  const { addBundleItem } = useAppContext();
   const [products, setProducts] = useState([]);
+  const [bundleOffers, setBundleOffers] = useState([]);
+  const [addingBundleId, setAddingBundleId] = useState(null);
+  const [offerFeedback, setOfferFeedback] = useState('');
+  const [variantModalOffer, setVariantModalOffer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -46,7 +110,13 @@ const ShopPage = () => {
       defaultVariantStock: Number(item.default_variant_stock || 0),
       totalStock: Number(item.total_stock || 0),
       name: displayName || String(item.name || '').toUpperCase(),
-      price: Number(item.base_price ?? item.price ?? 0),
+      price: Number(item.effective_price ?? item.base_price ?? item.price ?? 0),
+      originalPrice: Number(item.base_price ?? item.price ?? 0),
+      discountLabel: item.discount_type
+        ? item.discount_type === 'percentage'
+          ? `${Number(item.discount_value || 0)}% OFF`
+          : `${Number(item.discount_value || 0).toFixed(2)} EGP OFF`
+        : '',
       colorName: item.parent_category_name ? `${item.parent_category_name} / ${item.category_name}` : item.category_name || 'Supplements',
       categorySlug: item.category_slug || '',
       parentCategorySlug: item.parent_category_slug || '',
@@ -68,6 +138,40 @@ const ShopPage = () => {
       [key]: value,
       page: key === 'page' ? value : 1,
     }));
+  };
+
+  const handleAddBundle = async (offer) => {
+    // Bundles with multi-option components require the customer to pick the
+    // exact flavor/weight before the bundle can enter the cart.
+    const needsSelection = (offer.products || []).some((product) => (product.variants || []).length > 1);
+    if (needsSelection) {
+      setVariantModalOffer(offer);
+      return;
+    }
+
+    setOfferFeedback('');
+    setAddingBundleId(offer.id);
+
+    const result = await addBundleItem({
+      offerId: offer.id,
+      quantity: 1,
+      optimisticItem: {
+        id: `temp-bundle-${offer.id}`,
+        cartItemId: `temp-bundle-${offer.id}`,
+        itemType: 'bundle',
+        offerId: offer.id,
+        name: offer.name,
+        variant: 'Bundle offer',
+        unitPrice: Number(offer.bundlePrice || 0),
+        lineTotal: Number(offer.bundlePrice || 0),
+        quantity: 1,
+        products: offer.products || [],
+      },
+    });
+
+    setAddingBundleId(null);
+    setOfferFeedback(result.success ? `${offer.name} added to cart.` : result.message || 'Unable to add bundle.');
+    setTimeout(() => setOfferFeedback(''), 2500);
   };
 
   useEffect(() => {
@@ -110,6 +214,26 @@ const ShopPage = () => {
   }, [filters.category, filters.search, filters.minPrice, filters.maxPrice, filters.stockStatus, filters.sort_by, filters.page, filters.limit]);
 
   useEffect(() => {
+    let isMounted = true;
+    const loadOffers = async () => {
+      try {
+        const response = await getActiveOffersApi();
+        const bundles = Array.isArray(response?.data)
+          ? response.data.filter((offer) => offer.offerType === 'bundle')
+          : [];
+        if (isMounted) setBundleOffers(bundles);
+      } catch {
+        if (isMounted) setBundleOffers([]);
+      }
+    };
+
+    loadOffers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     setFilters((current) => ({
       ...current,
       category: searchParams.get('category') || '',
@@ -118,6 +242,8 @@ const ShopPage = () => {
       page: 1,
     }));
   }, [searchParams]);
+
+  const showOffersFirst = searchParams.get('offers') === 'bundles';
 
   // Client side filters mapping for supplementary parameters
   const filteredProducts = products.filter((p) => {
@@ -154,6 +280,18 @@ const ShopPage = () => {
 
   return (
     <div className="w-full font-sans bg-[#0A0A0B] text-[#FFF8E7] pb-16">
+      {variantModalOffer && (
+        <BundleVariantModal
+          offer={variantModalOffer}
+          onClose={(added) => {
+            setVariantModalOffer(null);
+            if (added) {
+              setOfferFeedback(`${variantModalOffer.name} added to cart.`);
+              setTimeout(() => setOfferFeedback(''), 2500);
+            }
+          }}
+        />
+      )}
       
       {/* Header Area */}
       <div className="mx-auto max-w-[1500px] px-6 md:px-12 pt-6 pb-4">
@@ -203,18 +341,67 @@ const ShopPage = () => {
       {/* Main Shop Grid Area */}
       <div className="mx-auto max-w-[1500px] px-6 md:px-12 grid grid-cols-1 md:grid-cols-[250px_1fr] lg:grid-cols-[280px_1fr] gap-8 pt-6">
         
-        {/* Sidebar Filters */}
-        <SidebarFilter filters={filters} onFilterChange={handleFilterChange} />
+        {/* Desktop Sidebar Filters */}
+        <aside className="hidden md:block w-full max-w-[280px]">
+          <SidebarFilter filters={filters} onFilterChange={handleFilterChange} />
+        </aside>
 
         {/* Mobile Filters Drawer */}
         {isMobileFiltersOpen && (
-          <div className="md:hidden border-b border-[#222225] pb-6">
-            <SidebarFilter filters={filters} onFilterChange={handleFilterChange} />
+          <div
+            className="fixed inset-0 z-50 md:hidden bg-black/70 backdrop-blur-sm flex items-start justify-end"
+            aria-label="Mobile filters"
+          >
+            <div className="h-full w-full max-w-xs overflow-y-auto bg-[#141416] border-l border-[#222225] p-6">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#222225]">
+                <h3 className="font-heading font-bold text-lg text-white">Filters</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  className="p-1 text-zinc-400 hover:text-white"
+                  aria-label="Close filters"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                  </svg>
+                </button>
+              </div>
+              <SidebarFilter filters={filters} onFilterChange={handleFilterChange} />
+            </div>
           </div>
         )}
 
         {/* Product Grid Area */}
         <div className="space-y-10">
+          {bundleOffers.length > 0 && (
+            <section id="bundle-offers" className={`space-y-5 ${showOffersFirst ? 'scroll-mt-24' : ''}`}>
+              <div className="flex flex-col gap-3 border-b border-[#222225] pb-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">Bundle Offers</p>
+                  <h2 className="font-heading text-3xl font-black uppercase text-white">TRIPLE A OFFERS</h2>
+                </div>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                  {bundleOffers.length} active {bundleOffers.length === 1 ? 'offer' : 'offers'}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                {bundleOffers.map((offer) => (
+                  <BundleOfferCard
+                    key={offer.id}
+                    offer={offer}
+                    onAddBundle={handleAddBundle}
+                    isAdding={addingBundleId === offer.id}
+                  />
+                ))}
+              </div>
+              {offerFeedback && (
+                <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">
+                  {offerFeedback}
+                </p>
+              )}
+            </section>
+          )}
+
           {isLoading && (
             <div className="py-24 text-center font-mono text-xs text-zinc-500 animate-pulse">
               SYNCING SUPPLEMENT CATALOG...

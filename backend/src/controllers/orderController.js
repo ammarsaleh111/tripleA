@@ -10,6 +10,7 @@ export const checkoutCart = async (req, res, next) => {
       },
       customerName: req.orderInput.customerName,
       customerPhone: req.orderInput.customerPhone,
+      customerEmail: req.orderInput.customerEmail,
       customerAddress: req.orderInput.customerAddress,
       total: req.orderInput.total,
     });

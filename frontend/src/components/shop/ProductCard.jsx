@@ -62,8 +62,11 @@ const ProductCard = ({ product }) => {
 
   const isOutOfStock = Number(product.totalStock || product.defaultVariantStock || 0) <= 0;
   const stockCount = Number(product.totalStock || product.defaultVariantStock || 0);
+  const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
 
-  const badgeText = product.isNew
+  const badgeText = hasDiscount
+    ? product.discountLabel || 'SALE'
+    : product.isNew
     ? 'NEW'
     : stockCount > 0 && stockCount <= 5
     ? 'LOW STOCK'
@@ -143,7 +146,12 @@ const ProductCard = ({ product }) => {
           {/* Price + CTA */}
           <div className="flex items-center justify-between gap-3">
             <span className="font-heading text-xl font-black tracking-tight text-white">
-              ${Number(product.price || 0).toFixed(2)}
+              {Number(product.price || 0).toFixed(2)} EGP
+              {hasDiscount && (
+                <span className="ml-2 align-middle font-mono text-xs font-bold text-zinc-500 line-through">
+                  {Number(product.originalPrice || 0).toFixed(2)} EGP
+                </span>
+              )}
             </span>
 
             <button

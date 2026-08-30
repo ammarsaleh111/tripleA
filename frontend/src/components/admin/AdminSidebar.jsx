@@ -5,10 +5,10 @@ import { useAppContext } from '../../context/AppContext.jsx';
 const primaryLinks = [
   'Dashboard',
   'Inventory',
+  'Offers',
   'Orders',
   'Messages',
   'Customers',
-  'Analytics',
   'Settings',
 ];
 
@@ -44,7 +44,7 @@ const AdminSidebar = ({ activeSection, onSectionChange, isOpen, onClose }) => {
       >
         <div>
           <p className="font-heading font-black italic text-2xl uppercase leading-none tracking-tighter text-[#FFCC00]">
-            TRIPLE A GYM
+            TRIPLE A
           </p>
           <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-zinc-400">
             ADMIN PORTAL

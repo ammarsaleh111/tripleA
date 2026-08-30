@@ -140,14 +140,57 @@ const getOffers = async ({ activeOnly = false }) => {
   if (bundleIds.length) {
     const placeholders = bundleIds.map(() => '?').join(', ');
     const [productRows] = await db.query(
-      `SELECT bop.offer_id, p.id, p.name, p.slug, p.base_price
+      `SELECT bop.offer_id, p.id, p.name, p.slug, p.base_price, p.has_flavor, p.has_weight,
+        COALESCE(
+          (
+            SELECT pi.image_url
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+            ORDER BY pi.is_primary DESC, pi.display_order ASC, pi.id ASC
+            LIMIT 1
+          ),
+          ''
+        ) AS primary_image
        FROM bundle_offer_products bop
        JOIN products p ON p.id = bop.product_id
        WHERE bop.offer_id IN (${placeholders})
        ORDER BY bop.offer_id, bop.product_id`,
       bundleIds,
     );
-    bundleProducts = productRows;
+
+    const [variantRows] = await db.query(
+      `SELECT pv.product_id, pv.id, pv.sku, pv.flavor, pv.color, pv.weight_value, pv.weight_unit,
+        pv.price_modifier, pv.stock_quantity
+       FROM product_variants pv
+       WHERE pv.product_id IN (
+         SELECT DISTINCT product_id FROM bundle_offer_products WHERE offer_id IN (${placeholders})
+       )
+       ORDER BY pv.product_id, pv.id`,
+      bundleIds,
+    );
+
+    const variantsByProduct = new Map();
+    for (const variant of variantRows) {
+      if (!variantsByProduct.has(variant.product_id)) {
+        variantsByProduct.set(variant.product_id, []);
+      }
+      variantsByProduct.get(variant.product_id).push({
+        id: variant.id,
+        sku: variant.sku,
+        flavor: variant.flavor || variant.color || null,
+        weightLabel:
+          variant.weight_value && variant.weight_unit
+            ? `${Number(variant.weight_value).toString()} ${variant.weight_unit}`
+            : null,
+        priceModifier: Number(variant.price_modifier || 0),
+        stockQuantity: Number(variant.stock_quantity || 0),
+      });
+    }
+
+    bundleProducts = productRows.map((row) => ({
+      ...row,
+      variants: variantsByProduct.get(row.id) || [],
+    }));
   }
 
   return rows.map((row) => mapOffer(
@@ -155,7 +198,15 @@ const getOffers = async ({ activeOnly = false }) => {
     bundleProducts.filter((product) => product.offer_id === row.id).map(({ offer_id, ...product }) => ({
       ...product,
       basePrice: Number(product.base_price),
+      hasFlavor: Boolean(product.has_flavor),
+      hasWeight: Boolean(product.has_weight),
+      primaryImage: product.primary_image || '',
+      variants: (product.variants || []).map((variant) => ({
+        ...variant,
+        weightLabel: variant.weightLabel || null,
+      })),
       base_price: undefined,
+      primary_image: undefined,
     })),
   ));
 };

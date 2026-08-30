@@ -53,9 +53,16 @@ export const getAdminOrders = async (request, response, next) => {
     }
 
     if (search) {
-      whereClause += " AND (o.order_number ILIKE ? OR CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) ILIKE ? OR u.email ILIKE ?)";
+      whereClause += ` AND (
+        o.order_number ILIKE ?
+        OR CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) ILIKE ?
+        OR u.email ILIKE ?
+        OR COALESCE(o.customer_name, '') ILIKE ?
+        OR COALESCE(o.customer_email, '') ILIKE ?
+        OR COALESCE(o.customer_phone, '') ILIKE ?
+      )`;
       const token = `%${search}%`;
-      whereParams.push(token, token, token);
+      whereParams.push(token, token, token, token, token, token);
     }
 
     const [countRows] = await db.query(
@@ -74,8 +81,9 @@ export const getAdminOrders = async (request, response, next) => {
         o.id,
         o.order_number,
         o.user_id,
-        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Guest Checkout') AS customer_name,
-        COALESCE(u.email, 'Guest') AS customer_email,
+        COALESCE(NULLIF(o.customer_name, ''), CONCAT(u.first_name, ' ', u.last_name), 'Guest Checkout') AS customer_name,
+        COALESCE(NULLIF(o.customer_email, ''), u.email, 'Guest') AS customer_email,
+        o.customer_phone,
         o.subtotal,
         o.tax,
         o.shipping_cost,
@@ -94,6 +102,9 @@ export const getAdminOrders = async (request, response, next) => {
         o.id,
         o.order_number,
         o.user_id,
+        o.customer_name,
+        o.customer_email,
+        o.customer_phone,
         u.first_name,
         u.last_name,
         u.email,
@@ -118,6 +129,8 @@ export const getAdminOrders = async (request, response, next) => {
         orderNumber: row.order_number,
         customerName: row.customer_name,
         customerEmail: row.customer_email,
+        customerPhone: row.customer_phone || null,
+        isGuest: row.user_id === null,
         subtotal: Number(row.subtotal || 0),
         tax: Number(row.tax || 0),
         shippingCost: Number(row.shipping_cost || 0),
@@ -157,8 +170,13 @@ export const getAdminOrderById = async (request, response, next) => {
         o.id,
         o.order_number,
         o.user_id,
-        COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Guest Checkout') AS customer_name,
-        COALESCE(u.email, 'Guest') AS customer_email,
+        COALESCE(NULLIF(o.customer_name, ''), CONCAT(u.first_name, ' ', u.last_name), 'Guest Checkout') AS customer_name,
+        COALESCE(NULLIF(o.customer_email, ''), u.email, 'Guest') AS customer_email,
+        COALESCE(NULLIF(o.customer_phone, ''), up.phone_number, '') AS customer_phone,
+        o.customer_name AS checkout_name,
+        o.customer_email AS checkout_email,
+        o.customer_phone AS checkout_phone,
+        o.customer_address,
         o.subtotal,
         o.tax,
         o.shipping_cost,
@@ -166,9 +184,26 @@ export const getAdminOrderById = async (request, response, next) => {
         o.status,
         o.tracking_number,
         o.created_at,
-        o.updated_at
+        o.updated_at,
+        u.id AS registered_user_id,
+        u.email AS registered_email,
+        u.first_name,
+        u.last_name,
+        u.role AS registered_role,
+        u.created_at AS registered_since,
+        up.phone_number AS profile_phone,
+        up.reward_points,
+        up.tier_status,
+        a.address_line_1,
+        a.address_line_2,
+        a.city,
+        a.state,
+        a.postal_code,
+        a.country
       FROM orders o
       LEFT JOIN users u ON u.id = o.user_id
+      LEFT JOIN user_profiles up ON up.user_id = u.id
+      LEFT JOIN addresses a ON a.user_id = u.id AND a.is_default = TRUE
       WHERE o.id = ?
       LIMIT 1
       `,
@@ -188,6 +223,8 @@ export const getAdminOrderById = async (request, response, next) => {
         oi.quantity,
         oi.price_at_purchase,
         oi.variant_id,
+        oi.item_type,
+        oi.metadata,
         pv.size,
         pv.color,
         pv.color_hex
@@ -200,14 +237,57 @@ export const getAdminOrderById = async (request, response, next) => {
     );
 
     const order = orders[0];
+    const isGuest = order.user_id === null;
+
+    const customer = isGuest
+      ? {
+          type: 'guest',
+          name: order.customer_name || 'Guest Checkout',
+          email:
+            order.customer_email && order.customer_email !== 'Guest'
+              ? order.customer_email
+              : order.checkout_email || null,
+          phone: order.customer_phone || order.checkout_phone || null,
+          address: order.customer_address || null,
+        }
+      : {
+          type: 'registered',
+          id: order.registered_user_id,
+          name: order.customer_name || `${order.first_name || ''} ${order.last_name || ''}`.trim(),
+          email: order.registered_email || order.checkout_email || null,
+          phone: order.customer_phone || order.profile_phone || order.checkout_phone || null,
+          role: order.registered_role,
+          registeredSince: order.registered_since,
+          rewardPoints:
+            order.reward_points === null || order.reward_points === undefined
+              ? null
+              : Number(order.reward_points),
+          tierStatus: order.tier_status || null,
+          address: order.address_line_1
+            ? [
+                order.address_line_1,
+                order.address_line_2,
+                order.city,
+                order.state,
+                order.postal_code,
+                order.country,
+              ]
+                .filter(Boolean)
+                .join(', ')
+            : order.customer_address || null,
+        };
 
     return response.status(200).json({
       success: true,
       data: {
         id: order.id,
         orderNumber: order.order_number,
+        isGuest,
+        customer,
         customerName: order.customer_name,
         customerEmail: order.customer_email,
+        customerPhone: order.customer_phone || null,
+        shippingAddress: order.customer_address || null,
         subtotal: Number(order.subtotal || 0),
         tax: Number(order.tax || 0),
         shippingCost: Number(order.shipping_cost || 0),
@@ -227,6 +307,8 @@ export const getAdminOrderById = async (request, response, next) => {
           size: item.size,
           color: item.color,
           colorHex: item.color_hex,
+          itemType: item.item_type || 'product',
+          metadata: item.metadata || null,
         })),
       },
     });

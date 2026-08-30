@@ -17,7 +17,7 @@ const goalOptions = [
   { label: 'Endurance', value: 'endurance' },
 ];
 
-const SidebarFilter = ({ filters, onFilterChange }) => {
+const SidebarFilter = ({ filters, onFilterChange, className = '' }) => {
   const selectedCategory = filters?.category || '';
   const selectedGoal = filters?.goal || '';
   const minPrice = filters?.minPrice || '';
@@ -33,8 +33,9 @@ const SidebarFilter = ({ filters, onFilterChange }) => {
   };
 
   return (
-    <aside className="bg-[#141416] border border-[#222225] p-6 text-white w-full sticky top-24 hidden md:block rounded-sm">
-      
+    <aside
+      className={`bg-[#141416] border border-[#222225] p-6 text-white w-full sticky top-24 rounded-sm ${className}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#222225]">
         <h3 className="font-heading font-bold text-lg text-white">
@@ -96,31 +97,7 @@ const SidebarFilter = ({ filters, onFilterChange }) => {
         </ul>
       </div>
 
-      {/* GOAL PILLS */}
-      <div className="mb-8 border-t border-[#222225] pt-6">
-        <h4 className="font-mono text-xs text-zinc-400 uppercase tracking-widest mb-4">
-          Goal
-        </h4>
-        <div className="flex flex-wrap gap-2.5">
-          {goalOptions.map((goal) => {
-            const isSelected = selectedGoal.toLowerCase() === goal.value;
-            return (
-              <button
-                key={goal.label}
-                type="button"
-                onClick={() => onFilterChange('goal', isSelected ? '' : goal.value)}
-                className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest rounded-full transition-all border ${
-                  isSelected
-                    ? 'bg-[#FFCC00] border-[#FFCC00] text-black font-extrabold shadow-[0_0_12px_rgba(255,204,0,0.2)]'
-                    : 'bg-[#0E0E10] border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
-                }`}
-              >
-                {goal.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    
 
       <div className="mb-8 border-t border-[#222225] pt-6">
         <h4 className="mb-4 font-mono text-xs uppercase tracking-widest text-zinc-400">Availability</h4>

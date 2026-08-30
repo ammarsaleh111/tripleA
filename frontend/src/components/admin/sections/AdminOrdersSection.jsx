@@ -193,8 +193,8 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
       </div>
 
       <div className="bg-[#111] border border-white/5 overflow-x-auto">
-        <table className="min-w-[760px] text-sm text-white/85">
-          <thead className="bg-black/35 text-[10px] uppercase tracking-[0.18em] text-white/45">
+        <table className="min-w-[760px] w-full text-sm text-white/85">
+          <thead className="bg-black/35 text-[10px] uppercase tracking-[0.16em] text-white/45">
             <tr>
               <th className="px-4 py-4 text-left">Order</th>
               <th className="px-4 py-4 text-left">Customer</th>
@@ -218,11 +218,11 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
                 <tr key={order.id} className="border-t border-white/5">
                   <td className="px-4 py-4">
                     <p className="font-semibold text-white">{order.orderNumber}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-white/45">{order.totalUnits} units</p>
+                    <p className="text-[10px] tracking-widest text-white/45">{order.totalUnits} units</p>
                   </td>
                   <td className="px-4 py-4">
                     <p>{order.customerName}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-white/45">{order.customerEmail}</p>
+                    <p className="text-[10px] tracking-widest text-white/45">{order.customerEmail}</p>
                   </td>
                   <td className="px-4 py-4">{formatDate(order.createdAt)}</td>
                   <td className="px-4 py-4 font-semibold">{formatCurrency(order.totalAmount)}</td>
@@ -301,16 +301,31 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
               <p className="py-10 text-center text-white/60">Loading order detail...</p>
             ) : (
               orderDetail && (
-                <div className="mt-5">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-[11px] uppercase tracking-[0.14em] text-white/65 mb-5">
-                    <p>Customer: <span className="text-white">{orderDetail.customerName}</span></p>
-                    <p>Status: <span className="text-white">{orderDetail.status}</span></p>
-                    <p>Date: <span className="text-white">{formatDate(orderDetail.createdAt)}</span></p>
-                    <p>Total: <span className="text-[var(--theme-accent)]">{formatCurrency(orderDetail.totalAmount)}</span></p>
+                <div className="mt-5 space-y-6">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-[11px] uppercase tracking-[0.14em] text-white/65">
+                    <p>
+                      Customer: <span className="text-white">{orderDetail.customerName}</span>
+                    </p>
+                    <p>
+                      Type: <span className="text-white">{orderDetail.isGuest ? 'Guest' : 'Registered'}</span>
+                    </p>
+                    <p>
+                      Email: <span className="text-white">{orderDetail.customerEmail || orderDetail.customer?.email || '--'}</span>
+                    </p>
+                    <p>
+                      Phone: <span className="text-white">{orderDetail.customerPhone || orderDetail.customer?.phone || '--'}</span>
+                    </p>
                   </div>
 
+                  {orderDetail.shippingAddress && (
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-white/65">
+                      <p className="mb-1">Shipping Address:</p>
+                      <p className="text-white">{orderDetail.shippingAddress}</p>
+                    </div>
+                  )}
+
                   <div className="overflow-x-auto border border-white/10">
-                    <table className="min-w-[760px] text-sm text-white/85">
+                    <table className="min-w-[760px] w-full text-sm text-white/85">
                       <thead className="bg-black/35 text-[10px] uppercase tracking-[0.16em] text-white/45">
                         <tr>
                           <th className="px-4 py-3 text-left">Product</th>
@@ -332,6 +347,29 @@ const AdminOrdersSection = ({ onOrdersMutated }) => {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div className="flex justify-end border-t border-white/10 pt-4">
+                    <div className="w-full max-w-xs space-y-2 text-[11px] uppercase tracking-[0.14em] text-white/65">
+                      <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span className="text-white">{formatCurrency(orderDetail.subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tax</span>
+                        <span className="text-white">{formatCurrency(orderDetail.tax)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Shipping</span>
+                        <span className="text-white">{formatCurrency(orderDetail.shippingCost)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-white/10 pt-2">
+                        <span>Total</span>
+                        <span className="text-[var(--theme-accent)] font-bold">
+                          {formatCurrency(orderDetail.totalAmount)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )
