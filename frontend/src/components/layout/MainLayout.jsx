@@ -289,10 +289,10 @@ const MainLayout = () => {
               </div>
             )}
 
-            {/* JOIN NOW Button */}
+            {/* JOIN NOW Button — hidden at 767px and below (visible >= 768px) */}
             <Link
               to="/auth?tab=register"
-              className="btn-primary text-xs sm:text-sm px-4 py-2 sm:px-5 sm:py-2.5 inline-block"
+              className="btn-primary text-xs sm:text-sm px-4 py-2 sm:px-5 sm:py-2.5 hidden md:inline-block"
             >
               JOIN NOW
             </Link>

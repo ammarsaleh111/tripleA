@@ -62,7 +62,10 @@ const ProductCard = ({ product }) => {
 
   const isOutOfStock = Number(product.totalStock || product.defaultVariantStock || 0) <= 0;
   const stockCount = Number(product.totalStock || product.defaultVariantStock || 0);
-  const hasDiscount = Number(product.originalPrice || 0) > Number(product.price || 0);
+  // Multi-weight products show "FROM <lowest weight price>" instead of a
+  // single price (their per-weight discounts surface on the detail page).
+  const hasPriceRange = Number(product.priceMax || 0) > Number(product.price || 0) + 0.001;
+  const hasDiscount = !hasPriceRange && Number(product.originalPrice || 0) > Number(product.price || 0);
 
   const badgeText = hasDiscount
     ? product.discountLabel || 'SALE'
@@ -130,10 +133,7 @@ const ProductCard = ({ product }) => {
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#FFCC00]/70">
               {product.colorName || 'Supplement'}
             </span>
-            <div className="inline-flex items-center gap-1 rounded-md border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] font-mono">
-              <span className="text-[#FFCC00]">★</span>
-              <span className="font-bold text-white">{product.rating || '5.0'}</span>
-            </div>
+          
           </div>
 
           {/* Name */}
@@ -146,8 +146,9 @@ const ProductCard = ({ product }) => {
           {/* Price + CTA */}
           <div className="flex items-center justify-between gap-3">
             <span className="font-heading text-xl font-black tracking-tight text-white">
+              {hasPriceRange && <span className="mr-1 font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-400">FROM</span>}
               {Number(product.price || 0).toFixed(2)} EGP
-              {hasDiscount && (
+              {!hasPriceRange && hasDiscount && (
                 <span className="ml-2 align-middle font-mono text-xs font-bold text-zinc-500 line-through">
                   {Number(product.originalPrice || 0).toFixed(2)} EGP
                 </span>

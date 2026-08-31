@@ -96,87 +96,10 @@ const AdminTopbar = ({
       </div>
 
       <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-center">
-        <label className="flex h-12 w-full min-w-0 items-center gap-3 border border-white/10 bg-zinc-900 px-4 text-zinc-500 md:w-auto md:min-w-[260px]">
-          <SearchIcon />
-          <input
-            value={searchTerm}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="SEARCH SYSTEM..."
-            className="w-full bg-transparent text-[11px] font-medium uppercase tracking-[0.18em] text-white outline-none placeholder:text-zinc-600"
-          />
-        </label>
+        
 
         <div className="relative flex flex-wrap items-center gap-3 text-white/65">
-          <button
-            type="button"
-            onClick={() => setActivePanel((current) => (current === 'notifications' ? '' : 'notifications'))}
-            className="relative inline-flex h-12 w-12 items-center justify-center border border-white/10 bg-zinc-900 transition-all duration-300 ease-in-out hover:text-white"
-            aria-label="Notifications"
-          >
-            <BellIcon />
-            <span className={`absolute right-3 top-3 h-2.5 w-2.5 rounded-full ${hasAlerts ? 'bg-[#FFCC00]' : 'bg-white/25'}`} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setActivePanel((current) => (current === 'apps' ? '' : 'apps'))}
-            className="inline-flex h-12 w-12 items-center justify-center border border-white/10 bg-zinc-900 transition-all duration-300 ease-in-out hover:text-white"
-            aria-label="Apps"
-          >
-            <GridIcon />
-          </button>
-          <button
-            type="button"
-            onClick={onRefreshDashboard}
-            disabled={isDashboardLoading}
-            className="h-12 border border-white/10 bg-zinc-900 px-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/75 transition-all duration-300 ease-in-out hover:border-[#FFCC00] hover:text-[#FFCC00] disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            {isDashboardLoading ? 'Syncing' : 'Sync'}
-          </button>
-
-          {activePanel === 'notifications' && (
-            <div className="absolute right-0 top-full z-20 mt-3 w-[min(20rem,calc(100vw-2rem))] border border-white/10 bg-zinc-900/90 p-4 shadow-2xl shadow-black/35 backdrop-blur-md">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45">Notifications</p>
-              <div className="mt-4 space-y-3">
-                <div className="border border-white/10 bg-black/30 px-3 py-2 text-[11px] text-white/75">
-                  {pendingOrders} pending orders need action.
-                </div>
-                <div className="border border-white/10 bg-black/30 px-3 py-2 text-[11px] text-white/75">
-                  {newMessages} new customer messages ({unresolvedMessages} unresolved).
-                </div>
-                <div className="border border-white/10 bg-black/30 px-3 py-2 text-[11px] text-white/75">
-                  {lowStockVariants} low-stock variants and {currencyFormatter.format(allTimeRevenue)} total revenue.
-                </div>
-                <button
-                  type="button"
-                  className="w-full border border-[#FFCC00] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#FFCC00] transition-all duration-300 ease-in-out hover:bg-[#FFCC00] hover:text-[#101010]"
-                  onClick={() => setActivePanel('')}
-                >
-                  Close Panel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {activePanel === 'apps' && (
-            <div className="absolute right-0 top-full z-20 mt-3 w-[min(20rem,calc(100vw-2rem))] border border-white/10 bg-zinc-900/90 p-4 shadow-2xl shadow-black/35 backdrop-blur-md">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45">Quick Actions</p>
-              <div className="mt-4 grid gap-2">
-                <Link to="/shop" className="border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/75 transition-all duration-300 ease-in-out hover:text-white">
-                  Open Store
-                </Link>
-                <Link to="/dashboard" className="border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/75 transition-all duration-300 ease-in-out hover:text-white">
-                  Open Dashboard
-                </Link>
-                <Link to="/help" className="border border-white/10 bg-black/30 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-white/75 transition-all duration-300 ease-in-out hover:text-white">
-                  Open Help
-                </Link>
-                <div className="border border-white/10 bg-black/30 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-white/50">
-                  Last Sync: {formatLastSynced(lastSyncedAt)}
-                </div>
-              </div>
-            </div>
-          )}
-
+          
           <div className="flex items-center gap-3 border border-white/10 bg-zinc-900 px-3 py-2">
             <div className="grid h-8 w-8 place-items-center rounded-full bg-[#FFCC00] text-[10px] font-bold text-black">
               TA

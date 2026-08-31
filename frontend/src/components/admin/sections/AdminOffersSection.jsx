@@ -13,8 +13,11 @@ const emptyForm = {
   offerType: 'bundle',
   name: '',
   description: '',
+  imageUrl: '',
   productIds: [],
   productId: '',
+  discountVariantId: '',
+  bundleVariantIds: {},
   bundlePrice: '',
   discountType: 'percentage',
   discountValue: '',
@@ -25,6 +28,22 @@ const emptyForm = {
 };
 
 const fieldClass = 'w-full border border-white/10 bg-black px-3 py-2 text-xs text-white outline-none focus:border-[#FFCC00]';
+
+// Unique weight tiers of a product, with a representative variant id each.
+// A discount/bundle targets the WEIGHT (all flavors of it), never a flavor.
+const weightTiersFor = (product) => {
+  const tiers = [];
+  const seen = new Set();
+  (product?.variants || []).forEach((variant) => {
+    if (variant.weight_value === null || variant.weight_value === undefined) return;
+    const label = `${Number(variant.weight_value).toString()} ${variant.weight_unit || 'g'}`;
+    const key = label.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    tiers.push({ label, variantId: Number(variant.id) });
+  });
+  return tiers;
+};
 
 const getStatus = (offer) => {
   if (!offer.isActive) return 'Inactive';
@@ -73,13 +92,20 @@ const AdminOffersSection = () => {
 
   const editOffer = (offer) => {
     setEditingId(offer.id);
+    const bundleVariantIds = {};
+    (offer.products || []).forEach((product) => {
+      if (product.selectedVariantId) bundleVariantIds[Number(product.id)] = Number(product.selectedVariantId);
+    });
     setForm({
       ...emptyForm,
       offerType: offer.offerType,
       name: offer.name || '',
       description: offer.description || '',
+      imageUrl: offer.imageUrl || '',
       productIds: (offer.products || []).map((product) => Number(product.id)),
       productId: offer.product?.id || '',
+      discountVariantId: offer.product?.variantId || '',
+      bundleVariantIds,
       bundlePrice: offer.bundlePrice ?? '',
       discountType: offer.discountType || 'percentage',
       discountValue: offer.discountValue ?? '',
@@ -109,17 +135,49 @@ const AdminOffersSection = () => {
       return setMessage('Percentage discount cannot exceed 100.');
     }
 
+    // Weight targeting: a product with multiple weight tiers MUST have the
+    // discount's weight selected explicitly (flavor is never required).
+    const selectedProduct = products.find((product) => Number(product.id) === Number(form.productId));
+    const discountTiers = weightTiersFor(selectedProduct);
+    if (form.offerType === 'product_discount' && discountTiers.length > 1 && !form.discountVariantId) {
+      return setMessage('Select which weight the discount applies to.');
+    }
+
+    const bundleVariantIds = {};
+    let missingBundleWeight = '';
+    for (const productId of form.productIds) {
+      const product = products.find((item) => Number(item.id) === Number(productId));
+      const tiers = weightTiersFor(product);
+      const selected = form.bundleVariantIds[Number(productId)];
+      if (tiers.length > 1) {
+        if (!selected) {
+          missingBundleWeight = product?.name || 'a bundle product';
+          break;
+        }
+        bundleVariantIds[Number(productId)] = Number(selected);
+      } else if (tiers.length === 1 && selected) {
+        bundleVariantIds[Number(productId)] = Number(selected);
+      } else if (tiers.length === 1) {
+        bundleVariantIds[Number(productId)] = tiers[0].variantId;
+      }
+    }
+    if (missingBundleWeight) {
+      return setMessage(`Select the weight to include for "${missingBundleWeight}".`);
+    }
+
     const payload = {
       offer_type: form.offerType,
       name: form.name,
       description: form.description,
+      image_url: form.imageUrl.trim() || undefined,
       starts_at: new Date(form.startsAt).toISOString(),
       ends_at: form.noExpiration ? null : new Date(form.endsAt).toISOString(),
       is_active: form.isActive,
       ...(form.offerType === 'bundle'
-        ? { product_ids: form.productIds, bundle_price: Number(form.bundlePrice) }
+        ? { product_ids: form.productIds, variant_ids: bundleVariantIds, bundle_price: Number(form.bundlePrice) }
         : {
             product_id: Number(form.productId),
+            variant_id: discountTiers.length > 1 ? Number(form.discountVariantId) : (discountTiers.length === 1 ? discountTiers[0].variantId : null),
             discount_type: form.discountType,
             discount_value: Number(form.discountValue),
           }),
@@ -139,6 +197,11 @@ const AdminOffersSection = () => {
     }
   };
 
+  const handleDelete = async (offerId) => {
+    await deleteAdminOffer(offerId);
+    await loadData();
+  };
+
   return (
     <section className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,420px)_1fr]">
       <form onSubmit={submitOffer} className="space-y-4 border border-white/10 bg-zinc-900/60 p-5">
@@ -155,33 +218,89 @@ const AdminOffersSection = () => {
         </label>
         <input className={fieldClass} placeholder="Offer name" value={form.name} onChange={(e) => updateForm('name', e.target.value)} />
         <textarea className={`${fieldClass} min-h-20`} placeholder="Description" value={form.description} onChange={(e) => updateForm('description', e.target.value)} />
+        <input className={fieldClass} type="url" placeholder="Bundle image URL (optional)" value={form.imageUrl} onChange={(e) => updateForm('imageUrl', e.target.value)} />
 
         {form.offerType === 'bundle' ? (
           <>
             <select className={fieldClass} value="" onChange={(e) => {
               const id = Number(e.target.value);
-              if (id && !form.productIds.includes(id)) updateForm('productIds', [...form.productIds, id]);
+              if (id && !form.productIds.includes(id)) {
+                const product = products.find((item) => Number(item.id) === id);
+                const tiers = weightTiersFor(product);
+                setForm((current) => ({
+                  ...current,
+                  productIds: [...current.productIds, id],
+                  bundleVariantIds: {
+                    ...current.bundleVariantIds,
+                    ...(tiers.length === 1 ? { [id]: tiers[0].variantId } : {}),
+                  },
+                }));
+              }
             }}>
               <option value="">Add existing product</option>
               {products.filter((product) => !form.productIds.includes(Number(product.id))).map((product) => (
                 <option key={product.id} value={product.id}>{product.name}</option>
               ))}
             </select>
-            <div className="flex flex-wrap gap-2">
-              {selectedProducts.map((product) => (
-                <button key={product.id} type="button" onClick={() => updateForm('productIds', form.productIds.filter((id) => id !== Number(product.id)))} className="border border-[#FFCC00]/40 px-2 py-1 text-[10px] uppercase text-[#FFCC00]">
-                  {product.name} x
-                </button>
-              ))}
+            <div className="space-y-2">
+              {selectedProducts.map((product) => {
+                const tiers = weightTiersFor(product);
+                const selected = form.bundleVariantIds[Number(product.id)] || '';
+                return (
+                  <div key={product.id} className="flex flex-wrap items-center gap-2">
+                    <button type="button" onClick={() => {
+                      const nextIds = form.productIds.filter((id) => id !== Number(product.id));
+                      const nextMap = { ...form.bundleVariantIds };
+                      delete nextMap[Number(product.id)];
+                      setForm((current) => ({ ...current, productIds: nextIds, bundleVariantIds: nextMap }));
+                    }} className="border border-[#FFCC00]/40 px-2 py-1 text-[10px] uppercase text-[#FFCC00]">
+                      {product.name} x
+                    </button>
+                    {tiers.length > 1 && (
+                      <select
+                        className={`${fieldClass} max-w-40`}
+                        value={selected}
+                        onChange={(e) => updateForm('bundleVariantIds', { ...form.bundleVariantIds, [Number(product.id)]: e.target.value ? Number(e.target.value) : '' })}
+                      >
+                        <option value="">Select weight…</option>
+                        {tiers.map((tier) => <option key={tier.variantId} value={tier.variantId}>{tier.label}</option>)}
+                      </select>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <input className={fieldClass} type="number" min="0" step="0.01" placeholder="Bundle price" value={form.bundlePrice} onChange={(e) => updateForm('bundlePrice', e.target.value)} />
           </>
         ) : (
           <>
-            <select className={fieldClass} value={form.productId} onChange={(e) => updateForm('productId', e.target.value)}>
+            <select className={fieldClass} value={form.productId} onChange={(e) => {
+              const id = e.target.value ? Number(e.target.value) : '';
+              const product = products.find((item) => Number(item.id) === Number(id));
+              const tiers = weightTiersFor(product);
+              setForm((current) => ({
+                ...current,
+                productId: id,
+                discountVariantId: tiers.length === 1 ? tiers[0].variantId : '',
+              }));
+            }}>
               <option value="">Select existing product</option>
               {products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
             </select>
+            {(() => {
+              const product = products.find((item) => Number(item.id) === Number(form.productId));
+              const tiers = weightTiersFor(product);
+              if (tiers.length <= 1) return null;
+              return (
+                <label className="block space-y-1 text-xs uppercase tracking-widest text-white/55">
+                  Discount weight (required — all flavors of this weight)
+                  <select className={fieldClass} value={form.discountVariantId} onChange={(e) => updateForm('discountVariantId', e.target.value ? Number(e.target.value) : '')}>
+                    <option value="">Select weight…</option>
+                    {tiers.map((tier) => <option key={tier.variantId} value={tier.variantId}>{tier.label}</option>)}
+                  </select>
+                </label>
+              );
+            })()}
             <select className={fieldClass} value={form.discountType} onChange={(e) => updateForm('discountType', e.target.value)}>
               <option value="percentage">Percentage</option>
               <option value="fixed">Fixed amount</option>
@@ -218,7 +337,7 @@ const AdminOffersSection = () => {
               <span className="ml-2 text-[10px] text-white/40">
                 {offer.offerType === 'bundle'
                   ? `${Number(offer.bundlePrice || 0).toFixed(0)} EGP`
-                  : `${offer.discountType === 'percentage' ? `${Number(offer.discountValue || 0)}%` : `${Number(offer.discountValue || 0).toFixed(0)} EGP`} off ${offer.product?.name || ''}`}
+                  : `${offer.discountType === 'percentage' ? `${Number(offer.discountValue || 0)}%` : `${Number(offer.discountValue || 0).toFixed(0)} EGP`} off ${offer.product?.name || ''}${offer.product?.variantWeightLabel ? ` — ${offer.product.variantWeightLabel}` : ''}`}
               </span>
             </span>
             <span>{offer.offerType === 'bundle' ? 'Bundle' : 'Discount'}</span>
@@ -228,7 +347,7 @@ const AdminOffersSection = () => {
             <span className="flex gap-2">
               <button className="text-[#FFCC00]" onClick={() => editOffer(offer)}>Edit</button>
               <button className="text-white/70" onClick={async () => { await updateAdminOfferStatus(offer.id, { is_active: !offer.isActive }); await loadData(); }}>{offer.isActive ? 'Disable' : 'Enable'}</button>
-              <button className="text-red-400" onClick={async () => { await deleteAdminOffer(offer.id); await loadData(); }}>Delete</button>
+              <button className="text-red-400" onClick={() => handleDelete(offer.id)}>Delete</button>
             </span>
           </div>
         ))}

@@ -170,6 +170,17 @@ export const AppProvider = ({ children }) => {
   // True until the app's real initialization finishes: session/profile restore
   // (when a token exists) plus the initial cart load. Drives the intro loader.
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const bootstrapStateRef = useRef({ profileDone: false, cartDone: false, done: false });
+
+  const finishBootstrapTask = useCallback((task) => {
+    const state = bootstrapStateRef.current;
+    if (state.done) return;
+    state[task] = true;
+    if (state.profileDone && state.cartDone) {
+      state.done = true;
+      setIsBootstrapping(false);
+    }
+  }, []);
 
   const persistGuestSessionId = useCallback((sessionId) => {
     localStorage.setItem(GUEST_SESSION_KEY, sessionId);
@@ -701,6 +712,7 @@ export const AppProvider = ({ children }) => {
       removeCartItemById,
       checkoutCart,
       refreshMyOrders,
+      refreshCart: loadCart,
     }),
     [
       apiStatus,

@@ -55,11 +55,13 @@ export const validateOfferInput = (payload = {}) => {
     throw createValidationError('ends_at must be after starts_at.');
   }
 
-  const isActive = payload.is_active ?? payload.isActive;
+    const isActive = payload.is_active ?? payload.isActive;
+  const rawImageUrl = payload.image_url ?? payload.imageUrl;
   const normalized = {
     offerType: offerType,
     name,
     description: payload.description == null ? null : String(payload.description).trim() || null,
+    imageUrl: rawImageUrl == null ? null : String(rawImageUrl).trim() || null,
     startsAt,
     endsAt,
     isActive: isActive === undefined ? true : Boolean(isActive),
@@ -68,7 +70,46 @@ export const validateOfferInput = (payload = {}) => {
   if (offerType === 'bundle') {
     const productIds = normalizeProductIds(payload.product_ids ?? payload.productIds);
     if (productIds.length < 2) throw createValidationError('Bundles require at least two products.');
-    return { ...normalized, productIds, bundlePrice: parseMoney(payload.bundle_price ?? payload.bundlePrice, 'bundle_price') };
+
+    // Optional per-product weight targeting. Accepts either an array aligned
+    // with product_ids or a map of { productId: variantId }. Values may be
+    // null only when the product has no weight tiers (auto-resolved later).
+    const rawVariantIds = payload.variant_ids ?? payload.variantIds ?? {};
+    const variantIdMap = new Map();
+    if (Array.isArray(rawVariantIds)) {
+      if (rawVariantIds.length > productIds.length) {
+        throw createValidationError('variant_ids cannot contain more entries than product_ids.');
+      }
+      productIds.forEach((productId, index) => {
+        const raw = rawVariantIds[index];
+        if (raw !== undefined && raw !== null && raw !== '') {
+          const variantId = Number(raw);
+          if (!Number.isInteger(variantId) || variantId <= 0) {
+            throw createValidationError('variant_ids must contain positive integer ids.');
+          }
+          variantIdMap.set(productId, variantId);
+        }
+      });
+    } else if (typeof rawVariantIds === 'object') {
+      for (const [key, raw] of Object.entries(rawVariantIds)) {
+        const productId = Number(key);
+        if (raw === undefined || raw === null || raw === '') continue;
+        const variantId = Number(raw);
+        if (!Number.isInteger(productId) || productId <= 0 || !Number.isInteger(variantId) || variantId <= 0) {
+          throw createValidationError('variant_ids must map product ids to positive integer variant ids.');
+        }
+        variantIdMap.set(productId, variantId);
+      }
+    } else {
+      throw createValidationError('variant_ids must be an array or an object.');
+    }
+
+    return {
+      ...normalized,
+      productIds,
+      variantIdMap,
+      bundlePrice: parseMoney(payload.bundle_price ?? payload.bundlePrice, 'bundle_price'),
+    };
   }
 
   const productId = Number(payload.product_id ?? payload.productId);
@@ -84,7 +125,18 @@ export const validateOfferInput = (payload = {}) => {
     throw createValidationError('Percentage discount must be between 0 and 100.');
   }
 
-  return { ...normalized, productId, discountType, discountValue };
+  // Optional weight targeting: when set, the discount applies ONLY to the
+  // target variant's weight (all flavors of that weight), never other weights.
+  const rawVariantId = payload.variant_id ?? payload.variantId;
+  let variantId = null;
+  if (rawVariantId !== undefined && rawVariantId !== null && rawVariantId !== '') {
+    variantId = Number(rawVariantId);
+    if (!Number.isInteger(variantId) || variantId <= 0) {
+      throw createValidationError('variant_id must be a positive integer.');
+    }
+  }
+
+  return { ...normalized, productId, variantId, discountType, discountValue };
 };
 
 export { createValidationError };

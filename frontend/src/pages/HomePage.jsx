@@ -25,7 +25,9 @@ const mapProduct = (item) => ({
   totalStock: Number(item.total_stock || 10),
   name: String(item.name || '').toUpperCase(),
   originalPrice: Number(item.base_price || item.price || 49.99),
-  price: Number(item.effective_price || item.base_price || item.price || 49.99),
+  // min_price/max_price are weight-tier aware (base + min/max modifier).
+  price: Number(item.min_price ?? item.effective_price ?? item.base_price ?? item.price ?? 49.99),
+  priceMax: Number(item.max_price ?? 0),
   discountLabel: item.discount_type
     ? item.discount_type === 'percentage'
       ? `${Number(item.discount_value || 0)}% OFF`
@@ -35,7 +37,7 @@ const mapProduct = (item) => ({
   imageUrl:
     item.primary_image ||
     item.imageUrl ||
-    'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=800&q=80',
+    'https://cdn.phototourl.com/free/2026-08-31-e9a1abe0-cbe4-4248-8983-a620145c2617.jpg',
   isNew: Boolean(item.is_featured),
   rating: Number(item.avg_rating || 5.0),
   reviewCount: Number(item.review_count || 120),
@@ -51,96 +53,103 @@ const getProductImage = (product) =>
 const BundleOfferCard = ({ offer, onAddBundle }) => {
   const needsSelection = (offer.products || []).some((product) => (product.variants || []).length > 1);
   const includedProducts = Array.isArray(offer.products) ? offer.products : [];
-  const originalTotal = includedProducts.reduce(
-    (sum, product) => sum + Number(product.basePrice || product.base_price || 0),
-    0,
+  // Regular value is computed from the EXACT variants/weights pinned in the
+  // bundle (server-provided), never from an arbitrary product price.
+  const originalTotal = Number(
+    offer.regularTotal ?? includedProducts.reduce(
+      (sum, product) => sum + Number(product.selectedVariantPrice || product.basePrice || product.base_price || 0),
+      0,
+    ),
   );
-  const savings = Math.max(0, originalTotal - Number(offer.bundlePrice || 0));
-  const productImages = includedProducts.map(getProductImage).filter(Boolean).slice(0, 4);
+  const bundlePrice = Number(offer.bundlePrice || 0);
+  const savings = Math.max(0, originalTotal - bundlePrice);
+  const bundleImage = offer.imageUrl || includedProducts.map(getProductImage).find(Boolean) || '';
 
   return (
-    <article className="group relative overflow-hidden rounded-xl border border-[#1C1C26] bg-[#0B0B0E] p-5 transition-all duration-500 hover:-translate-y-1 hover:border-[#FFCC00]/50 hover:shadow-[0_16px_38px_rgba(255,204,0,0.08)] sm:p-6">
-      <div className="absolute inset-x-0 top-0 h-1 bg-[#FFCC00] opacity-70" />
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-[#1C1C26] bg-[#0B0B0E] transition-all duration-500 hover:-translate-y-1 hover:border-[#FFCC00]/60 hover:shadow-[0_16px_38px_rgba(255,204,0,0.08)]">
+      {/* IMAGE AREA — consistent 16/10 frame, never stretched */}
+      <div className="relative w-full overflow-hidden border-b border-[#1C1C26] bg-[#050506]" style={{ aspectRatio: '16 / 10' }}>
+        {bundleImage ? (
+          <img
+            src={bundleImage}
+            alt={offer.name}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#111115] via-[#0D0D11] to-[#080809]">
+            <p className="font-heading text-5xl font-black text-[#FFCC00]">AAA</p>
+            <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-zinc-500">Bundle Stack</p>
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B0B0E] via-transparent to-transparent opacity-70" />
+        <span className="absolute left-4 top-4 rounded-full bg-[#FFCC00] px-3 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-black shadow-md">
+          Bundle Offer
+        </span>
+        <span className={`absolute right-4 top-4 rounded-full border px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-widest backdrop-blur-sm ${offer.isAvailable ? 'border-[#FFCC00]/50 bg-black/60 text-[#FFCC00]' : 'border-red-500/50 bg-black/60 text-red-400'}`}>
+          {offer.isAvailable ? 'In Stock' : 'Out Of Stock'}
+        </span>
+      </div>
 
-      <div className="flex flex-col gap-5 lg:flex-row">
-        <div className="flex min-h-36 items-center justify-center rounded-xl border border-[#16161F] bg-[#050506] p-4 lg:w-44 lg:shrink-0">
-          {productImages.length > 0 ? (
-            <div className="grid w-full grid-cols-2 gap-2">
-              {productImages.map((imageUrl, index) => (
-                <img
-                  key={`${imageUrl}-${index}`}
-                  src={imageUrl}
-                  alt={`${offer.name} product ${index + 1}`}
-                  className="aspect-square w-full rounded-lg border border-[#1C1C26] bg-[#14141E] object-contain p-1"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center">
-              <p className="font-heading text-3xl font-black text-[#FFCC00]">AAA</p>
-              <p className="mt-1 font-mono text-[9px] uppercase tracking-widest text-zinc-500">Bundle Stack</p>
-            </div>
+      {/* BODY */}
+      <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
+        <div>
+          <h3 className="break-words font-heading text-xl font-black uppercase leading-tight tracking-tight text-white group-hover:text-[#FFCC00] sm:text-2xl">
+            {offer.name}
+          </h3>
+          {offer.description && (
+            <p className="mt-2 text-xs leading-relaxed text-zinc-400">{offer.description}</p>
           )}
         </div>
 
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="rounded-full bg-[#FFCC00] px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-black">
-              Bundle Offer
-            </span>
-            <span className={offer.isAvailable ? 'font-mono text-[10px] font-bold uppercase tracking-widest text-[#FFCC00]' : 'font-mono text-[10px] font-bold uppercase tracking-widest text-red-400'}>
-              {offer.isAvailable ? 'In Stock' : 'Out Of Stock'}
-            </span>
-          </div>
+        {/* INCLUDED PRODUCTS — with the exact weight included in the bundle */}
+        <ul className="space-y-1.5">
+          {includedProducts.map((product) => (
+            <li key={product.id} className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-zinc-300">
+              <span className="text-[#FFCC00]">+</span>
+              <span className="min-w-0 truncate">{product.name}</span>
+              {product.selectedWeightLabel && (
+                <span className="shrink-0 rounded border border-[#FFCC00]/30 px-1.5 py-0.5 text-[9px] text-[#FFCC00]/90">
+                  {product.selectedWeightLabel}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
 
-          <div>
-            <h3 className="break-words font-heading text-2xl font-black uppercase leading-tight tracking-tight text-white group-hover:text-[#FFCC00]">
-              {offer.name}
-            </h3>
-            {offer.description && (
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400">{offer.description}</p>
-            )}
-          </div>
-
-          <ul className="grid gap-1.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400 sm:grid-cols-2">
-            {includedProducts.map((product) => (
-              <li key={product.id} className="min-w-0 truncate">+ {product.name}</li>
-            ))}
-          </ul>
-
-          <div className="grid gap-3 border-y border-[#1C1C26] py-4 sm:grid-cols-3">
-            {originalTotal > 0 && (
-              <div>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">Original</p>
-                <p className="font-heading text-lg font-black text-zinc-300 line-through">{formatMoney(originalTotal)}</p>
-              </div>
-            )}
+        {/* PRICE HIERARCHY */}
+        <div className="mt-auto space-y-3 border-t border-[#1C1C26] pt-4">
+          <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">Bundle</p>
-              <p className="font-heading text-2xl font-black text-[#FFCC00]">{formatMoney(offer.bundlePrice)}</p>
+              <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">Bundle Price</p>
+              <p className="font-heading text-3xl font-black tracking-tight text-[#FFCC00]">{formatMoney(bundlePrice)}</p>
             </div>
-            {savings > 0 && (
-              <div>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">Save</p>
-                <p className="font-heading text-lg font-black text-white">{formatMoney(savings)}</p>
+            {originalTotal > 0 && (
+              <div className="text-right">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">Regular</p>
+                <p className="font-heading text-sm font-black text-zinc-500 line-through">{formatMoney(originalTotal)}</p>
               </div>
             )}
           </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-              {offer.endsAt ? `Available until ${new Date(offer.endsAt).toLocaleDateString()}` : 'No expiration'}
+          {savings > 0 && (
+            <p className="inline-block rounded border border-[#FFCC00]/40 bg-[#FFCC00]/10 px-2 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-[black]">
+              You save {formatMoney(savings)}
             </p>
-            <button
-              type="button"
-              disabled={!offer.isAvailable}
-              onClick={() => onAddBundle(offer)}
-              className="rounded-lg bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {needsSelection ? 'Choose Options' : 'Get Bundle'}
-            </button>
-          </div>
+          )}
         </div>
+
+        <button
+          type="button"
+          disabled={!offer.isAvailable}
+          onClick={() => onAddBundle(offer)}
+          className="w-full rounded-lg bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {needsSelection ? 'Choose Options' : 'Get Bundle'}
+        </button>
+
+        <p className="text-center font-mono text-[9px] uppercase tracking-widest text-zinc-500">
+          {offer.endsAt ? `Available until ${new Date(offer.endsAt).toLocaleDateString()}` : 'No expiration'}
+        </p>
       </div>
     </article>
   );
@@ -339,38 +348,49 @@ const HomePage = () => {
       </section>
 
       {/* SECTION 3: TRIPLE A OFFERS */}
-      {bundleOffers.length > 0 && (
-        <section className="mx-auto max-w-[1500px] px-6 space-y-8 reveal-on-scroll">
-          <div className="flex flex-col gap-4 border-b border-[#1C1C24] pb-6 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="font-heading font-black text-3xl uppercase text-white sm:text-4xl">
-                TRIPLE A <span className="text-[#FFCC00]">OFFERS</span>
-              </h2>
-              <p className="mt-1 font-mono text-xs uppercase tracking-wider text-zinc-400 sm:text-sm">
-                More value. More performance.
-              </p>
-            </div>
-            <Link
-              to="/shop?offers=bundles"
-              className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00] hover:underline"
-            >
-              VIEW ALL OFFERS
-            </Link>
+      <section className="mx-auto max-w-[1500px] px-6 space-y-8 reveal-on-scroll">
+        <div className="flex flex-col gap-4 border-b border-[#1C1C24] pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-heading font-black text-3xl uppercase text-white sm:text-4xl">
+              TRIPLE A <span className="text-[#FFCC00]">OFFERS</span>
+            </h2>
+            <p className="mt-1 font-mono text-xs uppercase tracking-wider text-zinc-400 sm:text-sm">
+              More value. More performance.
+            </p>
           </div>
+          <Link
+            to="/shop?tab=offers"
+            className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00] hover:underline"
+          >
+            VIEW ALL OFFERS
+          </Link>
+        </div>
 
+        {bundleOffers.length > 0 ? (
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
             {bundleOffers.map((offer) => (
               <BundleOfferCard key={offer.id} offer={offer} onAddBundle={handleAddBundle} />
             ))}
           </div>
+        ) : (
+          <div className="rounded-xl border border-[#1C1C26] bg-[#0B0B0E] p-16 text-center space-y-4">
+            <p className="font-heading font-black text-xl uppercase text-white">NO ACTIVE OFFERS</p>
+            <p className="font-mono text-xs text-zinc-500">Check back soon for exclusive bundle deals and discounts.</p>
+            <Link
+              to="/shop?tab=offers"
+              className="inline-block rounded-lg bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase text-black transition-all hover:bg-yellow-300"
+            >
+              BROWSE SHOP
+            </Link>
+          </div>
+        )}
 
-          {cartFeedback && (
-            <p className="text-center font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">
-              {cartFeedback}
-            </p>
-          )}
-        </section>
-      )}
+        {cartFeedback && (
+          <p className="text-center font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">
+            {cartFeedback}
+          </p>
+        )}
+      </section>
 
       {/* SECTION 4: BEST SELLERS */}
       <section className="mx-auto max-w-[1500px] px-6 space-y-8 reveal-on-scroll">

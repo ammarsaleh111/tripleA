@@ -114,6 +114,17 @@ const getCartItemsWithTotals = async (db, cartId) => {
       FROM offers o
       WHERE o.offer_type = 'product_discount'
         AND o.product_id = p.id
+        AND (
+          o.variant_id IS NULL
+          OR EXISTS (
+            SELECT 1
+            FROM product_variants ov
+            WHERE ov.id = o.variant_id
+              AND ov.product_id = p.id
+              AND ov.weight_value IS NOT DISTINCT FROM pv.weight_value
+              AND ov.weight_unit IS NOT DISTINCT FROM pv.weight_unit
+          )
+        )
         AND ${activeOfferClause('o')}
       ORDER BY o.created_at DESC, o.id DESC
       LIMIT 1
@@ -270,7 +281,7 @@ const getVariant = async (db, variantId) => {
 const resolveBundleSelections = async (db, offerId, rawSelections) => {
   const [componentRows] = await db.query(
     `
-    SELECT bop.product_id, p.has_flavor, p.has_weight,
+    SELECT bop.product_id, bop.variant_id AS bundle_variant_id, p.has_flavor, p.has_weight,
       (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = bop.product_id) AS variant_count
     FROM bundle_offer_products bop
     JOIN products p ON p.id = bop.product_id
@@ -294,7 +305,42 @@ const resolveBundleSelections = async (db, offerId, rawSelections) => {
     const needsSelection = Boolean(component.has_flavor || component.has_weight) && Number(component.variant_count) > 1;
     const rawVariantId = Number(selections[String(productId)] ?? selections[productId]);
 
+    // Resolve the weight pinned by the bundle definition (if any). The
+    // customer may pick any flavor of that weight, but never another weight.
+    let targetVariantId = component.bundle_variant_id ? Number(component.bundle_variant_id) : null;
+    let targetWeight = null;
+    if (targetVariantId) {
+      const [targetRows] = await db.query(
+        'SELECT weight_value, weight_unit FROM product_variants WHERE id = ? LIMIT 1',
+        [targetVariantId],
+      );
+      if (!targetRows.length) {
+        return { error: 'The bundle references a variant that no longer exists.' };
+      }
+      targetWeight = {
+        value: targetRows[0].weight_value === null ? null : Number(targetRows[0].weight_value),
+        unit: targetRows[0].weight_unit || 'g',
+      };
+    }
+
     if (!Number.isInteger(rawVariantId) || rawVariantId <= 0) {
+      if (targetVariantId) {
+        // Default to the bundle-pinned variant ONLY when that weight has a
+        // single purchasable variant. If the weight has multiple flavors the
+        // customer must still choose one (existing business rule).
+        const [siblingRows] = await db.query(
+          `SELECT COUNT(*) AS total
+           FROM product_variants
+           WHERE product_id = ?
+             AND weight_value IS NOT DISTINCT FROM ?
+             AND weight_unit IS NOT DISTINCT FROM ?`,
+          [productId, targetWeight.value, targetWeight.unit],
+        );
+        if (Number(siblingRows[0]?.total || 0) <= 1) {
+          resolved[productId] = targetVariantId;
+          continue;
+        }
+      }
       if (needsSelection) {
         return { error: 'Select a flavor/weight for every product in this bundle.' };
       }
@@ -302,12 +348,22 @@ const resolveBundleSelections = async (db, offerId, rawSelections) => {
     }
 
     const [variantRows] = await db.query(
-      'SELECT id, product_id, stock_quantity FROM product_variants WHERE id = ? LIMIT 1',
+      'SELECT id, product_id, weight_value, weight_unit, stock_quantity FROM product_variants WHERE id = ? LIMIT 1',
       [rawVariantId],
     );
 
     if (!variantRows.length || Number(variantRows[0].product_id) !== productId) {
       return { error: 'The selected option does not belong to a product in this bundle.' };
+    }
+
+    if (targetWeight) {
+      const selectedWeight = {
+        value: variantRows[0].weight_value === null ? null : Number(variantRows[0].weight_value),
+        unit: variantRows[0].weight_unit || 'g',
+      };
+      if (selectedWeight.value !== targetWeight.value || selectedWeight.unit !== targetWeight.unit) {
+        return { error: 'The selected weight does not match the weight included in this bundle.' };
+      }
     }
 
     resolved[productId] = rawVariantId;
@@ -328,7 +384,9 @@ const getActiveBundle = async (db, offerId, quantity) => {
         WHERE bop.offer_id = o.id
           AND NOT EXISTS (
             SELECT 1 FROM product_variants pv
-            WHERE pv.product_id = p.id AND pv.stock_quantity >= ?
+            WHERE pv.product_id = p.id
+              AND (bop.variant_id IS NULL OR pv.id = bop.variant_id)
+              AND pv.stock_quantity >= ?
           )
       ) AS is_available
     FROM offers o

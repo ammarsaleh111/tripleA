@@ -127,7 +127,7 @@ const ProductDetailPage = () => {
           hex: color.hex || '#1f1f1f',
         }));
 
-        const mappedImages = (data.images || []).map((image) => image.image_url).filter(Boolean);
+        const mappedImages = (data.images || []).map((image) => image.image_url || image.imageUrl || '').filter(Boolean);
         const mappedSizes = hasWeight
           ? Array.isArray(data.availableWeights)
             ? data.availableWeights.map((weight) => weight.label || `${Number(weight.value).toString()} ${weight.unit}`)
@@ -204,6 +204,26 @@ const ProductDetailPage = () => {
   const maxSelectableQuantity = Math.max(1, Math.min(10, selectedStock || 10));
   const hasMultipleImages = product.images.length > 1;
 
+  // PRICING: the effective price always comes from the selected WEIGHT
+  // variant (all flavors of a weight share one price server-side), never
+  // from the flavor. Before any selection, multi-weight products show the
+  // lowest available weight price ("FROM …").
+  const variantPrices = (product.variants || [])
+    .map((variant) => Number(variant.effective_price ?? variant.price ?? 0))
+    .filter((price) => Number.isFinite(price) && price > 0);
+  const minVariantPrice = variantPrices.length ? Math.min(...variantPrices) : null;
+  const hasWeightTiers = product.hasWeight && new Set(
+    (product.variants || []).map((variant) => variant.weight_label || variant.size || ''),
+  ).size > 1;
+  const displayPrice = selectedVariant
+    ? Number(selectedVariant.effective_price ?? selectedVariant.price ?? product.effectivePrice) || 0
+    : hasWeightTiers && minVariantPrice
+      ? minVariantPrice
+      : Number(product.effectivePrice || product.price || 0);
+  const displayOriginalPrice = selectedVariant
+    ? Number(selectedVariant.price ?? product.price) || 0
+    : Number(product.price || 0);
+
   const shortDescription = useMemo(() => {
     const value = String(product.description || '').replace(/\s+/g, ' ').trim();
     if (!value) {
@@ -267,7 +287,7 @@ const ProductDetailPage = () => {
         color: selectedVariant.flavor || selectedVariant.color || selectedColor?.name || null,
         flavor: selectedVariant.flavor || selectedVariant.color || selectedColor?.name || null,
         size: selectedVariant.weight_label || selectedVariant.size || selectedSize || null,
-        unitPrice: Number(product.effectivePrice || product.price || 0),
+        unitPrice: Number((Number(selectedVariant.effective_price ?? selectedVariant.price ?? product.effectivePrice) || 0)),
         quantity: selectedQuantity,
         imageUrl: product.images?.[0] || FALLBACK_PRODUCT_IMAGE,
       },
@@ -455,11 +475,12 @@ const ProductDetailPage = () => {
           <div className="mt-5 flex items-end justify-between gap-4">
             <div>
               <p className="font-heading text-4xl font-black tracking-tight text-[#FFCC00]">
-                {Number(product.effectivePrice || product.price || 0).toFixed(2)} EGP
+                {hasWeightTiers && !selectedVariant && minVariantPrice ? 'FROM ' : ''}
+                {displayPrice.toFixed(2)} EGP
               </p>
-              {Number(product.effectivePrice || product.price || 0) < Number(product.price || 0) && (
+              {selectedVariant && displayPrice < displayOriginalPrice && (
                 <p className="mt-1 font-mono text-xs font-bold uppercase tracking-widest text-zinc-500">
-                  <span className="line-through">{Number(product.price || 0).toFixed(2)} EGP</span>
+                  <span className="line-through">{displayOriginalPrice.toFixed(2)} EGP</span>
                   <span className="ml-2 text-red-400">
                     {product.discountType === 'percentage'
                       ? `${Number(product.discountValue || 0)}% OFF`
@@ -492,30 +513,25 @@ const ProductDetailPage = () => {
               <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
                 Flavor / {selectedColor?.name || 'N/A'}
               </p>
-              <div className="flex flex-wrap gap-2">
-                {product.colors.length > 0 ? (
-                  product.colors.map((color) => (
-                    <button
-                      key={color.id}
-                      type="button"
-                      onClick={() => setSelectedColor(color)}
-                      className={`h-9 w-9 rounded-full border-2 p-0.5 transition-all duration-300 ease-in-out ${
-                        selectedColor?.id === color.id
-                          ? 'border-[#FFCC00] shadow-[0_0_0_1px_rgba(255,204,0,0.35)]'
-                          : 'border-transparent hover:border-zinc-500'
-                      }`}
-                      aria-label={`Select flavor ${color.name}`}
-                    >
-                      <span
-                        className="block h-full w-full rounded-full border border-white/20"
-                        style={{ backgroundColor: color.hex }}
-                      />
-                    </button>
-                  ))
-                ) : (
-                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">No flavor options</p>
-                )}
-              </div>
+              {product.colors.length > 0 ? (
+                <select
+                  value={selectedColor?.id || ''}
+                  onChange={(e) => {
+                    const color = product.colors.find((c) => c.id === e.target.value);
+                    if (color) setSelectedColor(color);
+                  }}
+                  className="w-full rounded-lg border border-[#1C1C26] bg-[#050506] px-4 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-white outline-none transition-all duration-300 focus:border-[#FFCC00]"
+                  aria-label="Select flavor"
+                >
+                  {product.colors.map((color) => (
+                    <option key={color.id} value={color.id}>
+                      {color.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500">No flavor options</p>
+              )}
             </div>
             )}
 

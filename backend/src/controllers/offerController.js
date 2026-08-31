@@ -23,6 +23,21 @@ const ensureProductsExist = async (connection, productIds) => {
 
 const ensureFixedDiscountAllowed = async (connection, offer) => {
   if (offer.offerType !== 'product_discount' || offer.discountType !== 'fixed') return;
+  if (offer.variantId) {
+    const [rows] = await connection.query(
+      `SELECT (p.base_price + pv.price_modifier) AS variant_price
+       FROM product_variants pv
+       JOIN products p ON p.id = pv.product_id
+       WHERE pv.id = ? AND pv.product_id = ?
+       LIMIT 1`,
+      [offer.variantId, offer.productId],
+    );
+    if (!rows.length) throw createHttpError(400, 'The specified variant does not belong to the product.');
+    if (offer.discountValue > Number(rows[0].variant_price)) {
+      throw createHttpError(400, 'Fixed discount cannot produce a negative product price.');
+    }
+    return;
+  }
   const [rows] = await connection.query('SELECT base_price FROM products WHERE id = ? LIMIT 1', [offer.productId]);
   if (!rows.length) throw createHttpError(400, 'The specified product does not exist.');
   if (offer.discountValue > Number(rows[0].base_price)) {
@@ -30,11 +45,93 @@ const ensureFixedDiscountAllowed = async (connection, offer) => {
   }
 };
 
+// Resolves the exact purchasable variant for every bundle component and
+// computes the regular (undiscounted) combined value from those variants.
+const resolveBundleVariants = async (connection, offer) => {
+  const placeholders = offer.productIds.map(() => '?').join(', ');
+  const [productRows] = await connection.query(
+    `SELECT p.id, p.name, p.base_price FROM products p WHERE p.id IN (${placeholders})`,
+    offer.productIds,
+  );
+  const [variantRows] = await connection.query(
+    `SELECT pv.id, pv.product_id, pv.flavor, pv.weight_value, pv.weight_unit, pv.price_modifier
+     FROM product_variants pv
+     WHERE pv.product_id IN (${placeholders})
+     ORDER BY pv.product_id, pv.id`,
+    offer.productIds,
+  );
+
+  const variantsByProduct = new Map();
+  for (const variant of variantRows) {
+    if (!variantsByProduct.has(variant.product_id)) {
+      variantsByProduct.set(variant.product_id, []);
+    }
+    variantsByProduct.get(variant.product_id).push(variant);
+  }
+
+  const resolved = [];
+  let regularTotal = 0;
+  for (const product of productRows) {
+    const variants = variantsByProduct.get(product.id) || [];
+    const weightTiers = [
+      ...new Set(
+        variants
+          .filter((variant) => variant.weight_value !== null && variant.weight_value !== undefined)
+          .map((variant) => `${Number(variant.weight_value)}|${variant.weight_unit || 'g'}`),
+      ),
+    ];
+
+    let selected = null;
+    const requestedId = offer.variantIdMap?.get(Number(product.id));
+    if (requestedId) {
+      selected = variants.find((variant) => Number(variant.id) === Number(requestedId));
+      if (!selected) {
+        throw createHttpError(400, `Selected weight for "${product.name}" does not belong to that product.`);
+      }
+    } else if (weightTiers.length > 1) {
+      // A multi-weight product MUST be pinned to an explicit weight: never
+      // fall back to the cheapest or first variant silently.
+      throw createHttpError(400, `Select the weight to include for "${product.name}".`);
+    } else if (weightTiers.length === 1) {
+      const [weightValue, weightUnit] = weightTiers[0].split('|');
+      selected = variants.find(
+        (variant) =>
+          Number(variant.weight_value) === Number(weightValue) && (variant.weight_unit || 'g') === weightUnit,
+      );
+    } else {
+      // No weight tiers: legacy/standard product, first variant (or none).
+      selected = variants[0] || null;
+    }
+
+    if (selected) {
+      regularTotal += Number(product.base_price) + Number(selected.price_modifier || 0);
+    }
+    resolved.push({ productId: Number(product.id), variantId: selected ? Number(selected.id) : null });
+  }
+
+  return { resolved, regularTotal: Number(regularTotal.toFixed(2)) };
+};
+
 const validateAndPersistOffer = async (connection, payload, offerId = null) => {
   const offer = validateOfferInput(payload);
   const productIds = offer.offerType === 'bundle' ? offer.productIds : [offer.productId];
   await ensureProductsExist(connection, productIds);
   await ensureFixedDiscountAllowed(connection, offer);
+
+  let bundleResolution = null;
+  if (offer.offerType === 'bundle') {
+    bundleResolution = await resolveBundleVariants(connection, offer);
+    // Bundle price must be a real saving against the exact selected variants,
+    // but never negative — validated server-side, never trusted from the UI.
+    if (offer.bundlePrice > bundleResolution.regularTotal) {
+      throw createHttpError(
+        400,
+        `Bundle price (${offer.bundlePrice}) cannot exceed the regular combined value (${bundleResolution.regularTotal}).`,
+      );
+    }
+  }
+
+  const discountVariantId = offer.offerType === 'product_discount' ? offer.variantId : null;
 
   const values = [
     offer.offerType,
@@ -47,6 +144,8 @@ const validateAndPersistOffer = async (connection, payload, offerId = null) => {
     offer.startsAt,
     offer.endsAt,
     offer.isActive,
+    offer.imageUrl || null,
+    discountVariantId,
   ];
 
   let savedId;
@@ -55,7 +154,7 @@ const validateAndPersistOffer = async (connection, payload, offerId = null) => {
       `UPDATE offers
        SET offer_type = ?, product_id = ?, name = ?, description = ?, bundle_price = ?,
            discount_type = ?, discount_value = ?, starts_at = ?, ends_at = ?,
-           is_active = ?, updated_at = now()
+           is_active = ?, image_url = ?, variant_id = ?, updated_at = now()
        WHERE id = ?`,
       [...values, offerId],
     );
@@ -66,8 +165,8 @@ const validateAndPersistOffer = async (connection, payload, offerId = null) => {
     const [result] = await connection.query(
       `INSERT INTO offers
        (offer_type, product_id, name, description, bundle_price, discount_type, discount_value,
-        starts_at, ends_at, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        starts_at, ends_at, is_active, image_url, variant_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING id`,
       values,
     );
@@ -75,10 +174,10 @@ const validateAndPersistOffer = async (connection, payload, offerId = null) => {
   }
 
   if (offer.offerType === 'bundle') {
-    for (const productId of offer.productIds) {
+    for (const component of bundleResolution.resolved) {
       await connection.query(
-        'INSERT INTO bundle_offer_products (offer_id, product_id) VALUES (?, ?)',
-        [savedId, productId],
+        'INSERT INTO bundle_offer_products (offer_id, product_id, variant_id) VALUES (?, ?, ?)',
+        [savedId, component.productId, component.variantId],
       );
     }
   }
@@ -98,14 +197,22 @@ const mapOffer = (row, products = []) => ({
   endsAt: row.ends_at,
   isActive: row.is_active,
   isCurrentlyActive: Boolean(row.is_currently_active),
+  imageUrl: row.image_url || null,
+  regularTotal: row.offer_type === 'bundle'
+    ? Number(products.reduce((sum, product) => sum + Number(product.selectedVariantPrice || product.basePrice || 0), 0).toFixed(2))
+    : undefined,
   product: row.product_id ? {
     id: row.product_id,
     name: row.product_name,
     slug: row.product_slug,
     basePrice: Number(row.base_price),
-    effectivePrice: row.discount_type === 'percentage'
+    variantId: row.discount_variant_id ? Number(row.discount_variant_id) : null,
+    variantWeightLabel: row.discount_variant_weight_label || null,
+    // Product-level effective price only reflects whole-product discounts;
+    // weight-targeted discounts are applied per-variant in cart/checkout.
+    effectivePrice: row.discount_variant_id ? Number(row.base_price) : (row.discount_type === 'percentage'
       ? Number((Number(row.base_price) * (1 - Number(row.discount_value) / 100)).toFixed(2))
-      : Number(Math.max(0, Number(row.base_price) - Number(row.discount_value)).toFixed(2)),
+      : Number(Math.max(0, Number(row.base_price) - Number(row.discount_value)).toFixed(2))),
   } : null,
   products,
   isAvailable: row.offer_type === 'bundle' ? Boolean(row.is_available) : undefined,
@@ -118,6 +225,12 @@ const getOffers = async ({ activeOnly = false }) => {
   const where = activeOnly ? `WHERE ${activeClause}` : '';
   const [rows] = await db.query(`
     SELECT o.*, p.name AS product_name, p.slug AS product_slug, p.base_price,
+      ov.id AS discount_variant_id,
+      CASE
+        WHEN ov.weight_value IS NOT NULL AND ov.weight_unit IS NOT NULL
+          THEN CONCAT(rtrim(CAST(ov.weight_value AS text), '.0'), ' ', ov.weight_unit)
+        ELSE NULL
+      END AS discount_variant_weight_label,
       (o.offer_type <> 'bundle' OR NOT EXISTS (
         SELECT 1
         FROM bundle_offer_products bop
@@ -131,6 +244,7 @@ const getOffers = async ({ activeOnly = false }) => {
       (${activeClause}) AS is_currently_active
     FROM offers o
     LEFT JOIN products p ON p.id = o.product_id
+    LEFT JOIN product_variants ov ON ov.id = o.variant_id
     ${where}
     ORDER BY o.created_at DESC, o.id DESC
   `);
@@ -141,6 +255,7 @@ const getOffers = async ({ activeOnly = false }) => {
     const placeholders = bundleIds.map(() => '?').join(', ');
     const [productRows] = await db.query(
       `SELECT bop.offer_id, p.id, p.name, p.slug, p.base_price, p.has_flavor, p.has_weight,
+        bop.variant_id AS bundle_variant_id,
         COALESCE(
           (
             SELECT pi.image_url
@@ -195,19 +310,31 @@ const getOffers = async ({ activeOnly = false }) => {
 
   return rows.map((row) => mapOffer(
     row,
-    bundleProducts.filter((product) => product.offer_id === row.id).map(({ offer_id, ...product }) => ({
-      ...product,
-      basePrice: Number(product.base_price),
-      hasFlavor: Boolean(product.has_flavor),
-      hasWeight: Boolean(product.has_weight),
-      primaryImage: product.primary_image || '',
-      variants: (product.variants || []).map((variant) => ({
-        ...variant,
-        weightLabel: variant.weightLabel || null,
-      })),
-      base_price: undefined,
-      primary_image: undefined,
-    })),
+    bundleProducts.filter((product) => product.offer_id === row.id).map(({ offer_id, ...product }) => {
+      const bundleVariantId = product.bundle_variant_id ? Number(product.bundle_variant_id) : null;
+      const selectedVariant = bundleVariantId
+        ? (product.variants || []).find((variant) => Number(variant.id) === bundleVariantId) || null
+        : null;
+      return {
+        ...product,
+        basePrice: Number(product.base_price),
+        hasFlavor: Boolean(product.has_flavor),
+        hasWeight: Boolean(product.has_weight),
+        primaryImage: product.primary_image || '',
+        selectedVariantId: selectedVariant ? Number(selectedVariant.id) : null,
+        selectedWeightLabel: selectedVariant?.weightLabel || null,
+        selectedVariantPrice: selectedVariant
+          ? Number((Number(product.base_price) + Number(selectedVariant.priceModifier || 0)).toFixed(2))
+          : Number(product.base_price),
+        variants: (product.variants || []).map((variant) => ({
+          ...variant,
+          weightLabel: variant.weightLabel || null,
+          price: Number((Number(product.base_price) + Number(variant.priceModifier || 0)).toFixed(2)),
+        })),
+        base_price: undefined,
+        primary_image: undefined,
+      };
+    }),
   ));
 };
 

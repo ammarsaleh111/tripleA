@@ -73,6 +73,17 @@ export const getCartItemsForCheckout = async (db, cartId) => {
       FROM offers o
       WHERE o.offer_type = 'product_discount'
         AND o.product_id = p.id
+        AND (
+          o.variant_id IS NULL
+          OR EXISTS (
+            SELECT 1
+            FROM product_variants ov
+            WHERE ov.id = o.variant_id
+              AND ov.product_id = p.id
+              AND ov.weight_value IS NOT DISTINCT FROM pv.weight_value
+              AND ov.weight_unit IS NOT DISTINCT FROM pv.weight_unit
+          )
+        )
         AND o.is_active = TRUE
         AND now() >= o.starts_at
         AND (o.ends_at IS NULL OR now() < o.ends_at)
@@ -137,7 +148,7 @@ export const getCartItemsForCheckout = async (db, cartId) => {
 
     const [componentRows] = await db.query(
       `
-      SELECT bop.product_id, p.name AS product_name
+      SELECT bop.product_id, bop.variant_id AS bundle_variant_id, p.name AS product_name
       FROM bundle_offer_products bop
       JOIN products p ON p.id = bop.product_id
       WHERE bop.offer_id = ?
@@ -163,7 +174,7 @@ export const getCartItemsForCheckout = async (db, cartId) => {
       if (Number.isInteger(selectedVariantId) && selectedVariantId > 0) {
         const [variantRows] = await db.query(
           `
-          SELECT pv.id, pv.sku
+          SELECT pv.id, pv.sku, pv.weight_value, pv.weight_unit
           FROM product_variants pv
           JOIN bundle_offer_products bop
             ON bop.product_id = pv.product_id AND bop.offer_id = ?
@@ -179,19 +190,41 @@ export const getCartItemsForCheckout = async (db, cartId) => {
           throw error;
         }
 
+        // Server-side revalidation: the picked variant must stay within the
+        // weight pinned by the bundle definition (flavor may vary, weight may
+        // not — the bundle price is based on that exact weight).
+        if (component.bundle_variant_id) {
+          const [targetRows] = await db.query(
+            'SELECT weight_value, weight_unit FROM product_variants WHERE id = ? LIMIT 1',
+            [Number(component.bundle_variant_id)],
+          );
+          const target = targetRows[0] || null;
+          const picked = variantRows[0];
+          const sameWeight = target
+            && Number(target.weight_value) === Number(picked.weight_value)
+            && (target.weight_unit || 'g') === (picked.weight_unit || 'g');
+          if (!sameWeight) {
+            const error = new Error(`The selected weight for ${component.product_name} is not part of this bundle.`);
+            error.statusCode = 400;
+            throw error;
+          }
+        }
+
         variantId = variantRows[0].id;
         sku = variantRows[0].sku;
       } else {
-        // Component has a single variant (no flavor/weight choice): use it.
+        // No explicit selection: use the variant pinned by the bundle
+        // definition, otherwise the component's single (first) variant.
         const [variantRows] = await db.query(
           `
           SELECT pv.id, pv.sku
           FROM product_variants pv
           WHERE pv.product_id = ?
+            AND (?::int IS NULL OR pv.id = ?::int)
           ORDER BY pv.id ASC
           LIMIT 1
           `,
-          [productId],
+          [productId, component.bundle_variant_id, component.bundle_variant_id],
         );
 
         if (!variantRows.length) {

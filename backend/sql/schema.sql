@@ -94,25 +94,30 @@ CREATE TABLE IF NOT EXISTS offers (
     product_id INT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT NULL,
+    image_url VARCHAR(255) NULL,
     bundle_price DECIMAL(10, 2) NULL,
     discount_type VARCHAR(20) NULL,
     discount_value DECIMAL(10, 2) NULL,
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    variant_id INT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT CK_offers_type CHECK (offer_type IN ('bundle', 'product_discount')),
     CONSTRAINT CK_offers_dates CHECK (ends_at IS NULL OR ends_at > starts_at),
-    CONSTRAINT FK_offers_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    CONSTRAINT FK_offers_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT FK_offers_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS bundle_offer_products (
     offer_id INT NOT NULL,
     product_id INT NOT NULL,
+    variant_id INT NULL,
     PRIMARY KEY (offer_id, product_id),
     CONSTRAINT FK_bundle_offer_products_offer FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE,
-    CONSTRAINT FK_bundle_offer_products_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    CONSTRAINT FK_bundle_offer_products_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT FK_bundle_offer_products_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS carts (
@@ -225,3 +230,5 @@ CREATE INDEX IF NOT EXISTS idx_cart_items_offer ON cart_items (offer_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_offer ON order_items (offer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders (customer_email);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON orders (customer_phone);
+CREATE INDEX IF NOT EXISTS idx_offers_variant ON offers (variant_id) WHERE variant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_bop_variant ON bundle_offer_products (variant_id) WHERE variant_id IS NOT NULL;

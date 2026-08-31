@@ -28,6 +28,27 @@ const BundleVariantModal = ({ offer, onClose }) => {
     [components],
   );
 
+  // The bundle pins each component to a specific WEIGHT. The customer may
+  // pick any flavor of that weight, but never a different weight (the bundle
+  // price is based on that exact weight).
+  const optionsFor = (product) => {
+    const variants = product.variants || [];
+    if (!product.selectedVariantId) return variants;
+    const pinned = variants.find((variant) => Number(variant.id) === Number(product.selectedVariantId));
+    if (!pinned || !pinned.weightLabel) return variants;
+    return variants.filter((variant) => (variant.weightLabel || '') === (pinned.weightLabel || ''));
+  };
+
+  useEffect(() => {
+    if (!offer) return;
+    const pinned = {};
+    components.forEach((product) => {
+      if (product.selectedVariantId) pinned[product.id] = Number(product.selectedVariantId);
+    });
+    if (Object.keys(pinned).length) setSelections(pinned);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offer]);
+
   useEffect(() => {
     if (!offer) return undefined;
     const handleEscape = (event) => {
@@ -114,9 +135,16 @@ const BundleVariantModal = ({ offer, onClose }) => {
                     className="h-12 w-12 rounded-lg border border-[#1C1C26] bg-[#14141E] object-contain p-1"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-heading text-sm font-black uppercase text-white">{product.name}</p>
+                    <p className="truncate font-heading text-sm font-black uppercase text-white">
+                      {product.name}
+                      {product.selectedWeightLabel && (
+                        <span className="ml-2 rounded border border-[#FFCC00]/40 px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#FFCC00]">
+                          {product.selectedWeightLabel}
+                        </span>
+                      )}
+                    </p>
                     <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                      {formatMoney(product.basePrice)}
+                      {formatMoney(product.selectedVariantPrice ?? product.basePrice)}
                     </p>
                   </div>
                   {!needsChoice && (
@@ -126,7 +154,7 @@ const BundleVariantModal = ({ offer, onClose }) => {
 
                 {needsChoice && (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {variants.map((variant) => {
+                    {optionsFor(product).map((variant) => {
                       const isSelected = Number(selections[product.id]) === Number(variant.id);
                       const isOutOfStock = Number(variant.stockQuantity || 0) <= 0;
                       const label = [variant.flavor, variant.weightLabel].filter(Boolean).join(' / ') || variant.sku;

@@ -129,7 +129,6 @@ const AdminCustomersSection = () => {
               <th className="px-4 py-4 text-left">Phone</th>
               <th className="px-4 py-4 text-left">Orders</th>
               <th className="px-4 py-4 text-left">Spent</th>
-              <th className="px-4 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -173,15 +172,7 @@ const AdminCustomersSection = () => {
                   <td className="px-4 py-4 text-white/65">
                     {currencyFormatter.format(customer.totalSpent)}
                   </td>
-                  <td className="px-4 py-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => openCustomerDetail(customer.identity)}
-                      className="bg-[#1f1f1f] border border-white/20 px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)]"
-                    >
-                      View Details
-                    </button>
-                  </td>
+                  
                 </tr>
               ))
             )}

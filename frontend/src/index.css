@@ -1313,10 +1313,7 @@ html.light-mode .storefront-input::placeholder {
 
 html.light-mode .storefront-primary,
 html.light-mode .home-neon-button,
-html.light-mode .bg-neon,
-html.light-mode [class*="bg-[#FFCC00]"],
-html.light-mode [class*="bg-[#ffcc00]"],
-html.light-mode [class*="bg-[#FFD633]"] {
+html.light-mode .bg-neon {
   background-color: var(--theme-accent) !important;
   /* border-color: var(--theme-accent) !important; */
   color: #ffffff !important;

@@ -40,7 +40,7 @@ const createEmptyForm = () => ({
   hasFlavor: false,
   hasWeight: false,
   flavors: [''],
-  weights: [{ value: '', unit: 'g' }],
+  weights: [{ value: '', unit: 'g', price: '' }],
   variants: [createEmptyVariant()],
   images: [''],
 });
@@ -66,25 +66,42 @@ const weightLabel = (weight) => {
   return value && unit ? `${Number(value).toString()} ${unit}` : '';
 };
 
-const buildVariantsFromOptions = ({ hasFlavor, hasWeight, flavors, weights, variants }) => {
+const buildVariantsFromOptions = ({ hasFlavor, hasWeight, basePrice, flavors, weights, variants }) => {
+  if (!hasFlavor && !hasWeight) {
+    return variants.length ? variants : [createEmptyVariant()];
+  }
+
   const previousMap = new Map((variants || []).map((variant) => [variantKey(variant), variant]));
   const activeFlavors = hasFlavor ? uniqueTrimmed(flavors) : [''];
+  const base = Number(basePrice) || 0;
   const activeWeights = hasWeight
     ? weights
-        .map((weight) => ({ value: String(weight.value || '').trim(), unit: weight.unit === 'kg' ? 'kg' : 'g' }))
+        .map((weight) => ({
+          value: String(weight.value || '').trim(),
+          unit: weight.unit === 'kg' ? 'kg' : 'g',
+          price: weight.price === undefined || weight.price === null || weight.price === '' ? null : Number(weight.price),
+        }))
         .filter((weight) => weight.value && Number(weight.value) > 0)
-    : [{ value: '', unit: '' }];
+    : [{ value: '', unit: '', price: null }];
 
   if (!activeFlavors.length || !activeWeights.length) return [];
 
   return activeFlavors.flatMap((flavor) =>
     activeWeights.map((weight) => {
       const previous = previousMap.get(variantKey({ flavor, weightValue: weight.value, weightUnit: weight.unit }));
+      // PRICE COMES FROM THE WEIGHT: every flavor of the same weight shares
+      // one price (priceModifier = weight price − product base price), so
+      // changing flavor can never change the price.
+      const priceModifier =
+        weight.price !== null && Number.isFinite(weight.price)
+          ? Number((Number(weight.price) - base).toFixed(2))
+          : previous?.priceModifier ?? 0;
       return {
         id: previous?.id || null,
         flavor,
         weightValue: weight.value,
         weightUnit: weight.unit,
+        priceModifier,
         stockQuantity: previous?.stockQuantity ?? 0,
       };
     }),
@@ -112,18 +129,25 @@ const normalizeProductToForm = (product) => {
         flavor: variant.flavor || variant.color || '',
         weightValue: variant.weightValue ?? variant.weight_value ?? '',
         weightUnit: variant.weightUnit || variant.weight_unit || 'g',
+        priceModifier: Number(variant.priceModifier ?? variant.price_modifier ?? 0),
         stockQuantity: Number(variant.stockQuantity ?? variant.stock_quantity ?? 0),
       }))
     : [createEmptyVariant()];
-  const hasFlavor = Boolean(product?.hasFlavor) || variants.some((variant) => variant.flavor);
-  const hasWeight = Boolean(product?.hasWeight) || variants.some((variant) => variant.weightValue);
+  const hasFlavor = Boolean(product?.hasFlavor);
+  const hasWeight = Boolean(product?.hasWeight);
   const { categoryName, subcategoryName } = inferCategoryFields(product);
   const images = Array.isArray(product?.images) && product.images.length
-    ? product.images.map((image) => image.imageUrl).filter(Boolean).slice(0, MAX_IMAGES)
-    : [product?.primaryImage || ''];
+    ? product.images.map((image) => image.imageUrl || image.image_url || '').filter(Boolean).slice(0, MAX_IMAGES)
+    : [product?.primaryImage || product?.primary_image || ''];
   const uniqueWeights = variants
     .filter((variant) => variant.weightValue)
-    .map((variant) => ({ value: String(variant.weightValue), unit: variant.weightUnit || 'g' }))
+    .map((variant) => {
+      const key = weightLabel(variant);
+      // Derive the single weight price from any variant of that weight:
+      // price = product base price + price modifier.
+      const price = Number(product?.basePrice ?? 0) + Number(variant.priceModifier ?? variant.price_modifier ?? 0);
+      return { value: String(variant.weightValue), unit: variant.weightUnit || 'g', price: String(price) };
+    })
     .filter((weight, index, list) => list.findIndex((item) => weightLabel(item) === weightLabel(weight)) === index);
 
   return {
@@ -135,7 +159,7 @@ const normalizeProductToForm = (product) => {
     hasFlavor,
     hasWeight,
     flavors: hasFlavor ? uniqueTrimmed(variants.map((variant) => variant.flavor)) : [''],
-    weights: hasWeight && uniqueWeights.length ? uniqueWeights : [{ value: '', unit: 'g' }],
+    weights: hasWeight && uniqueWeights.length ? uniqueWeights : [{ value: '', unit: 'g', price: '' }],
     variants,
     images: images.length ? images : [''],
   };
@@ -164,6 +188,13 @@ const createPayloadFromForm = ({ form, removedVariantIds, isEdit }) => {
   if (!Number.isFinite(parseNonNegativeNumber(form.basePrice, NaN))) throw new Error('Price must be a valid number.');
   if (category.slug === 'supplements' && !subcategory) throw new Error('Supplements require a subcategory.');
   if (!variants.length) throw new Error('Add at least one valid option or disable Flavor and Weight.');
+  if (form.hasWeight) {
+    for (const weight of form.weights) {
+      if (String(weight.value || '').trim() && Number(weight.value) > 0 && !Number.isFinite(Number(weight.price))) {
+        throw new Error('Every weight needs a price (the price applies to all flavors of that weight).');
+      }
+    }
+  }
   if (imageCount > MAX_IMAGES) throw new Error(`You can add up to ${MAX_IMAGES} image URLs.`);
 
   const payload = {
@@ -181,10 +212,11 @@ const createPayloadFromForm = ({ form, removedVariantIds, isEdit }) => {
       flavor: form.hasFlavor ? variant.flavor : null,
       weight_value: form.hasWeight ? Number(variant.weightValue) : null,
       weight_unit: form.hasWeight ? variant.weightUnit : null,
-      size: form.hasWeight ? `${Number(variant.weightValue).toString()} ${variant.weightUnit}` : 'Standard',
-      color: form.hasFlavor ? variant.flavor : 'Default',
+      size: form.hasWeight && variant.weightValue ? `${Number(variant.weightValue).toString()} ${variant.weightUnit}` : null,
+      color: form.hasFlavor ? variant.flavor : null,
       color_hex: null,
-      price_modifier: 0,
+      // Weight-driven pricing: price_modifier = weight price − base price.
+      price_modifier: Number(variant.priceModifier ?? 0),
       stock_quantity: parseNonNegativeNumber(variant.stockQuantity, 0),
     })),
     images: uniqueTrimmed(form.images).slice(0, MAX_IMAGES).map((imageUrl, index) => ({
@@ -517,16 +549,17 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
                   <div className="mb-5 space-y-3">
                     <p className="text-[10px] uppercase tracking-widest text-white/45">Weights</p>
                     {formData.weights.map((weight, index) => (
-                      <div key={`weight-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_110px]">
+                      <div key={`weight-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_140px_110px]">
                         <input value={weight.value} onChange={(event) => updateOptionList('weights', index, { ...weight, value: event.target.value })} type="number" min="0" step="0.01" placeholder="500" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]" />
                         <select value={weight.unit} onChange={(event) => updateOptionList('weights', index, { ...weight, unit: event.target.value })} className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]">
                           <option value="g">g</option>
                           <option value="kg">kg</option>
                         </select>
+                        <input value={weight.price ?? ''} onChange={(event) => updateOptionList('weights', index, { ...weight, price: event.target.value })} type="number" min="0" step="0.01" placeholder="Price (EGP)" title="Price for this weight — shared by all flavors" className="border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white outline-none focus:border-[var(--theme-accent)]" />
                         <button type="button" onClick={() => removeOption('weights', index)} disabled={formData.weights.length === 1} className="border border-red-500/40 bg-[#2a1313] px-3 py-2 text-[10px] uppercase tracking-widest text-red-200 disabled:cursor-not-allowed disabled:opacity-40">Remove</button>
                       </div>
                     ))}
-                    <button type="button" onClick={() => addOption('weights', { value: '', unit: 'g' })} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)]">Add Weight</button>
+                    <button type="button" onClick={() => addOption('weights', { value: '', unit: 'g', price: '' })} className="border border-white/15 bg-[#1f1f1f] px-3 py-2 text-[10px] uppercase tracking-widest text-white hover:border-[var(--theme-accent)]">Add Weight</button>
                   </div>
                 )}
 

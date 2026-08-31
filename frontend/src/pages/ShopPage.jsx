@@ -8,64 +8,118 @@ import { getActiveOffers as getActiveOffersApi } from '../services/api/offers.js
 import BundleVariantModal from '../components/common/BundleVariantModal.jsx';
 import { useAppContext } from '../context/AppContext.jsx';
 
+const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
+
+const getProductImage = (product) =>
+  product?.imageUrl || product?.image_url || product?.primaryImage || product?.primary_image || '';
+
 const BundleOfferCard = ({ offer, onAddBundle, isAdding }) => {
   const needsSelection = (offer.products || []).some((product) => (product.variants || []).length > 1);
   const includedProducts = Array.isArray(offer.products) ? offer.products : [];
-  const baseTotal = includedProducts.reduce((sum, product) => sum + Number(product.basePrice || product.base_price || 0), 0);
-  const savings = Math.max(0, baseTotal - Number(offer.bundlePrice || 0));
+  // Regular value is computed from the EXACT variants/weights pinned in the
+  // bundle (server-provided regularTotal), never from an arbitrary product price.
+  const originalTotal = Number(
+    offer.regularTotal ?? includedProducts.reduce(
+      (sum, product) => sum + Number(product.selectedVariantPrice || product.basePrice || product.base_price || 0),
+      0,
+    ),
+  );
+  const bundlePrice = Number(offer.bundlePrice || 0);
+  const savings = Math.max(0, originalTotal - bundlePrice);
+  const bundleImage = offer.imageUrl || includedProducts.map(getProductImage).find(Boolean) || '';
 
   return (
-    <article className="rounded-xl border border-[#1C1C26] bg-[#0B0B0E] p-5 transition-all duration-300 hover:border-[#FFCC00]/40">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <span className="rounded-full bg-[#FFCC00] px-2.5 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-black">
-            Bundle Offer
-          </span>
-          <h3 className="mt-4 font-heading text-xl font-black uppercase leading-tight text-white">
-            {offer.name}
-          </h3>
-        </div>
-        <span className={offer.isAvailable ? 'font-mono text-[10px] font-bold uppercase text-[#FFCC00]' : 'font-mono text-[10px] font-bold uppercase text-red-400'}>
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-[#1C1C26] bg-[#0B0B0E] transition-all duration-500 hover:-translate-y-1 hover:border-[#FFCC00]/60 hover:shadow-[0_16px_38px_rgba(255,204,0,0.08)]">
+      {/* IMAGE AREA — consistent 16/10 frame, never stretched */}
+      <div className="relative w-full overflow-hidden border-b border-[#1C1C26] bg-[#050506]" style={{ aspectRatio: '16 / 10' }}>
+        {bundleImage ? (
+          <img
+            src={bundleImage}
+            alt={offer.name}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#111115] via-[#0D0D11] to-[#080809]">
+            <p className="font-heading text-5xl font-black text-[#FFCC00]">AAA</p>
+            <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-zinc-500">Bundle Stack</p>
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B0B0E] via-transparent to-transparent opacity-70" />
+        <span className="absolute left-4 top-4 rounded-full bg-[#FFCC00] px-3 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-black shadow-md">
+          Bundle Offer
+        </span>
+        <span className={`absolute right-4 top-4 rounded-full border px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-widest backdrop-blur-sm ${offer.isAvailable ? 'border-[#FFCC00]/50 bg-black/60 text-[#FFCC00]' : 'border-red-500/50 bg-black/60 text-red-400'}`}>
           {offer.isAvailable ? 'In Stock' : 'Out Of Stock'}
         </span>
       </div>
 
-      <p className="mt-3 min-h-10 text-xs leading-relaxed text-zinc-400">
-        {offer.description || 'Curated supplement stack with bundle pricing.'}
-      </p>
-
-      <ul className="mt-4 space-y-1.5 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        {includedProducts.map((product) => (
-          <li key={product.id}>+ {product.name}</li>
-        ))}
-      </ul>
-
-      <div className="mt-5 flex items-end justify-between gap-4">
+      {/* BODY */}
+      <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
         <div>
-          <p className="font-heading text-3xl font-black text-[#FFCC00]">
-            {Number(offer.bundlePrice || 0).toFixed(2)} EGP
-          </p>
+          <h3 className="break-words font-heading text-xl font-black uppercase leading-tight tracking-tight text-white group-hover:text-[#FFCC00] sm:text-2xl">
+            {offer.name}
+          </h3>
+          {offer.description && (
+            <p className="mt-2 text-xs leading-relaxed text-zinc-400">{offer.description}</p>
+          )}
+        </div>
+
+        {/* INCLUDED PRODUCTS — with the exact weight included in the bundle */}
+        <ul className="space-y-1.5">
+          {includedProducts.map((product) => (
+            <li key={product.id} className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-zinc-300">
+              <span className="text-[#FFCC00]">+</span>
+              <span className="min-w-0 truncate">{product.name}</span>
+              {product.selectedWeightLabel && (
+                <span className="shrink-0 rounded border border-[#FFCC00]/30 px-1.5 py-0.5 text-[9px] text-[#FFCC00]/90">
+                  {product.selectedWeightLabel}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        {/* PRICE HIERARCHY */}
+        <div className="mt-auto space-y-3 border-t border-[#1C1C26] pt-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">Bundle Price</p>
+              <p className="font-heading text-3xl font-black tracking-tight text-[#FFCC00]">{formatMoney(bundlePrice)}</p>
+            </div>
+            {originalTotal > 0 && (
+              <div className="text-right">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">Regular</p>
+                <p className="font-heading text-sm font-black text-zinc-500 line-through">{formatMoney(originalTotal)}</p>
+              </div>
+            )}
+          </div>
           {savings > 0 && (
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-              Save {savings.toFixed(2)} EGP
+            <p className="inline-block rounded border border-[#FFCC00]/40 bg-[#FFCC00]/10 px-2 py-1 font-mono text-[9px] font-black uppercase tracking-widest text-[black]">
+              You save {formatMoney(savings)}
             </p>
           )}
         </div>
+
         <button
           type="button"
           disabled={!offer.isAvailable || isAdding}
           onClick={() => onAddBundle(offer)}
-          className="rounded-lg bg-[#FFCC00] px-4 py-2 font-heading text-xs font-black uppercase text-black transition-all hover:bg-yellow-300 disabled:opacity-40"
+          className="w-full rounded-lg bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isAdding ? 'Adding...' : needsSelection ? 'Choose Options' : 'Add Bundle'}
+          {isAdding ? 'Adding...' : needsSelection ? 'Choose Options' : 'Get Bundle'}
         </button>
+
+        <p className="text-center font-mono text-[9px] uppercase tracking-widest text-zinc-500">
+          {offer.endsAt ? `Available until ${new Date(offer.endsAt).toLocaleDateString()}` : 'No expiration'}
+        </p>
       </div>
     </article>
   );
 };
 
 const ShopPage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { addBundleItem } = useAppContext();
   const [products, setProducts] = useState([]);
   const [bundleOffers, setBundleOffers] = useState([]);
@@ -75,6 +129,7 @@ const ShopPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'offers' ? 'offers' : 'products');
   
   const [meta, setMeta] = useState({
     totalCount: 6,
@@ -110,7 +165,8 @@ const ShopPage = () => {
       defaultVariantStock: Number(item.default_variant_stock || 0),
       totalStock: Number(item.total_stock || 0),
       name: displayName || String(item.name || '').toUpperCase(),
-      price: Number(item.effective_price ?? item.base_price ?? item.price ?? 0),
+      price: Number(item.min_price ?? item.effective_price ?? item.base_price ?? item.price ?? 0),
+      priceMax: Number(item.max_price ?? 0),
       originalPrice: Number(item.base_price ?? item.price ?? 0),
       discountLabel: item.discount_type
         ? item.discount_type === 'percentage'
@@ -243,7 +299,20 @@ const ShopPage = () => {
     }));
   }, [searchParams]);
 
-  const showOffersFirst = searchParams.get('offers') === 'bundles';
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'offers') {
+      setSearchParams((prev) => {
+        prev.set('tab', 'offers');
+        return prev;
+      });
+    } else {
+      setSearchParams((prev) => {
+        prev.delete('tab');
+        return prev;
+      });
+    }
+  };
 
   // Client side filters mapping for supplementary parameters
   const filteredProducts = products.filter((p) => {
@@ -373,112 +442,155 @@ const ShopPage = () => {
 
         {/* Product Grid Area */}
         <div className="space-y-10">
-          {bundleOffers.length > 0 && (
-            <section id="bundle-offers" className={`space-y-5 ${showOffersFirst ? 'scroll-mt-24' : ''}`}>
-              <div className="flex flex-col gap-3 border-b border-[#222225] pb-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">Bundle Offers</p>
-                  <h2 className="font-heading text-3xl font-black uppercase text-white">TRIPLE A OFFERS</h2>
+          {/* Tab Navigation */}
+          <div className="flex items-center gap-1 border-b border-[#222225] pb-4">
+            <button
+              type="button"
+              onClick={() => handleTabChange('products')}
+              className={`px-5 py-2.5 font-heading text-sm font-black uppercase tracking-wider rounded-sm transition-all ${
+                activeTab === 'products'
+                  ? 'bg-[#FFCC00] text-black'
+                  : 'bg-[#141416] text-zinc-400 hover:text-white border border-[#222225]'
+              }`}
+            >
+              Products
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('offers')}
+              className={`px-5 py-2.5 font-heading text-sm font-black uppercase tracking-wider rounded-sm transition-all ${
+                activeTab === 'offers'
+                  ? 'bg-[#FFCC00] text-black'
+                  : 'bg-[#141416] text-zinc-400 hover:text-white border border-[#222225]'
+              }`}
+            >
+              Offers
+              {bundleOffers.length > 0 && (
+                <span className="ml-2 rounded-full bg-black/20 px-2 py-0.5 font-mono text-[10px] font-bold">
+                  {bundleOffers.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Products Tab */}
+          {activeTab === 'products' && (
+            <>
+              {isLoading && (
+                <div className="py-24 text-center font-mono text-xs text-zinc-500 animate-pulse">
+                  SYNCING SUPPLEMENT CATALOG...
                 </div>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                  {bundleOffers.length} active {bundleOffers.length === 1 ? 'offer' : 'offers'}
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                {bundleOffers.map((offer) => (
-                  <BundleOfferCard
-                    key={offer.id}
-                    offer={offer}
-                    onAddBundle={handleAddBundle}
-                    isAdding={addingBundleId === offer.id}
-                  />
+              )}
+
+              {!isLoading && filteredProducts.length === 0 && (
+                <ChamferCard className="p-16 text-center space-y-4 rounded-sm bg-[#141416]/50 border border-[#222225]">
+                  <p className="font-heading font-black text-xl uppercase text-white">{loadError ? 'CATALOG UNAVAILABLE' : 'NO FORMULATIONS MATCHED'}</p>
+                  <p className="font-mono text-xs text-zinc-500">{loadError || 'Try resetting your filters or adjusting your budget limits.'}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleFilterChange('category', '');
+                      handleFilterChange('goal', '');
+                      handleFilterChange('stockStatus', '');
+                      handleFilterChange('minPrice', '');
+                      handleFilterChange('maxPrice', '');
+                    }}
+                    className="btn-primary text-xs px-6 py-2.5 font-bold font-heading"
+                  >
+                    RESET FILTERS
+                  </button>
+                </ChamferCard>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-              {offerFeedback && (
-                <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">
-                  {offerFeedback}
-                </p>
-              )}
-            </section>
-          )}
 
-          {isLoading && (
-            <div className="py-24 text-center font-mono text-xs text-zinc-500 animate-pulse">
-              SYNCING SUPPLEMENT CATALOG...
-            </div>
-          )}
-
-          {!isLoading && filteredProducts.length === 0 && (
-            <ChamferCard className="p-16 text-center space-y-4 rounded-sm bg-[#141416]/50 border border-[#222225]">
-              <p className="font-heading font-black text-xl uppercase text-white">{loadError ? 'CATALOG UNAVAILABLE' : 'NO FORMULATIONS MATCHED'}</p>
-              <p className="font-mono text-xs text-zinc-500">{loadError || 'Try resetting your filters or adjusting your budget limits.'}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  handleFilterChange('category', '');
-                  handleFilterChange('goal', '');
-                  handleFilterChange('stockStatus', '');
-                  handleFilterChange('minPrice', '');
-                  handleFilterChange('maxPrice', '');
-                }}
-                className="btn-primary text-xs px-6 py-2.5 font-bold font-heading"
-              >
-                RESET FILTERS
-              </button>
-            </ChamferCard>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          <div className="pt-8 flex items-center justify-between font-mono text-xs text-zinc-500 border-t border-[#222225]">
-            <span className="uppercase">Showing 1-{filteredProducts.length} of {meta.totalCount} Products</span>
-            <div className="flex items-center gap-1">
-              {/* Previous page arrow */}
-              <button
-                type="button"
-                disabled={meta.currentPage <= 1}
-                onClick={() => handleFilterChange('page', meta.currentPage - 1)}
-                className="w-8 h-8 bg-[#141416] border border-[#222225] flex items-center justify-center text-white disabled:opacity-30 rounded-sm hover:border-zinc-700 transition-colors"
-              >
-                &lt;
-              </button>
-
-              {/* Page Numbers */}
-              {[...Array(meta.totalPages || 1)].map((_, i) => {
-                const pageNum = i + 1;
-                const isSelected = meta.currentPage === pageNum;
-                return (
+              {/* Pagination */}
+              <div className="pt-8 flex items-center justify-between font-mono text-xs text-zinc-500 border-t border-[#222225]">
+                <span className="uppercase">Showing 1-{filteredProducts.length} of {meta.totalCount} Products</span>
+                <div className="flex items-center gap-1">
                   <button
-                    key={pageNum}
                     type="button"
-                    onClick={() => handleFilterChange('page', pageNum)}
-                    className={`w-8 h-8 font-bold flex items-center justify-center rounded-sm transition-all border ${
-                      isSelected
-                        ? 'bg-[#FFCC00] border-[#FFCC00] text-black'
-                        : 'bg-[#141416] border-[#222225] text-zinc-400 hover:border-zinc-700'
-                    }`}
+                    disabled={meta.currentPage <= 1}
+                    onClick={() => handleFilterChange('page', meta.currentPage - 1)}
+                    className="w-8 h-8 bg-[#141416] border border-[#222225] flex items-center justify-center text-white disabled:opacity-30 rounded-sm hover:border-zinc-700 transition-colors"
                   >
-                    {pageNum}
+                    {'<'}
                   </button>
-                );
-              })}
 
-              {/* Next page arrow */}
-              <button
-                type="button"
-                disabled={meta.currentPage >= meta.totalPages}
-                onClick={() => handleFilterChange('page', meta.currentPage + 1)}
-                className="w-8 h-8 bg-[#141416] border border-[#222225] flex items-center justify-center text-white disabled:opacity-30 rounded-sm hover:border-zinc-700 transition-colors"
-              >
-                &gt;
-              </button>
-            </div>
-          </div>
+                  {[...Array(meta.totalPages || 1)].map((_, i) => {
+                    const pageNum = i + 1;
+                    const isSelected = meta.currentPage === pageNum;
+                    return (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => handleFilterChange('page', pageNum)}
+                        className={`w-8 h-8 font-bold flex items-center justify-center rounded-sm transition-all border ${
+                          isSelected
+                            ? 'bg-[#FFCC00] border-[#FFCC00] text-black'
+                            : 'bg-[#141416] border-[#222225] text-zinc-400 hover:border-zinc-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    disabled={meta.currentPage >= meta.totalPages}
+                    onClick={() => handleFilterChange('page', meta.currentPage + 1)}
+                    className="w-8 h-8 bg-[#141416] border border-[#222225] flex items-center justify-center text-white disabled:opacity-30 rounded-sm hover:border-zinc-700 transition-colors"
+                  >
+                    {'>'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Offers Tab */}
+          {activeTab === 'offers' && (
+            <>
+              {bundleOffers.length > 0 ? (
+                <section className="space-y-5">
+                  <div className="flex flex-col gap-3 border-b border-[#222225] pb-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">Bundle Offers</p>
+                      <h2 className="font-heading text-3xl font-black uppercase text-white">TRIPLE A OFFERS</h2>
+                    </div>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                      {bundleOffers.length} active {bundleOffers.length === 1 ? 'offer' : 'offers'}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                    {bundleOffers.map((offer) => (
+                      <BundleOfferCard
+                        key={offer.id}
+                        offer={offer}
+                        onAddBundle={handleAddBundle}
+                        isAdding={addingBundleId === offer.id}
+                      />
+                    ))}
+                  </div>
+                  {offerFeedback && (
+                    <p className="font-mono text-xs font-bold uppercase tracking-widest text-[#FFCC00]">
+                      {offerFeedback}
+                    </p>
+                  )}
+                </section>
+              ) : (
+                <ChamferCard className="p-16 text-center space-y-4 rounded-sm bg-[#141416]/50 border border-[#222225]">
+                  <p className="font-heading font-black text-xl uppercase text-white">NO ACTIVE OFFERS</p>
+                  <p className="font-mono text-xs text-zinc-500">Check back soon for exclusive bundle deals and discounts.</p>
+                </ChamferCard>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

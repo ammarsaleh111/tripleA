@@ -6,6 +6,22 @@ const activeDiscountSubquery = `
   FROM offers od
   WHERE od.offer_type = 'product_discount'
     AND od.product_id = p.id
+    AND od.variant_id IS NULL
+    AND od.is_active = TRUE
+    AND now() >= od.starts_at
+    AND (od.ends_at IS NULL OR now() < od.ends_at)
+  ORDER BY od.created_at DESC, od.id DESC
+  LIMIT 1
+`;
+
+// Any active discount for the product, including weight-targeted ones.
+// Used to compute per-variant effective prices (a weight-targeted discount
+// applies to every flavor of that weight, never to other weights).
+const anyDiscountSubquery = `
+  SELECT od.discount_type, od.discount_value, od.variant_id
+  FROM offers od
+  WHERE od.offer_type = 'product_discount'
+    AND od.product_id = p.id
     AND od.is_active = TRUE
     AND now() >= od.starts_at
     AND (od.ends_at IS NULL OR now() < od.ends_at)
@@ -183,6 +199,16 @@ export const getProducts = async (req, res, next) => {
           WHEN ad.discount_type = 'fixed' THEN GREATEST(0, ROUND(p.base_price - ad.discount_value, 2))
           ELSE p.base_price
         END AS effective_price,
+        (
+          SELECT MIN(pv.price_modifier)
+          FROM product_variants pv
+          WHERE pv.product_id = p.id
+        ) AS min_price_modifier,
+        (
+          SELECT MAX(pv.price_modifier)
+          FROM product_variants pv
+          WHERE pv.product_id = p.id
+        ) AS max_price_modifier,
         c.name AS category_name,
         c.slug AS category_slug,
         cp.name AS parent_category_name,
@@ -249,12 +275,20 @@ export const getProducts = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: products.map((product) => ({
-        ...product,
-        base_price: Number(product.base_price || 0),
-        effective_price: Number(product.effective_price || product.base_price || 0),
-        discount_value: product.discount_value === null ? null : Number(product.discount_value),
-      })),
+      data: products.map((product) => {
+        const basePrice = Number(product.base_price || 0);
+        const minPrice = basePrice + Number(product.min_price_modifier ?? 0);
+        const maxPrice = basePrice + Number(product.max_price_modifier ?? 0);
+        return {
+          ...product,
+          base_price: basePrice,
+          effective_price: Number(product.effective_price || basePrice || 0),
+          discount_value: product.discount_value === null ? null : Number(product.discount_value),
+          // Weight-tier aware price range (only meaningful when has_weight).
+          min_price: Number(minPrice.toFixed(2)),
+          max_price: Number(maxPrice.toFixed(2)),
+        };
+      }),
       meta: {
         count: products.length,
         totalCount,
@@ -300,6 +334,9 @@ export const getProductBySlug = async (req, res, next) => {
         p.has_flavor, p.has_weight,
         ad.discount_type,
         ad.discount_value,
+        pd.discount_type AS variant_discount_type,
+        pd.discount_value AS variant_discount_value,
+        pd.variant_id AS variant_discount_variant_id,
         CASE
           WHEN ad.discount_type = 'percentage' THEN ROUND(p.base_price * (1 - ad.discount_value / 100), 2)
           WHEN ad.discount_type = 'fixed' THEN GREATEST(0, ROUND(p.base_price - ad.discount_value, 2))
@@ -313,6 +350,7 @@ export const getProductBySlug = async (req, res, next) => {
       LEFT JOIN categories c ON c.id = p.category_id
       LEFT JOIN categories cp ON cp.id = c.parent_id
       LEFT JOIN LATERAL (${activeDiscountSubquery}) ad ON TRUE
+      LEFT JOIN LATERAL (${anyDiscountSubquery}) pd ON TRUE
       WHERE p.slug = ?
     `;
 
@@ -376,15 +414,38 @@ export const getProductBySlug = async (req, res, next) => {
         base_price: Number(product.base_price || 0),
         effective_price: Number(product.effective_price || product.base_price || 0),
         discount_value: product.discount_value === null ? null : Number(product.discount_value),
+        discount: product.variant_discount_type ? {
+          type: product.variant_discount_type,
+          value: Number(product.variant_discount_value),
+          variantId: product.variant_discount_variant_id ? Number(product.variant_discount_variant_id) : null,
+        } : null,
         images,
-        variants: variants.map((variant) => ({
-          ...variant,
-          flavor: variant.flavor || variant.color,
-          weight_label:
-            variant.weight_value && variant.weight_unit
-              ? `${Number(variant.weight_value).toString()} ${variant.weight_unit}`
-              : variant.size,
-        })),
+        variants: variants.map((variant) => {
+          const originalPrice = Number(product.base_price || 0) + Number(variant.price_modifier || 0);
+          // Server-computed effective price: a weight-targeted discount applies
+          // to every flavor of the target weight, never to other weights.
+          const discountTarget = product.variant_discount_variant_id
+            ? variants.find((candidate) => Number(candidate.id) === Number(product.variant_discount_variant_id))
+            : null;
+          const weightMatches = !discountTarget || (
+            Number(discountTarget.weight_value) === Number(variant.weight_value) &&
+            (discountTarget.weight_unit || 'g') === (variant.weight_unit || 'g')
+          );
+          const discountedPrice = product.variant_discount_type === 'percentage'
+            ? originalPrice * (1 - Number(product.variant_discount_value) / 100)
+            : Math.max(0, originalPrice - Number(product.variant_discount_value || 0));
+          const effectivePrice = product.variant_discount_type && weightMatches ? discountedPrice : originalPrice;
+          return {
+            ...variant,
+            flavor: variant.flavor || variant.color,
+            weight_label:
+              variant.weight_value && variant.weight_unit
+                ? `${Number(variant.weight_value).toString()} ${variant.weight_unit}`
+                : variant.size,
+            price: Number(originalPrice.toFixed(2)),
+            effective_price: Number(effectivePrice.toFixed(2)),
+          };
+        }),
         availableFlavors,
         availableWeights,
         availableSizes,

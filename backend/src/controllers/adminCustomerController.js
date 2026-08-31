@@ -190,7 +190,7 @@ export const getAdminCustomers = async (request, response, next) => {
     );
 
     const customers = [];
-
+    if (registeredRows.length > 0) {
     for (const row of registeredRows || []) {
       customers.push({
         identity: `user-${row.identity}`,
@@ -205,8 +205,8 @@ export const getAdminCustomers = async (request, response, next) => {
         lastOrderAt: row.last_order_at,
         lastActivityAt: row.last_activity_at,
       });
-    }
-
+    }}
+    if (guestRows.length > 0) {
     for (const row of guestRows || []) {
       customers.push({
         identity: row.identity,
@@ -221,7 +221,7 @@ export const getAdminCustomers = async (request, response, next) => {
         lastOrderAt: row.last_order_at,
         lastActivityAt: row.last_activity_at,
       });
-    }
+    }}
 
     let filtered = customers;
     if (search) {
