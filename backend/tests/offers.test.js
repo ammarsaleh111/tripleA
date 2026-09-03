@@ -36,9 +36,9 @@ suite('offers API', () => {
       const products = [];
       for (let index = 1; index <= 2; index += 1) {
         const product = await client.query(
-          `INSERT INTO products (name, slug, description, base_price)
-           VALUES ($1, $2, $3, $4) RETURNING id`,
-          [`Offer Test Product ${index}`, `${slugPrefix}-${index}`, 'Temporary offer test product', 100],
+          `INSERT INTO products (name, slug, base_price)
+           VALUES ($1, $2, $3) RETURNING id`,
+          [`Offer Test Product ${index}`, `${slugPrefix}-${index}`, 100],
         );
         const productId = product.rows[0].id;
         await client.query(

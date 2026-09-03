@@ -44,7 +44,7 @@ globalThis.__ctx = { api, check, adminToken, sessionId, stamp, pool };
 const whey = await api('/admin/products', {
   method: 'POST', token: adminToken,
   body: {
-    name: `WP Whey ${stamp}`, description: 'weight pricing test', base_price: 700,
+    name: `WP Whey ${stamp}`, base_price: 700,
     category_name: 'Supplements', category_slug: 'supplements',
     subcategory_name: 'Protein', subcategory_slug: 'protein',
     has_flavor: true, has_weight: true,

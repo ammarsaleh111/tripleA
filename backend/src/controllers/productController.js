@@ -116,15 +116,14 @@ export const getProducts = async (req, res, next) => {
 
     if (searchTerm) {
       fromAndWhere += `
-        AND (
+                AND (
           p.name ILIKE ?
-          OR p.description ILIKE ?
           OR c.name ILIKE ?
           OR cp.name ILIKE ?
         )
       `;
       const searchToken = `%${searchTerm}%`;
-      filterParams.push(searchToken, searchToken, searchToken, searchToken);
+      filterParams.push(searchToken, searchToken, searchToken);
     }
 
     if (size) {
@@ -330,7 +329,7 @@ export const getProductBySlug = async (req, res, next) => {
 
     const query = `
       SELECT 
-        p.id, p.name, p.slug, p.description, p.materials_care, p.base_price,
+        p.id, p.name, p.slug, p.materials_care, p.base_price,
         p.has_flavor, p.has_weight,
         ad.discount_type,
         ad.discount_value,
@@ -461,3 +460,4 @@ export const getProductBySlug = async (req, res, next) => {
     next(error);
   }
 };
+

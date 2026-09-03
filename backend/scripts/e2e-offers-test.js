@@ -64,9 +64,9 @@ const run = async () => {
   let productA; let productB; let variantA1; let variantA2; let variantB1;
   try {
     const pa = await client.query(
-      `INSERT INTO products (name, slug, description, base_price, has_flavor, has_weight)
-       VALUES ($1, $2, $3, 1000, TRUE, TRUE) RETURNING id`,
-      [`E2E Whey ${stamp}`, `e2e-whey-${stamp}`, 'E2E test product A'],
+      `INSERT INTO products (name, slug, base_price, has_flavor, has_weight)
+       VALUES ($1, $2, 1000, TRUE, TRUE) RETURNING id`,
+      [`E2E Whey ${stamp}`, `e2e-whey-${stamp}`],
     );
     productA = pa.rows[0].id;
     const va = await client.query(
@@ -83,9 +83,9 @@ const run = async () => {
     variantA2 = va2.rows[0].id;
 
     const pb = await client.query(
-      `INSERT INTO products (name, slug, description, base_price, has_flavor, has_weight)
-       VALUES ($1, $2, $3, 300, FALSE, FALSE) RETURNING id`,
-      [`E2E Creatine ${stamp}`, `e2e-creatine-${stamp}`, 'E2E test product B'],
+      `INSERT INTO products (name, slug, base_price, has_flavor, has_weight)
+       VALUES ($1, $2, 300, FALSE, FALSE) RETURNING id`,
+      [`E2E Creatine ${stamp}`, `e2e-creatine-${stamp}`],
     );
     productB = pb.rows[0].id;
     const vb = await client.query(
@@ -449,3 +449,4 @@ run().catch((error) => {
   console.error('E2E test crashed:', error);
   process.exitCode = 1;
 });
+

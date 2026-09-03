@@ -48,7 +48,6 @@ CREATE TABLE IF NOT EXISTS products (
     category_id INT NULL,
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
     materials_care TEXT NULL,
     base_price DECIMAL(10, 2) NOT NULL,
     has_flavor BOOLEAN NOT NULL DEFAULT FALSE,

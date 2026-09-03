@@ -442,8 +442,7 @@ const MainLayout = () => {
         </div>
 
         <div className="mx-auto max-w-[1500px] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
-          <p>© 2026 TRIPLE A SUPPLEMENTS. ELITE STATUS GUARANTEED.</p>
-          <div className="flex gap-6">
+<p>&copy; 2026 Ammar Ahmed. All rights reserved.</p>          <div className="flex gap-6">
             <Link to="/privacy" className="hover:text-zinc-300">PRIVACY POLICY</Link>
             <Link to="/terms" className="hover:text-zinc-300">TERMS OF SERVICE</Link>
           </div>

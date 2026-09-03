@@ -33,7 +33,6 @@ const createEmptyVariant = () => ({
 
 const createEmptyForm = () => ({
   name: '',
-  description: '',
   basePrice: '',
   categoryName: 'Supplements',
   subcategoryName: 'Protein',
@@ -152,7 +151,6 @@ const normalizeProductToForm = (product) => {
 
   return {
     name: product?.name || '',
-    description: product?.description || '',
     basePrice: String(product?.basePrice ?? ''),
     categoryName,
     subcategoryName,
@@ -184,7 +182,6 @@ const createPayloadFromForm = ({ form, removedVariantIds, isEdit }) => {
   const variants = buildVariantsFromOptions(form);
 
   if (!String(form.name || '').trim()) throw new Error('Product name is required.');
-  if (!String(form.description || '').trim()) throw new Error('Description is required.');
   if (!Number.isFinite(parseNonNegativeNumber(form.basePrice, NaN))) throw new Error('Price must be a valid number.');
   if (category.slug === 'supplements' && !subcategory) throw new Error('Supplements require a subcategory.');
   if (!variants.length) throw new Error('Add at least one valid option or disable Flavor and Weight.');
@@ -199,7 +196,6 @@ const createPayloadFromForm = ({ form, removedVariantIds, isEdit }) => {
 
   const payload = {
     name: String(form.name || '').trim(),
-    description: String(form.description || '').trim(),
     base_price: parseNonNegativeNumber(form.basePrice, NaN),
     category_name: category.value,
     category_slug: category.slug,
@@ -517,11 +513,6 @@ const AdminInventorySection = ({ inventory, onInventoryMutated }) => {
                   </label>
                 )}
               </div>
-
-              <label className="block space-y-2">
-                <span className="block text-[10px] uppercase tracking-widest text-white/45">Description</span>
-                <textarea value={formData.description} onChange={(event) => updateFormField('description', event.target.value)} className="min-h-[120px] w-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-white outline-none focus:border-[var(--theme-accent)]" required />
-              </label>
 
               <div className="border border-white/10 p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

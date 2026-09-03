@@ -35,7 +35,6 @@ const EMPTY_PRODUCT = {
   sizes: [],
   hasFlavor: false,
   hasWeight: false,
-  description: 'Product details are unavailable.',
   materials: 'Specification details are unavailable.',
   shipping: DEFAULT_SHIPPING_MESSAGE,
   images: [FALLBACK_PRODUCT_IMAGE],
@@ -85,7 +84,7 @@ const ProductDetailPage = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [openAccordion, setOpenAccordion] = useState('description');
+  const [openAccordion, setOpenAccordion] = useState('materials');
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const materialsSectionRef = useRef(null);
@@ -150,7 +149,6 @@ const ProductDetailPage = () => {
           sizes: mappedSizes,
           hasFlavor,
           hasWeight,
-          description: data.description || EMPTY_PRODUCT.description,
           materials: data.materials_care || EMPTY_PRODUCT.materials,
           shipping: DEFAULT_SHIPPING_MESSAGE,
           images: mappedImages.length ? mappedImages : [FALLBACK_PRODUCT_IMAGE],
@@ -223,17 +221,6 @@ const ProductDetailPage = () => {
   const displayOriginalPrice = selectedVariant
     ? Number(selectedVariant.price ?? product.price) || 0
     : Number(product.price || 0);
-
-  const shortDescription = useMemo(() => {
-    const value = String(product.description || '').replace(/\s+/g, ' ').trim();
-    if (!value) {
-      return 'Premium supplement engineered for maximum performance.';
-    }
-    if (value.length <= 150) {
-      return value;
-    }
-    return `${value.slice(0, 147)}...`;
-  }, [product.description]);
 
   const canAddToCart = Boolean(selectedVariant) && selectedStock > 0 && !isLoading;
 
@@ -402,7 +389,7 @@ const ProductDetailPage = () => {
               <img
                 src={product.images[activeImage] || FALLBACK_PRODUCT_IMAGE}
                 alt={product.name}
-                className="h-[320px] w-full object-cover transition-transform duration-500 ease-in-out hover:scale-[1.02] sm:h-[460px] lg:h-[560px]"
+                className="h-[320px] w-full object-contain bg-[#050506] transition-opacity duration-500 ease-in-out sm:h-[460px] lg:h-[560px]"
               />
             )}
 
@@ -456,7 +443,7 @@ const ProductDetailPage = () => {
                 }`}
                 aria-label={`Show image ${index + 1}`}
               >
-                <img src={img} alt={`${product.name} view ${index + 1}`} className="h-20 w-full object-cover" />
+                <img src={img} alt={`${product.name} view ${index + 1}`} className="h-20 w-full object-contain bg-[#050506]" />
               </button>
             ))}
           </div>
@@ -470,7 +457,6 @@ const ProductDetailPage = () => {
           <h1 className="mt-4 font-heading text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">
             {product.name}
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-400">{shortDescription}</p>
 
           <div className="mt-5 flex items-end justify-between gap-4">
             <div>
@@ -628,12 +614,6 @@ const ProductDetailPage = () => {
           )}
 
           <div ref={materialsSectionRef} className="mt-8 border-t border-[#1C1C26]">
-            <Accordion
-              title="PRODUCT DETAILS"
-              content={product.description}
-              isOpen={openAccordion === 'description'}
-              onClick={() => setOpenAccordion(openAccordion === 'description' ? '' : 'description')}
-            />
             <Accordion
               title="INGREDIENTS & SPECIFICATIONS"
               content={product.materials}

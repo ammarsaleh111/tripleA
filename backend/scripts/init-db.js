@@ -6,6 +6,8 @@ import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import pg from 'pg';
 
+import { normalizeWeightProducts } from './normalize-weight-products.js';
+
 dotenv.config();
 
 const { Pool } = pg;
@@ -21,6 +23,7 @@ const offerVariantSelectionsMigrationPath = path.resolve(__dirname, '../sql/migr
 const orderGuestContactMigrationPath = path.resolve(__dirname, '../sql/migrations/006_order_guest_contact.sql');
 const offerImageUrlMigrationPath = path.resolve(__dirname, '../sql/migrations/007_offer_image_url.sql');
 const offerVariantTargetingMigrationPath = path.resolve(__dirname, '../sql/migrations/008_offer_variant_targeting.sql');
+const removeProductDescriptionMigrationPath = path.resolve(__dirname, '../sql/migrations/009_remove_product_description.sql');
 
 const openPool = async () => {
   const connStr = process.env.DATABASE_URL || '';
@@ -120,7 +123,6 @@ const catalogSeed = [
     product: {
       name: 'TripleA Whey Isolate',
       slug: 'triplea-whey-isolate',
-      description: 'Ultra-pure whey protein isolate with 27g protein per scoop. Cold-filtered for maximum bioavailability.',
       materialsCare: 'Store in a cool dry place. Consume within 24 hours of mixing.',
       basePrice: 49.99,
       hasFlavor: true,
@@ -147,7 +149,6 @@ const catalogSeed = [
     product: {
       name: 'Pure Creatine Monohydrate',
       slug: 'pure-creatine-monohydrate',
-      description: 'Micronized creatine monohydrate. 5g per serving, unflavored. Lab tested for purity.',
       materialsCare: 'Keep sealed in a cool dry location. Take 5g daily with water.',
       basePrice: 24.99,
       hasFlavor: true,
@@ -174,7 +175,6 @@ const catalogSeed = [
     product: {
       name: 'Nitric Surge Pre-Workout',
       slug: 'nitric-surge-preworkout',
-      description: 'High-stim pre-workout with 350mg caffeine, L-Citrulline, and Beta-Alanine for maximum performance.',
       materialsCare: 'Shake well. Consume 30 minutes before training. Not for use by minors.',
       basePrice: 39.99,
       hasFlavor: true,
@@ -199,7 +199,6 @@ const catalogSeed = [
     product: {
       name: 'BCAA Recovery Matrix',
       slug: 'bcaa-recovery-matrix',
-      description: '2:1:1 BCAA ratio with added L-Glutamine and electrolytes for intra-workout recovery.',
       materialsCare: 'Mix with 300ml cold water. Best consumed during or after training.',
       basePrice: 32.99,
       hasFlavor: true,
@@ -226,7 +225,6 @@ const catalogSeed = [
     product: {
       name: 'Mass Gainer Pro 1000',
       slug: 'mass-gainer-pro-1000',
-      description: 'Loaded with 1000+ calories per serving, complex carbs, and 50g protein for rapid mass building.',
       materialsCare: 'Mix 3 scoops with 500ml whole milk. Best post-workout or between meals.',
       basePrice: 64.99,
       hasFlavor: true,
@@ -251,7 +249,6 @@ const catalogSeed = [
     product: {
       name: 'Iron Core Multi-V',
       slug: 'iron-core-multi-v',
-      description: 'Comprehensive multivitamin formulated for athletes. 26 essential vitamins and minerals per dose.',
       materialsCare: 'Take 1 tablet daily with food and water. Store below 25°C.',
       basePrice: 19.99,
       hasFlavor: false,
@@ -414,19 +411,20 @@ const upsertProduct = async (connection, product, categoryId) => {
   if (existingId) {
     await connection.execute(
       `UPDATE products
-       SET category_id = ?, name = ?, description = ?,
+           SET category_id = ?, name = ?,
            materials_care = ?, base_price = ?, has_flavor = ?, has_weight = ?, is_featured = ?
        WHERE id = ?`,
-      [categoryId, product.name, product.description, product.materialsCare, product.basePrice, Boolean(product.hasFlavor), Boolean(product.hasWeight), product.isFeatured, existingId],
+      [categoryId, product.name, product.materialsCare, product.basePrice, Boolean(product.hasFlavor), Boolean(product.hasWeight), product.isFeatured, existingId],
     );
     return existingId;
   }
 
   const [insertResult] = await connection.execute(
-    `INSERT INTO products (category_id, name, slug, description, materials_care, base_price, has_flavor, has_weight, is_featured)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-     RETURNING id AS "insertId"`,
-    [categoryId, product.name, product.slug, product.description, product.materialsCare, product.basePrice, Boolean(product.hasFlavor), Boolean(product.hasWeight), product.isFeatured],
+      `INSERT INTO products
+        (category_id, name, slug, materials_care, base_price, has_flavor, has_weight, is_featured)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING id AS "insertId"`,
+    [categoryId, product.name, product.slug, product.materialsCare, product.basePrice, Boolean(product.hasFlavor), Boolean(product.hasWeight), product.isFeatured],
   );
 
   return insertResult.insertId;
@@ -664,7 +662,6 @@ const upsertDemoOrder = async (connection, orderSeed, variants, customerLookup) 
       `INSERT INTO orders
          (order_number, user_id, shipping_address_id, subtotal, tax,
           shipping_cost, total_amount, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING id AS "insertId"`,
       [orderSeed.orderNumber, userId, shippingAddressId, subtotal, tax, shippingCost, totalAmount, orderSeed.status, createdAt],
     );
@@ -782,12 +779,17 @@ const initializeDatabase = async () => {
      await dataPool.query(offerImageUrlMigration);
      const offerVariantTargetingMigration = await fs.readFile(offerVariantTargetingMigrationPath, 'utf8');
      await dataPool.query(offerVariantTargetingMigration);
+      const removeProductDescriptionMigration = await fs.readFile(removeProductDescriptionMigrationPath, 'utf8');
+      await dataPool.query(removeProductDescriptionMigration);
 
      console.log('Database initialized successfully.');
 
-    if (process.env.RUN_DEMO_SEED === 'true') {
+        if (process.env.RUN_DEMO_SEED === 'true') {
       await seedAdminAccount(connection);
       await seedCatalogData(connection);
+      // Normalize legacy products whose names embed a weight into real weight
+      // variants (idempotent — safe to run repeatedly).
+      await normalizeWeightProducts(dataPool);
       await seedDemoOperationalData(connection);
       console.log(`Admin account ready: ${process.env.ADMIN_EMAIL}`);
       console.log(`Demo customer password: ${DEMO_CUSTOMER_PASSWORD}`);

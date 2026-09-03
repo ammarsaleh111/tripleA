@@ -653,7 +653,6 @@ const fetchProductsWithRelations = async (connection, productIds) => {
       p.category_id,
       p.name,
       p.slug,
-      p.description,
       p.materials_care,
       p.base_price,
       p.has_flavor,
@@ -783,7 +782,6 @@ const fetchProductsWithRelations = async (connection, productIds) => {
       parentCategorySlug: product.parent_category_slug,
       name: product.name,
       slug: product.slug,
-      description: product.description,
       materialsCare: product.materials_care,
       basePrice: Number(product.base_price || 0),
       hasFlavor: Boolean(product.has_flavor),
@@ -912,7 +910,6 @@ export const createAdminProduct = async (request, response, next) => {
 
   try {
     const name = requireStringField(request.body.name, 'Product name', 255);
-    const description = requireStringField(request.body.description, 'Product description');
     const materialsCare = toOptionalString(request.body.materials_care ?? request.body.materialsCare);
     const basePrice = parseMoney(request.body.base_price ?? request.body.basePrice, 'base_price');
     const hasFlavor = parseBoolean(request.body.has_flavor ?? request.body.hasFlavor, false);
@@ -961,17 +958,16 @@ export const createAdminProduct = async (request, response, next) => {
         category_id,
         name,
         slug,
-        description,
         materials_care,
         base_price,
         has_flavor,
         has_weight,
         is_featured
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
       `,
-      [categoryId, name, slug, description, materialsCare, basePrice, hasFlavor, hasWeight, isFeatured],
+      [categoryId, name, slug, materialsCare, basePrice, hasFlavor, hasWeight, isFeatured],
     );
 
     const productId = productInsertResult.insertId;
@@ -1021,7 +1017,7 @@ export const updateAdminProduct = async (request, response, next) => {
 
     const [productRows] = await connection.query(
       `
-      SELECT id, category_id, name, slug, description, materials_care, base_price, has_flavor, has_weight, is_featured
+      SELECT id, category_id, name, slug, materials_care, base_price, has_flavor, has_weight, is_featured
       FROM products
       WHERE id = ?
       LIMIT 1
@@ -1038,10 +1034,6 @@ export const updateAdminProduct = async (request, response, next) => {
     const nextName = hasOwn(request.body, 'name')
       ? requireStringField(request.body.name, 'Product name', 255)
       : existingProduct.name;
-
-    const nextDescription = hasOwn(request.body, 'description')
-      ? requireStringField(request.body.description, 'Product description')
-      : existingProduct.description;
 
     const nextMaterialsCare = hasOwn(request.body, 'materials_care') || hasOwn(request.body, 'materialsCare')
       ? toOptionalString(request.body.materials_care ?? request.body.materialsCare)
@@ -1088,14 +1080,13 @@ export const updateAdminProduct = async (request, response, next) => {
     await connection.query(
       `
       UPDATE products
-      SET category_id = ?, name = ?, slug = ?, description = ?, materials_care = ?, base_price = ?, has_flavor = ?, has_weight = ?, is_featured = ?, updated_at = now()
+      SET category_id = ?, name = ?, slug = ?, materials_care = ?, base_price = ?, has_flavor = ?, has_weight = ?, is_featured = ?, updated_at = now()
       WHERE id = ?
       `,
       [
         nextCategoryId,
         nextName,
         nextSlug,
-        nextDescription,
         nextMaterialsCare,
         nextBasePrice,
         nextHasFlavor,
@@ -1269,3 +1260,4 @@ export const deleteAdminProduct = async (request, response, next) => {
     connection.release();
   }
 };
+

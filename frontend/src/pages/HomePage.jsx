@@ -41,8 +41,7 @@ const mapProduct = (item) => ({
   isNew: Boolean(item.is_featured),
   rating: Number(item.avg_rating || 5.0),
   reviewCount: Number(item.review_count || 120),
-  badgeText: item.is_featured ? 'BEST SELLER' : '',
-  description: item.description || 'Premium athletic formulation.'
+  badgeText: item.is_featured ? 'BEST SELLER' : ''
 });
 
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;

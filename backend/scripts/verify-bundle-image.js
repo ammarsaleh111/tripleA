@@ -43,7 +43,7 @@ check('Admin login', Boolean(adminToken));
 const whey = await api('/admin/products', {
   method: 'POST', token: adminToken,
   body: {
-    name: `BIW Whey ${stamp}`, description: 'bundle image test whey', base_price: 700,
+    name: `BIW Whey ${stamp}`, base_price: 700,
     category_name: 'Supplements', category_slug: 'supplements',
     subcategory_name: 'Protein', subcategory_slug: 'protein',
     has_flavor: true, has_weight: true,
@@ -65,7 +65,7 @@ check('Whey 1kg Chocolate variant exists', Boolean(whey1kgVariant), JSON.stringi
 const shaker = await api('/admin/products', {
   method: 'POST', token: adminToken,
   body: {
-    name: `BIW Shaker ${stamp}`, description: 'bundle image test shaker', base_price: 123,
+    name: `BIW Shaker ${stamp}`, base_price: 123,
     category_name: null, category_slug: 'gym-accessories',
     subcategory_name: null, subcategory_slug: null,
     has_flavor: false, has_weight: false,

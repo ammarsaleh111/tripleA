@@ -117,9 +117,9 @@ const AboutPage = () => {
               </p>
               <div className="pt-2">
                 <span className="block font-mono text-[9px] text-zinc-500 uppercase tracking-widest">Store Location</span>
-                <span className="font-mono text-sm text-[#FFCC00]">
-                  Gesser El-Suez
-                </span>
+                <a href="tel:01080017177" className="font-mono text-sm text-[#FFCC00] hover:underline">
+                  01080017177
+                </a>
               </div>
             </div>
             <a
