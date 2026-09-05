@@ -9,12 +9,22 @@ const startServer = async () => {
   try {
     await connectDatabase();
 
-    app.listen(port, () => {
-      console.log(`TripleA backend listening on port ${port}`);
+        app.listen(port, () => {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.log(`TripleA backend listening on port ${port}`);
+      }
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to start the backend server.');
-    console.error(error.message);
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.error(error.message);
+    } else {
+      // eslint-disable-next-line no-console
+      console.error(`Startup error: ${error?.statusCode || 'fatal'}`);
+    }
     process.exit(1);
   }
 };

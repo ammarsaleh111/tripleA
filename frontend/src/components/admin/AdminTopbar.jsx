@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'EGP',
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });

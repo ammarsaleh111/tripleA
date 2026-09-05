@@ -2,7 +2,10 @@ node_modules/
 dist/
 .DS_Store
 *.log
+*.err
 backend/.env
 frontend/.env
+/backend/server.log
+/backend/server.err
 /package-lock.json
 

@@ -8,21 +8,31 @@ import { notFoundHandler } from './middleware/notFoundHandler.js';
 
 const app = express();
 
-const defaultAllowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:5174',
-  'http://127.0.0.1:5174',
-].join(',');
+// Build the list of allowed CORS origins.
+// In development: allow localhost Vite dev servers (5173/5174).
+// In production: only use FRONTEND_URL (or CORS_ORIGINS if explicitly set).
+// Never expose localhost origins to production clients.
+const isDev = process.env.NODE_ENV !== 'production';
+
+const devOrigins = isDev
+  ? [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5174',
+    ]
+  : [];
 
 const configuredOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
-const allowedOrigins = Array.from(new Set([
-  ...defaultAllowedOrigins.split(','),
-  ...configuredOrigins,
-]));
+
+const frontendUrl = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL.trim()]
+  : [];
+
+const allowedOrigins = Array.from(new Set([...devOrigins, ...frontendUrl, ...configuredOrigins]));
 
 app.use(
   cors({

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAppContext } from '../../context/AppContext.jsx';
 
-const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
+const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80';
 

@@ -107,20 +107,32 @@ export const connectDatabase = async () => {
     try {
       pool = new Pool(getDatabaseConfig());
 
+            // Guard all logging behind NODE_ENV so production logs never include
+      // connection details or full error objects.
+      const isDev = process.env.NODE_ENV !== 'production';
+
       pool.on('error', (err) => {
-        console.error('Unexpected error on idle Postgres client', err);
+        // eslint-disable-next-line no-console
+        console.error('Unexpected error on idle Postgres client', err?.message || err);
       });
 
       const client = await pool.connect();
       await client.query('SELECT 1 AS ok');
       client.release();
 
-      console.log('Database connection established.');
+      if (isDev) {
+        // eslint-disable-next-line no-console
+        console.log('Database connection established.');
+      }
       return createDatabaseClient(pool);
     } catch (error) {
-      const message = `Database connection failed: ${error?.message || error}`;
+      const message = 'Database connection failed.';
+      // eslint-disable-next-line no-console
       console.error(message);
-      console.error(error);
+      if (isDev) {
+        // eslint-disable-next-line no-console
+        console.error(error?.message || error);
+      }
       pool = undefined;
       throw new Error(message);
     } finally {

@@ -1,7 +1,7 @@
 const formatCurrency = (value) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'EGP',
     maximumFractionDigits: 0,
   }).format(value);
 

@@ -1,7 +1,18 @@
 import axios from 'axios';
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+// In production, fail fast if the API URL is missing so issues are caught
+// early rather than silently hitting a dead localhost endpoint.
+if (!apiBaseUrl && import.meta.env.PROD) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    'VITE_API_BASE_URL is not set in production. The API client will not function correctly.',
+  );
+}
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: apiBaseUrl || (import.meta.env.DEV ? 'http://localhost:5000/api' : ''),
   timeout: 10000,
 });
 

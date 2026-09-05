@@ -79,19 +79,20 @@ const MainLayout = () => {
   // Fetch product catalog once for local fuzzy lookup
   useEffect(() => {
     const loadProductsForSearch = async () => {
-      try {
+                try {
         const response = await getProductsApi({ limit: 40 });
         if (response?.data) {
           setAllProducts(response.data);
         }
-      } catch {
-        // Safe static fallback items matching database seed
-        setAllProducts([
-          { id: 1, name: 'Iso-Surge Elite Whey', slug: 'triplea-whey-isolate', category_name: 'Protein', base_price: 59.99, primary_image: 'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=400&q=80' },
-          { id: 3, name: 'Ignition Protocol V2', slug: 'nitric-surge-preworkout', category_name: 'Pre-Workout', base_price: 44.99, primary_image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=400&q=80' },
-          { id: 4, name: 'Hydra-Surge BCAA', slug: 'bcaa-recovery-matrix', category_name: 'Amino Acids', base_price: 34.99, primary_image: 'https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=400&q=80' },
-          { id: 2, name: 'Pure Creatine Monohydrate', slug: 'pure-creatine-monohydrate', category_name: 'Creatine', base_price: 24.99, primary_image: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=400&q=80' },
-        ]);
+      } catch (error) {
+        // In production, never fabricate product data for search. Leave the
+        // list empty so the user sees "no matches" instead of potentially
+        // stale or incorrect fallback products.
+        setAllProducts([]);
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.warn('Failed to load products for search:', error?.message || error);
+        }
       }
     };
     loadProductsForSearch();
@@ -167,7 +168,7 @@ const MainLayout = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <img
-              src="https://www.image2url.com/r2/default/images/1788104618184-8c7362c7-6f4f-4dc9-a2a3-ac83d48b33e2.jpg"
+                          src="https://www.image2url.com/r2/default/images/1788104618184-8c7362c7-6f4f-4dc9-a2a3-ac83d48b33e2.jpg"
               alt="TRIPLE A Supplements"
               className="h-9 w-auto object-contain grayscale-0 group-hover:brightness-110 transition-[filter] duration-300"
             />
@@ -506,7 +507,7 @@ const MainLayout = () => {
                           </h4>
                           <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">{item.category_name || item.colorName}</span>
                         </div>
-                        <span className="font-mono text-xs text-[#FFCC00] font-bold shrink-0">${Number(item.base_price || item.price || 49.99).toFixed(2)}</span>
+                                                <span className="font-mono text-xs text-[#FFCC00] font-bold shrink-0">{Number(item.base_price || item.price || 0).toFixed(2)} EGP</span>
                       </div>
                     ))}
                   </div>

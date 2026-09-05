@@ -4,7 +4,7 @@ import ChamferCard from '../components/common/ChamferCard.jsx';
 
 const STORAGE_KEY = 'triplea_latest_order_confirmation';
 
-const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
+const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
 
 const readStoredOrder = () => {
   try {

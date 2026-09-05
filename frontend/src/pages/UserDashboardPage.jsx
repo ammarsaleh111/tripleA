@@ -5,7 +5,7 @@ import { useAppContext } from '../context/AppContext.jsx';
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'EGP',
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });

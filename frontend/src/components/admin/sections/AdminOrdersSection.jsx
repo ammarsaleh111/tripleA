@@ -11,7 +11,7 @@ const STATUS_OPTIONS = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancel
 const formatCurrency = (value) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'EGP',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(value || 0));

@@ -24,9 +24,9 @@ const mapProduct = (item) => ({
   defaultVariantStock: Number(item.default_variant_stock || item.total_stock || 10),
   totalStock: Number(item.total_stock || 10),
   name: String(item.name || '').toUpperCase(),
-  originalPrice: Number(item.base_price || item.price || 49.99),
+      originalPrice: Number(item.base_price || item.price || 0),
   // min_price/max_price are weight-tier aware (base + min/max modifier).
-  price: Number(item.min_price ?? item.effective_price ?? item.base_price ?? item.price ?? 49.99),
+    price: Number(item.min_price ?? item.effective_price ?? item.base_price ?? item.price ?? 0),
   priceMax: Number(item.max_price ?? 0),
   discountLabel: item.discount_type
     ? item.discount_type === 'percentage'
@@ -34,7 +34,7 @@ const mapProduct = (item) => ({
       : `${Number(item.discount_value || 0).toFixed(2)} EGP OFF`
     : '',
   colorName: item.category_name || 'Supplements',
-  imageUrl:
+      imageUrl:
     item.primary_image ||
     item.imageUrl ||
     'https://cdn.phototourl.com/free/2026-08-31-e9a1abe0-cbe4-4248-8983-a620145c2617.jpg',

@@ -4,7 +4,7 @@ import { getAdminCustomerById, getAdminCustomers } from '../../../services/api/a
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'EGP',
   maximumFractionDigits: 0,
 });
 

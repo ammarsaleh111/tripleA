@@ -2,7 +2,7 @@ const formatMetric = (value, format) => {
   if (format === 'currency') {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+            currency: 'EGP',
       minimumFractionDigits: 2,
     }).format(value);
   }
