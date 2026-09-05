@@ -31,12 +31,16 @@ const fieldClass = 'w-full border border-white/10 bg-black px-3 py-2 text-xs tex
 
 // Unique weight tiers of a product, with a representative variant id each.
 // A discount/bundle targets the WEIGHT (all flavors of it), never a flavor.
+// NOTE: the admin products API returns camelCase variants (weightValue/
+// weightUnit) while some offer payloads use snake_case — accept both.
 const weightTiersFor = (product) => {
   const tiers = [];
   const seen = new Set();
   (product?.variants || []).forEach((variant) => {
-    if (variant.weight_value === null || variant.weight_value === undefined) return;
-    const label = `${Number(variant.weight_value).toString()} ${variant.weight_unit || 'g'}`;
+    const weightValue = variant.weight_value ?? variant.weightValue;
+    const weightUnit = variant.weight_unit ?? variant.weightUnit;
+    if (weightValue === null || weightValue === undefined) return;
+    const label = `${Number(weightValue).toString()} ${weightUnit || 'g'}`;
     const key = label.toLowerCase();
     if (seen.has(key)) return;
     seen.add(key);
