@@ -168,7 +168,7 @@ const MainLayout = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <img
-                          src="https://www.image2url.com/r2/default/images/1788104618184-8c7362c7-6f4f-4dc9-a2a3-ac83d48b33e2.jpg"
+                          src="https://cdn.phototourl.com/member/2026-09-05-6c0503ec-5190-4d41-941f-eada2535b397.jpg"
               alt="TRIPLE A Supplements"
               className="h-9 w-auto object-contain grayscale-0 group-hover:brightness-110 transition-[filter] duration-300"
             />
