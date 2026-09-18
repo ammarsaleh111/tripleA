@@ -28,6 +28,7 @@ const mapProduct = (item) => ({
   // min_price/max_price are weight-tier aware (base + min/max modifier).
     price: Number(item.min_price ?? item.effective_price ?? item.base_price ?? item.price ?? 0),
   priceMax: Number(item.max_price ?? 0),
+    totalSold: Number(item.total_sold || 0),
   discountLabel: item.discount_type
     ? item.discount_type === 'percentage'
       ? `${Number(item.discount_value || 0)}% OFF`
@@ -41,7 +42,7 @@ const mapProduct = (item) => ({
   isNew: Boolean(item.is_featured),
   rating: Number(item.avg_rating || 5.0),
   reviewCount: Number(item.review_count || 120),
-  badgeText: item.is_featured ? 'BEST SELLER' : ''
+  badgeText: Number(item.total_sold || 0) > 0 ? 'BEST SELLER' : ''
 });
 
 const formatMoney = (value) => `${Number(value || 0).toFixed(2)} EGP`;
@@ -143,7 +144,7 @@ const BundleOfferCard = ({ offer, onAddBundle }) => {
           onClick={() => onAddBundle(offer)}
           className="w-full rounded-lg bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {needsSelection ? 'Choose Options' : 'Get Bundle'}
+          {!offer.isAvailable ? 'Out Of Stock' : needsSelection ? 'Choose Options' : 'Get Bundle'}
         </button>
 
         <p className="text-center font-mono text-[9px] uppercase tracking-widest text-zinc-500">
@@ -159,8 +160,13 @@ const HomePage = () => {
   const { addBundleItem } = useAppContext();
   const [products, setProducts] = useState([]);
   const [bundleOffers, setBundleOffers] = useState([]);
+  const [isOffersLoading, setIsOffersLoading] = useState(true);
+  const [offersLoadError, setOffersLoadError] = useState(false);
   const [cartFeedback, setCartFeedback] = useState('');
   const [variantModalOffer, setVariantModalOffer] = useState(null);
+  const soldProducts = products.filter((product) => product.totalSold > 0);
+  const otherProducts = products.filter((product) => product.totalSold <= 0);
+  const displayedBestSellingProducts = [...soldProducts, ...otherProducts].slice(0, 4);
 
   useEffect(() => {
     let isMounted = true;
@@ -170,15 +176,28 @@ const HomePage = () => {
         const bundles = Array.isArray(response?.data)
           ? response.data.filter((offer) => offer.offerType === 'bundle')
           : [];
-        if (isMounted) setBundleOffers(bundles);
+        if (isMounted) {
+          setBundleOffers(bundles);
+          setOffersLoadError(false);
+        }
       } catch {
-        if (isMounted) setBundleOffers([]);
+        if (isMounted) {
+          setBundleOffers([]);
+          setOffersLoadError(true);
+        }
+      } finally {
+        if (isMounted) setIsOffersLoading(false);
       }
     };
 
     loadOffers();
+    const refreshOffers = () => loadOffers();
+    const refreshTimer = window.setInterval(refreshOffers, 30000);
+    window.addEventListener('focus', refreshOffers);
     return () => {
       isMounted = false;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', refreshOffers);
     };
   }, []);
 
@@ -208,7 +227,7 @@ const HomePage = () => {
     let isMounted = true;
     const loadProducts = async () => {
       try {
-        const response = await getProductsApi({ sort_by: 'featured', limit: 8, page: 1 });
+        const response = await getProductsApi({ sort_by: 'best_selling', limit: 8, page: 1 });
         const mapped = Array.isArray(response?.data) ? response.data.map(mapProduct) : [];
         if (isMounted) {
           setProducts(mapped);
@@ -365,16 +384,26 @@ const HomePage = () => {
           </Link>
         </div>
 
-        {bundleOffers.length > 0 ? (
-          <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+        {isOffersLoading ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {[1, 2].map((item) => (
+              <div key={item} className="h-[420px] animate-pulse rounded-xl border border-[#1C1C26] bg-[#0B0B0E]" />
+            ))}
+          </div>
+        ) : bundleOffers.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {bundleOffers.map((offer) => (
               <BundleOfferCard key={offer.id} offer={offer} onAddBundle={handleAddBundle} />
             ))}
           </div>
         ) : (
           <div className="rounded-xl border border-[#1C1C26] bg-[#0B0B0E] p-16 text-center space-y-4">
-            <p className="font-heading font-black text-xl uppercase text-white">NO ACTIVE OFFERS</p>
-            <p className="font-mono text-xs text-zinc-500">Check back soon for exclusive bundle deals and discounts.</p>
+            <p className="font-heading font-black text-xl uppercase text-white">
+              {offersLoadError ? 'OFFERS UNAVAILABLE' : 'NO ACTIVE OFFERS'}
+            </p>
+            <p className="font-mono text-xs text-zinc-500">
+              {offersLoadError ? 'Offers could not be loaded right now.' : 'Check back soon for exclusive bundle deals and discounts.'}
+            </p>
             <Link
               to="/shop?tab=offers"
               className="inline-block rounded-lg bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase text-black transition-all hover:bg-yellow-300"
@@ -411,9 +440,14 @@ const HomePage = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.slice(0, 4).map((product) => (
+          {displayedBestSellingProducts.length > 0 ? displayedBestSellingProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
-          ))}
+          )) : (
+            <div className="col-span-full rounded-xl border border-[#1C1C26] bg-[#0B0B0E] p-12 text-center">
+              <p className="font-heading text-xl font-black uppercase text-white">BEST SELLERS UNAVAILABLE</p>
+              <p className="mt-2 font-mono text-xs uppercase tracking-widest text-zinc-500">Product sales data could not be loaded.</p>
+            </div>
+          )}
         </div>
       </section>
 {/* SECTION 5: WHY TRIPLE A */}

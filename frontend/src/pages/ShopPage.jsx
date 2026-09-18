@@ -107,7 +107,7 @@ const BundleOfferCard = ({ offer, onAddBundle, isAdding }) => {
           onClick={() => onAddBundle(offer)}
           className="w-full rounded-lg bg-[#FFCC00] px-6 py-3 font-heading text-xs font-black uppercase tracking-widest text-black shadow-md transition-all hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isAdding ? 'Adding...' : needsSelection ? 'Choose Options' : 'Get Bundle'}
+          {isAdding ? 'Adding...' : !offer.isAvailable ? 'Out Of Stock' : needsSelection ? 'Choose Options' : 'Get Bundle'}
         </button>
 
         <p className="text-center font-mono text-[9px] uppercase tracking-widest text-zinc-500">
@@ -123,6 +123,8 @@ const ShopPage = () => {
   const { addBundleItem } = useAppContext();
   const [products, setProducts] = useState([]);
   const [bundleOffers, setBundleOffers] = useState([]);
+  const [isOffersLoading, setIsOffersLoading] = useState(true);
+  const [offersLoadError, setOffersLoadError] = useState(false);
   const [addingBundleId, setAddingBundleId] = useState(null);
   const [offerFeedback, setOfferFeedback] = useState('');
   const [variantModalOffer, setVariantModalOffer] = useState(null);
@@ -277,15 +279,28 @@ const ShopPage = () => {
         const bundles = Array.isArray(response?.data)
           ? response.data.filter((offer) => offer.offerType === 'bundle')
           : [];
-        if (isMounted) setBundleOffers(bundles);
+        if (isMounted) {
+          setBundleOffers(bundles);
+          setOffersLoadError(false);
+        }
       } catch {
-        if (isMounted) setBundleOffers([]);
+        if (isMounted) {
+          setBundleOffers([]);
+          setOffersLoadError(true);
+        }
+      } finally {
+        if (isMounted) setIsOffersLoading(false);
       }
     };
 
     loadOffers();
+    const refreshOffers = () => loadOffers();
+    const refreshTimer = window.setInterval(refreshOffers, 30000);
+    window.addEventListener('focus', refreshOffers);
     return () => {
       isMounted = false;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', refreshOffers);
     };
   }, []);
 
@@ -465,7 +480,7 @@ const ShopPage = () => {
               }`}
             >
               Offers
-              {bundleOffers.length > 0 && (
+              {!isOffersLoading && bundleOffers.length > 0 && (
                 <span className="ml-2 rounded-full bg-black/20 px-2 py-0.5 font-mono text-[10px] font-bold">
                   {bundleOffers.length}
                 </span>
@@ -556,7 +571,13 @@ const ShopPage = () => {
           {/* Offers Tab */}
           {activeTab === 'offers' && (
             <>
-              {bundleOffers.length > 0 ? (
+              {isOffersLoading ? (
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {[1, 2].map((item) => (
+                    <div key={item} className="h-[420px] animate-pulse rounded-sm border border-[#222225] bg-[#141416]" />
+                  ))}
+                </div>
+              ) : bundleOffers.length > 0 ? (
                 <section className="space-y-5">
                   <div className="flex flex-col gap-3 border-b border-[#222225] pb-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -585,8 +606,12 @@ const ShopPage = () => {
                 </section>
               ) : (
                 <ChamferCard className="p-16 text-center space-y-4 rounded-sm bg-[#141416]/50 border border-[#222225]">
-                  <p className="font-heading font-black text-xl uppercase text-white">NO ACTIVE OFFERS</p>
-                  <p className="font-mono text-xs text-zinc-500">Check back soon for exclusive bundle deals and discounts.</p>
+                  <p className="font-heading font-black text-xl uppercase text-white">
+                    {offersLoadError ? 'OFFERS UNAVAILABLE' : 'NO ACTIVE OFFERS'}
+                  </p>
+                  <p className="font-mono text-xs text-zinc-500">
+                    {offersLoadError ? 'Offers could not be loaded right now.' : 'Check back soon for exclusive bundle deals and discounts.'}
+                  </p>
                 </ChamferCard>
               )}
             </>

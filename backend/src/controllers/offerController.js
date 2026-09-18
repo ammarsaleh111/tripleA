@@ -341,7 +341,10 @@ const getOffers = async ({ activeOnly = false }) => {
 export const getActiveOffers = async (_request, response, next) => {
   try {
     const offers = await getOffers({ activeOnly: true });
-    return response.status(200).json({ success: true, data: offers.filter((offer) => offer.isAvailable !== false) });
+    // Keep bundles even when a component product is out of stock: the client
+    // shows them with an "Out Of Stock" badge and a disabled add button.
+    // Hiding them entirely made active offers invisible in the shop/home.
+    return response.status(200).json({ success: true, data: offers });
   } catch (error) {
     return next(error);
   }

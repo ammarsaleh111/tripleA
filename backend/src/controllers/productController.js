@@ -66,7 +66,7 @@ export const getProducts = async (req, res, next) => {
       });
     }
 
-    const allowedSorts = new Set(['featured', 'newest', 'price_asc', 'price_desc', 'name_asc']);
+    const allowedSorts = new Set(['featured', 'best_selling', 'newest', 'price_asc', 'price_desc', 'name_asc']);
     if (!allowedSorts.has(sort_by)) {
       return res.status(400).json({
         success: false,
@@ -169,6 +169,9 @@ export const getProducts = async (req, res, next) => {
     }
 
     let orderClause = ' ORDER BY p.is_featured DESC, p.created_at DESC';
+    if (sort_by === 'best_selling') {
+      orderClause = ' ORDER BY total_sold DESC, p.created_at DESC, p.id DESC';
+    }
     if (sort_by === 'newest') {
       orderClause = ' ORDER BY p.created_at DESC';
     }
@@ -191,6 +194,26 @@ export const getProducts = async (req, res, next) => {
         p.has_flavor,
         p.has_weight,
         p.is_featured,
+        COALESCE((
+          SELECT SUM(sold.quantity)
+          FROM (
+            SELECT oi.quantity
+            FROM order_items oi
+            JOIN orders o ON o.id = oi.order_id
+            JOIN product_variants pv_sold ON pv_sold.id = oi.variant_id
+            WHERE oi.item_type = 'product'
+              AND pv_sold.product_id = p.id
+              AND o.status <> 'Cancelled'
+            UNION ALL
+            SELECT oi.quantity
+            FROM order_items oi
+            JOIN orders o ON o.id = oi.order_id
+            CROSS JOIN LATERAL jsonb_array_elements(COALESCE(oi.metadata->'components', '[]'::jsonb)) component
+            WHERE oi.item_type = 'bundle'
+              AND o.status <> 'Cancelled'
+              AND (component->>'productId')::INT = p.id
+          ) sold
+        ), 0) AS total_sold,
         ad.discount_type,
         ad.discount_value,
         CASE
